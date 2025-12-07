@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# shellcheck disable=SC3043
+
+main() {
+  set -eu
+  if [ -n "${DEBUG:-}" ]; then set -v; fi
+  if [ -n "${TRACE:-}" ]; then set -xv; fi
+
+  local program version author root
+  program="anvil"
+  version="0.1.0"
+  author="Fletcher Nichol <fnichol@nichol.ca>"
+
+  # shellcheck source=lib/realpath.sh
+  . "${0%/*}/../lib/realpath.sh"
+
+  root="$(realpath "${0%/*}/..")"
+
+  # shellcheck source=vendor/lib/libsh.full.sh
+  . "$root/vendor/lib/libsh.full.sh"
+  # shellcheck source=lib/anvil/cli.sh
+  . "$root/lib/anvil/cli.sh"
+
+  anvil_cli "$program" "$version" "$author" "$root" "$@"
+}
+
+main "$@" || exit 99
