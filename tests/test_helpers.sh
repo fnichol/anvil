@@ -17,14 +17,14 @@ commonOneTimeSetUp() {
   __ORIG_TERM="$TERM"
   __ORIG_PWD="$(pwd)"
 
-  tmppath="$SHUNIT_TMPDIR/tmp"
+  tmpdir="$SHUNIT_TMPDIR/tmp"
 
-  stdout="$tmppath/stdout"
-  stderr="$tmppath/stderr"
-  expected="$tmppath/expected"
-  actual="$tmppath/actual"
-  sh_script="$tmppath/sh_script.sh"
-  isolated_path="$tmppath/isolated_path"
+  stdout="$tmpdir/stdout"
+  stderr="$tmpdir/stderr"
+  expected="$tmpdir/expected"
+  actual="$tmpdir/actual"
+  sh_script="$tmpdir/sh_script.sh"
+  isolated_path="$tmpdir/isolated_path"
 }
 
 commonSetUp() {
@@ -37,11 +37,11 @@ commonSetUp() {
   # Restore the original working directory
   cd "$__ORIG_PWD" || return 1
   # Clean any prior test file/directory state
-  rm -rf "$tmppath"
+  rm -rf "$tmpdir"
   # Unset any prior test variable state
   unset return_status
   # Create a scratch directory that will be removed on every test
-  mkdir -p "$tmppath"
+  mkdir -p "$tmpdir"
 }
 
 assertStdoutEquals() {
@@ -69,12 +69,12 @@ assertStdoutContains() {
 }
 
 assertStdoutStripAnsiContains() {
-  stripAnsi <"$stdout" >"$tmppath/stdout_no_ansi"
+  stripAnsi <"$stdout" >"$tmpdir/stdout_no_ansi"
 
   if [ "$#" -eq 2 ]; then
-    assertTrue "$1" "grep -E '$2' <'$tmppath/stdout_no_ansi'"
+    assertTrue "$1" "grep -E '$2' <'$tmpdir/stdout_no_ansi'"
   else
-    assertTrue 'stdout does not contain' "grep -E '$1' <'$tmppath/stdout_no_ansi'"
+    assertTrue 'stdout does not contain' "grep -E '$1' <'$tmpdir/stdout_no_ansi'"
   fi
 }
 
@@ -107,12 +107,12 @@ assertStderrContains() {
 }
 
 assertStderrStripAnsiContains() {
-  stripAnsi <"$stderr" >"$tmppath/stderr_no_ansi"
+  stripAnsi <"$stderr" >"$tmpdir/stderr_no_ansi"
 
   if [ "$#" -eq 2 ]; then
-    assertTrue "$1" "grep -E '$2' <'$tmppath/stderr_no_ansi'"
+    assertTrue "$1" "grep -E '$2' <'$tmpdir/stderr_no_ansi'"
   else
-    assertTrue 'stderr does not contain' "grep -E '$1' <'$tmppath/stderr_no_ansi'"
+    assertTrue 'stderr does not contain' "grep -E '$1' <'$tmpdir/stderr_no_ansi'"
   fi
 }
 
@@ -179,9 +179,9 @@ run_in_sh_script_and_signal() {
     wait \$bgps
     # Return the exit code from the script process
     exit $?
-  " >"$tmppath/run_in_bg.sh"
+  " >"$tmpdir/run_in_bg.sh"
 
-  run "${SHELL_BIN:-sh}" "$tmppath/run_in_bg.sh"
+  run "${SHELL_BIN:-sh}" "$tmpdir/run_in_bg.sh"
 }
 
 run_with_sh_script() {
