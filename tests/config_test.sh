@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# shellcheck disable=SC3043
 
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/test_helpers.sh"
@@ -38,6 +39,97 @@ testConfigExistsCheckExisting() {
 
   assertTrue 'existing config file should return true' "$return_status"
   assertStdoutNull
+  assertStderrNull
+}
+
+testCreateJson() {
+  local config
+
+  run config_create_json "one,two,three"
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.tags | length == 3'
+  assertJsonFromFile "$config" '.tags | contains(["one"])'
+  assertJsonFromFile "$config" '.tags | contains(["two"])'
+  assertJsonFromFile "$config" '.tags | contains(["three"])'
+  assertJsonFromFile "$config" '.skip_steps | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+}
+
+testCreateJsonNoTags() {
+  local config
+
+  run config_create_json ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.tags | length == 0'
+  assertJsonFromFile "$config" '.skip_steps | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+}
+
+testCreateJsonStripsWhitespaceFromTags() {
+  local config
+
+  run config_create_json "  one,  two,   three    "
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.tags | length == 3'
+  assertJsonFromFile "$config" '.tags | contains(["one"])'
+  assertJsonFromFile "$config" '.tags | contains(["two"])'
+  assertJsonFromFile "$config" '.tags | contains(["three"])'
+  assertJsonFromFile "$config" '.skip_steps | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+}
+
+testCreateFile() {
+  local tags expected_file config_file
+
+  tags="one,two,three"
+
+  run config_create_json "$tags"
+  expected_file="$tmpdir/expected.json"
+  cp "$stdout" "$expected_file"
+
+  # Ensure that non-existing parent directories are created
+  config_file="$tmpdir/path/to/config.json"
+
+  run config_create "$config_file" "$tags"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+
+  cmp "$expected_file" "$config_file"
+  assertTrue 'config file contents differs from expected contents' "$?"
+}
+
+testCreateFileAlreadyExists() {
+  local config_file="$tmpdir/config.json"
+
+  touch "$tmpdir/config.json"
+
+  run config_create "$config_file" ""
+
+  assertFalse 'function should not have succeeded' "$return_status"
+  assertStdoutStripAnsiContains "file already exists"
   assertStderrNull
 }
 

@@ -1,6 +1,6 @@
 SH_SOURCES ?= $(shell find . -type f -name '*.sh' -not -path './tmp/*' -and -not -path './vendor/*')
 SHELL_BIN ?= $(SHELL)
-SHUNIT2_VERSION := 2.1.7
+SHUNIT2_VERSION := 2.1.8
 CHECK_TOOLS += shellcheck shfmt
 
 test-shell: testtools dl-shunit2 ## Runs all shell code tests

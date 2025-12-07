@@ -34,14 +34,14 @@ print_usage() {
 }
 
 anvil_cli() {
-  local program version author root
+  local root program version author
+  root="$1"
+  shift
   program="$1"
   shift
   version="$1"
   shift
   author="$1"
-  shift
-  root="$1"
   shift
 
   VERBOSE=""
@@ -104,7 +104,8 @@ anvil_cli() {
       die "apply command not yet implemented"
       ;;
     config)
-      die "config command not yet implemented"
+      . "$root/lib/anvil/commands/config/lib.sh"
+      cmd_config "$root" "$program" "$@"
       ;;
     diff)
       die "diff command not yet implemented"

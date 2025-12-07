@@ -120,6 +120,20 @@ assertStderrNull() {
   assertTrue 'stderr is not empty' "[ ! -s '$stderr' ]"
 }
 
+assertJson() {
+  echo "echo \"$1\" | jq -e '$2'" >"$sh_script"
+  run "${SHELL_BIN:-sh}" "$sh_script"
+
+  assertTrue "jq execution failed ($2)" "$return_status"
+}
+
+assertJsonFromFile() {
+  echo "jq -e '$2' <$1" >"$sh_script"
+  run "${SHELL_BIN:-sh}" "$sh_script"
+
+  assertTrue "jq execution failed ($2)" "$return_status"
+}
+
 # Run command and capture stdout/stderr
 run() {
   # Implementation inspired by `run` in bats
@@ -245,4 +259,5 @@ shell_compat() {
 }
 
 # shellcheck disable=SC2034
-shunit2="${0%/*}/../tmp/shunit2/shunit2"
+shunit2RelRoot="tmp/shunit2/shunit2"
+shunit2="${0%/*}/../$shunit2RelRoot"

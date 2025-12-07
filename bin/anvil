@@ -6,7 +6,7 @@ main() {
   if [ -n "${DEBUG:-}" ]; then set -v; fi
   if [ -n "${TRACE:-}" ]; then set -xv; fi
 
-  local program version author root
+  local root program version author
   program="anvil"
   version="0.1.0"
   author="Fletcher Nichol <fnichol@nichol.ca>"
@@ -21,7 +21,7 @@ main() {
   # shellcheck source=lib/anvil/cli.sh
   . "$root/lib/anvil/cli.sh"
 
-  anvil_cli "$program" "$version" "$author" "$root" "$@"
+  anvil_cli "$root" "$program" "$version" "$author" "$@"
 }
 
 main "$@" || exit 99

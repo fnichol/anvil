@@ -15,6 +15,38 @@ config_exists() {
   [ -f "$config_file" ]
 }
 
+config_create() {
+  local config_file tags_str
+  config_file="$1"
+  tags_str="$2"
+
+  if config_exists "$config_file"; then
+    warn "Can't create new config, file already exists: $config_file"
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$config_file")"
+
+  touch "$config_file"
+  config_create_json "$tags_str" >"$config_file"
+}
+
+config_create_json() {
+  local tags_str
+  tags_str="$1"
+
+  need_cmd jq
+
+  jq -n --arg tags_str "$tags_str" '{
+    tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" ")),
+    skip_steps: [],
+    custom_packages: {
+      add: [],
+      remove: []
+    }
+  }'
+}
+
 # Read tags from config
 config_read_tags() {
   local config_file="${1:-$(config_path)}"
