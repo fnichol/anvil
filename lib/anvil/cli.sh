@@ -114,7 +114,8 @@ anvil_cli() {
       die "doctor command not yet implemented; root=$root"
       ;;
     facts)
-      die "facts command not yet implemented"
+      . "$root/lib/anvil/commands/facts.sh"
+      cmd_facts "$root" "$program" "$@"
       ;;
     list)
       die "list command not yet implemented"
