@@ -1,0 +1,11 @@
+{
+  "name": "base",
+  "description": "Core system utilities and tools",
+  "depends_on": [],
+  "#": ["Base tag provides essential command-line tools for all systems"],
+  "packages": {
+    "macos": {
+      "homebrew": ["git"]
+    }
+  }
+}

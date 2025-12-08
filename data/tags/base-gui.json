@@ -1,0 +1,11 @@
+{
+  "name": "base-gui",
+  "description": "Base graphical user interface and desktop software",
+  "depends_on": [],
+  "#": ["Base tag provides essential command-line tools for all systems"],
+  "packages": {
+    "macos": {
+      "homebrew_cask": ["aerospace"]
+    }
+  }
+}

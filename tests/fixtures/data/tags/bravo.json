@@ -1,0 +1,11 @@
+{
+  "name": "bravo",
+  "depends_on": ["alfa"],
+  "packages": {
+    "bazzite": {
+      "x86_64": {
+        "packages": ["shoes", "shirts"]
+      }
+    }
+  }
+}

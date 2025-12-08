@@ -78,4 +78,3 @@ cmd_config_edit() {
 
   "$editor" "$config_file"
 }
-

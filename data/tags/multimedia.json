@@ -1,0 +1,11 @@
+{
+  "name": "multimedia",
+  "description": "Audio and video processing tools",
+  "depends_on": ["base"],
+  "#": ["Tools for audio/video encoding, processing, and playback"],
+  "packages": {
+    "macos": {
+      "homebrew": ["ffmpeg", "flac", "lame"]
+    }
+  }
+}

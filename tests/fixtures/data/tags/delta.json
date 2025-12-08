@@ -1,0 +1,20 @@
+{
+  "name": "delta",
+  "depends_on": ["charlie", "bravo"],
+  "packages": {
+    "macos": {
+      "all": {
+        "homebrew": ["apple", "strawberry"],
+        "homebrew_cask": ["brown", "red"]
+      },
+      "x86_64": {
+        "homebrew": ["cherry"],
+        "homebrew_cask": ["purple", "orange"]
+      },
+      "aarch64": {
+        "homebrew": ["grape"],
+        "homebrew_cask": ["yellow", "white"]
+      }
+    }
+  }
+}
