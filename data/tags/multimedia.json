@@ -4,7 +4,7 @@
   "depends_on": ["base"],
   "#": ["Tools for audio/video encoding, processing, and playback"],
   "packages": {
-    "darwin": {
+    "macos": {
       "homebrew": ["ffmpeg", "flac", "lame"]
     }
   }

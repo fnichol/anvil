@@ -4,7 +4,7 @@
   "depends_on": [],
   "#": ["Base tag provides essential command-line tools for all systems"],
   "packages": {
-    "darwin": {
+    "macos": {
       "homebrew_cask": ["aerospace"]
     }
   }
