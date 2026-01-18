@@ -101,7 +101,8 @@ anvil_cli() {
 
   case "$command" in
     apply)
-      die "apply command not yet implemented"
+      . "$root/lib/anvil/commands/apply.sh"
+      cmd_apply "$root" "$program" "$@"
       ;;
     config)
       . "$root/lib/anvil/commands/config/lib.sh"
