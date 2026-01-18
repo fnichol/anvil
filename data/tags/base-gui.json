@@ -5,7 +5,9 @@
   "#": ["Base tag provides essential command-line tools for all systems"],
   "packages": {
     "macos": {
-      "homebrew_cask": ["aerospace"]
+      "all": {
+        "homebrew_cask": ["aerospace"]
+      }
     }
   }
 }

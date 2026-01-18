@@ -5,7 +5,9 @@
   "#": ["Tools for audio/video encoding, processing, and playback"],
   "packages": {
     "macos": {
-      "homebrew": ["ffmpeg", "flac", "lame"]
+      "all": {
+        "homebrew": ["ffmpeg", "flac", "lame"]
+      }
     }
   }
 }
