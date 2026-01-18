@@ -97,15 +97,16 @@ config_create_json() {
 #
 # * `@param [String]` configuration file path (optional, defaults to
 #   `config_path` output)
-# * `@stdout` list of tag names, one per line
+# * `@stdout` space-seperated list of tag names
 # * `@return 0` if successful
 config_read_tags() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
     need_cmd jq
+    need_cmd tr
 
-    jq -r '.tags[]? // empty' "$config_file"
+    jq -r '.tags[]? // empty' "$config_file" | tr '\n' ' '
   fi
 }
 
