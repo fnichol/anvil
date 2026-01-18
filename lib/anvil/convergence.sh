@@ -20,7 +20,7 @@ desired_packages() {
   local os="$2"
   local arch="$3"
   local package_type="$4"
-  shift 3
+  shift 4
   local tags="$*"
 
   # shellcheck source=lib/anvil/tags.sh
@@ -31,7 +31,7 @@ desired_packages() {
   for tag in $tags; do
     local tag_pkgs
     tag_pkgs="$(
-      tag_packages_for "$root/data/tags" "$tag" "$os" "$arch" "$package_type"
+      tags_packages_for "$root" "$tag" "$os" "$arch" "$package_type"
     )"
 
     if [ -n "$tag_pkgs" ]; then
