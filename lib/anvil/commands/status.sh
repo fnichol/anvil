@@ -77,6 +77,9 @@ cmd_status() {
     die "Config file not found"
   fi
 
+  need_cmd tr
+  need_cmd wc
+
   section "Anvil Status"
   info "Config: $config_file"
   echo ""
