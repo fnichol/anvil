@@ -85,6 +85,9 @@ cmd_apply() {
     die "Config file not found"
   fi
 
+  need_cmd tr
+  need_cmd wc
+
   section "Anvil Apply"
 
   # Gather system facts
