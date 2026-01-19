@@ -113,7 +113,8 @@ anvil_cli() {
       cmd_diff "$root" "$program" "$@"
       ;;
     doctor)
-      die "doctor command not yet implemented; root=$root"
+      . "$root/lib/anvil/commands/doctor.sh"
+      cmd_doctor "$root" "$program" "$@"
       ;;
     facts)
       . "$root/lib/anvil/commands/facts.sh"
