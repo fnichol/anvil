@@ -9,10 +9,12 @@ print_usage_config_init() {
 	Initialize a config file
 	
 	USAGE:
-	    $program config init [FLAGS] [COMMAND]
+	    $program config init [FLAGS] [OPTIONS]
 	
 	FLAGS:
 	    -h, --help              Prints help information
+
+	OPTIONS:
 	    -t, --tags=<T>[,<T>..]  Tags to use in config
 
 	ENVIRONMENT VARIABLES:

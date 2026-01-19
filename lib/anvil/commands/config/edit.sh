@@ -9,7 +9,7 @@ print_usage_config_edit() {
 	Edit current config
 	
 	USAGE:
-	    $program config edit [FLAGS] [COMMAND]
+	    $program config edit [FLAGS]
 	
 	FLAGS:
 	    -h, --help              Prints help information

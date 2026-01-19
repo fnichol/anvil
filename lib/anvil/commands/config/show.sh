@@ -9,7 +9,7 @@ print_usage_config_show() {
 	Show current config
 	
 	USAGE:
-	    $program config show [FLAGS] [COMMAND]
+	    $program config show [FLAGS]
 	
 	FLAGS:
 	    -h, --help              Prints help information

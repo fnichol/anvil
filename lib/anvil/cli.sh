@@ -24,12 +24,12 @@ print_usage() {
 	COMMANDS:
 	    apply           Converge system to desired state
 	    config          Manage configuration
-	    status          Show current vs desired state
 	    diff            Show what would change
-	    facts           Show discovered system info
 	    doctor          Verify system health
-	    list            List available tags or roles
-	    show            Show details of tag or role
+	    facts           Show discovered system info
+	    role            Manage roles
+	    tag             Manage tags
+	    status          Show current vs desired state
 	EOF
 }
 
@@ -118,11 +118,13 @@ anvil_cli() {
       . "$root/lib/anvil/commands/facts.sh"
       cmd_facts "$root" "$program" "$@"
       ;;
-    list)
-      die "list command not yet implemented"
+    role)
+      . "$root/lib/anvil/commands/role/lib.sh"
+      cmd_role "$root" "$program" "$@"
       ;;
-    show)
-      die "show command not yet implemented"
+    tag)
+      . "$root/lib/anvil/commands/tag/lib.sh"
+      cmd_tag "$root" "$program" "$@"
       ;;
     status)
       die "status command not yet implemented"
