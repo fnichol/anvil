@@ -127,10 +127,11 @@ anvil_cli() {
       cmd_tag "$root" "$program" "$@"
       ;;
     status)
-      die "status command not yet implemented"
+      . "$root/lib/anvil/commands/status.sh"
+      cmd_status "$root" "$program" "$@"
       ;;
     *)
-      print_usage "$program" "$version" >&2
+      print_usage "$program" "$version" "$author" >&2
       die "unknown command: $command"
       ;;
   esac
