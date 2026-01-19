@@ -124,4 +124,3 @@ cmd_diff() {
     done
   fi
 }
-
