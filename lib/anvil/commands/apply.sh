@@ -91,8 +91,8 @@ cmd_apply() {
   section "Discovering system facts..."
   local os arch
   os="$(facts_os)"
-  info "Operating system: $os"
   arch="$(facts_arch)"
+  info "Operating System: $os"
   info "Architecture: $arch"
 
   # Read config
