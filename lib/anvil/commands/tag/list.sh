@@ -22,6 +22,10 @@ cmd_tag_list() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
+  . "$root/lib/anvil/facts.sh"
+  . "$root/lib/anvil/tags.sh"
+
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
@@ -54,8 +58,7 @@ cmd_tag_list() {
   done
   shift "$((OPTIND - 1))"
 
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/tags.sh"
+  ensure_jq
 
   section "Available Tags"
 
