@@ -16,7 +16,7 @@ ensure_jq() {
   need_cmd dirname
 
   local candidate_path
-  candidate_path="$(_jq_vendored_path)"
+  candidate_path="$(_jq_vendored_latest_path)"
 
   # If vendored package was found but not on PATH, set up installed cookie
   # variable, append program parent directory to PATH and return
@@ -47,7 +47,7 @@ use_system_jq() {
   need_cmd sed
 
   local candidate_path
-  candidate_path="$(dirname "$(_jq_vendored_path)")"
+  candidate_path="$(dirname "$(_jq_vendored_latest_path)")"
 
   if echo "$PATH" | grep -q -E "(^|:)$candidate_path(:|$)"; then
     local updated
@@ -124,19 +124,24 @@ _install_static_jq() {
 
   need_cmd chmod
   need_cmd dirname
+  need_cmd ln
   need_cmd mkdir
 
   local url="https://github.com/jqlang/jq/releases/download"
   url="$url/jq-$version/jq-$distrib-$arch"
 
   local dst
-  dst="$(_jq_vendored_path)"
+  dst="$(_installs_path_prefix "jq")/$version/jq"
+
+  local latest
+  latest="$(_jq_vendored_latest_path)"
 
   mkdir -p "$(dirname "$dst")"
   download "$url" "$dst" 1>&2
   chmod 755 "$dst"
+  ln -snf "./$version" "$(dirname "$latest")"
 
-  echo "$dst"
+  echo "$latest"
 }
 
 _installs_path_prefix() {
@@ -147,7 +152,7 @@ _installs_path_prefix() {
   echo "$path_prefix/$install_name"
 }
 
-_jq_vendored_path() {
+_jq_vendored_latest_path() {
   local path
   path="$(_installs_path_prefix "jq")/latest/jq"
 
