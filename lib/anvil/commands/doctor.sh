@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-REQUIRED_CMDS="jq curl git"
-REQUIRED_CMDS_ALPINE="apk"
-REQUIRED_CMDS_ARCH="pacman"
-REQUIRED_CMDS_MACOS="xcode-select"
-REQUIRED_CMDS_UBUNTU="apt"
+REQUIRED_CMDS=""
+REQUIRED_CMDS_ALPINE="apk wget"
+REQUIRED_CMDS_ARCH="curl pacman"
+REQUIRED_CMDS_DEBIAN="apt wget"
+REQUIRED_CMDS_MACOS="xcode-select curl"
 
 # Prints usage for the status command.
 print_usage_doctor() {
@@ -34,6 +34,7 @@ cmd_doctor() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
   . "$root/lib/anvil/facts.sh"
 
@@ -97,19 +98,19 @@ cmd_doctor() {
 
   section "Platform-Specific ($os)"
 
-  local platform_required_cmds
+  local platform_required_cmds=""
   case "$os" in
     alpine)
       platform_required_cmds="$REQUIRED_CMDS_ALPINE"
       ;;
-    arch)
+    arch | cachyos)
       platform_required_cmds="$REQUIRED_CMDS_ARCH"
+      ;;
+    debian | ubuntu)
+      platform_required_cmds="$REQUIRED_CMDS_DEBIAN"
       ;;
     macos)
       platform_required_cmds="$REQUIRED_CMDS_MACOS"
-      ;;
-    ubuntu)
-      platform_required_cmds="$REQUIRED_CMDS_UBUNTU"
       ;;
   esac
 
@@ -163,7 +164,9 @@ cmd_doctor() {
 
   if [ -d "$tags_dir" ]; then
     local tag_count
-    tag_count="$(find "$tags_dir" -name '*.json' -depth 1 | wc -l | tr -d ' ')"
+    tag_count="$(
+      find "$tags_dir" -maxdepth 1 -name '*.json' | wc -l | tr -d ' '
+    )"
     info "✓ Found $tag_count tag definition(s) in: $tags_dir"
   else
     warn "✗ Tag directory not found: $tags_dir"
