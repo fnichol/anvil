@@ -23,6 +23,7 @@ cmd_role_list() {
   shift
 
   . "$root/lib/anvil/jq.sh"
+  . "$root/lib/anvil/facts.sh"
 
   OPTIND=1
   while getopts "h-:" arg; do
