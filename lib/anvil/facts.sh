@@ -85,7 +85,7 @@ facts_os() {
           debian)
             # Attempt to detect TrueNAS CLI command (there aren't great ways of
             # detecting TrueNAS SCALE)
-            case "$(name -r)" in
+            case "$(uname -r)" in
               *+truenas)
                 echo "truenas"
                 ;;
@@ -199,12 +199,21 @@ facts_version() {
     debian)
       # Attempt to detect TrueNAS CLI command (there aren't great ways of
       # detecting TrueNAS SCALE)
-      case "$(name -r)" in
+      case "$(uname -r)" in
         *+truenas)
           cat /etc/version
           ;;
         *)
-          echo "$os_release_version_id"
+          if [ -f /etc/os-release ]; then
+            local os_release_version_id
+            os_release_version_id="$(
+              # shellcheck source=/dev/null
+              . /etc/os-release
+              echo "${VERSION_ID:-}"
+            )"
+
+            echo "$os_release_version_id"
+          fi
           ;;
       esac
       ;;
