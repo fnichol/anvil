@@ -128,6 +128,8 @@ cmd_doctor() {
   fi
   echo ""
 
+  ensure_jq
+
   # Check config
   section "Configuration"
 
