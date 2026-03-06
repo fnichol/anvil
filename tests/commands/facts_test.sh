@@ -47,6 +47,7 @@ testCmdConfigShowWithConfig() {
   assertTrue 'cli command failed' "$return_status"
   assertJsonFromFile "$output" 'has("os")'
   assertJsonFromFile "$output" 'has("arch")'
+  assertJsonFromFile "$output" 'has("distribution")'
   assertJsonFromFile "$output" 'has("version")'
   assertJsonFromFile "$output" 'has("hostname")'
   assertStderrNull

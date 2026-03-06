@@ -23,6 +23,8 @@ desired_packages() {
   shift 4
   local tags="$*"
 
+  # shellcheck source=lib/anvil/jq.sh
+  . "$root/lib/anvil/jq.sh"
   # shellcheck source=lib/anvil/tags.sh
   . "$root/lib/anvil/tags.sh"
 

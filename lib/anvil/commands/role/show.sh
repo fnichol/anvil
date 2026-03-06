@@ -25,6 +25,8 @@ cmd_role_show() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
+
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
@@ -64,7 +66,7 @@ cmd_role_show() {
     die "required argument: NAME"
   fi
 
-  need_cmd jq
+  ensure_jq
 
   local role_file="$root/data/roles/$name.json"
 

@@ -54,6 +54,7 @@ cmd_tag_list() {
   done
   shift "$((OPTIND - 1))"
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/tags.sh"
 
   section "Available Tags"

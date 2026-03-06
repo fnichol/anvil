@@ -64,6 +64,7 @@ cmd_tag_show() {
     die "required argument: NAME"
   fi
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/facts.sh"
   . "$root/lib/anvil/tags.sh"
 

@@ -1,6 +1,38 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# Determines the system distribution (i.e. the kernel of the running system).
+#
+# Detects the distribution by examining `uname -s` output. Returns normalized
+# names in lower case.
+#
+# * `@stdout` normalized system name
+# * `@return 0` if successful
+#
+# # Explicitly supported distribution names
+#
+# * `darwin` - macOS distributions
+# * `freebsd` - FreeBSD distributions
+# * `linux` - Linux distributions
+# * `openbsd` - OpenBSD distributions
+facts_distribution() {
+  need_cmd uname
+  need_cmd tr
+
+  local system_lowercase
+  system_lowercase="$(uname -s | tr '[:upper:]' '[:lower:]')"
+
+  case "$system_lowercase" in
+    darwin | freebsd | linux | openbsd)
+      echo "$system_lowercase"
+      ;;
+    *)
+      echo "$system_lowercase-unknown"
+      return 1
+      ;;
+  esac
+}
+
 # Determines the operating system name.
 #
 # Detects the OS by examining `uname -s` output and `/etc/os-release` on Linux
@@ -285,16 +317,18 @@ facts_hostname() {
 # }
 # ```
 facts_json() {
-  need_cmd jq
+  ensure_jq
 
   jq -n \
     --arg os "$(facts_os)" \
     --arg arch "$(facts_arch)" \
+    --arg distribution "$(facts_distribution)" \
     --arg version "$(facts_version)" \
     --arg hostname "$(hostname)" \
     '{
       os: $os,
       arch: $arch,
+      distribution: $distribution,
       version: $version,
       hostname: $hostname
     }'

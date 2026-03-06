@@ -26,6 +26,7 @@ cmd_config_edit() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
 
   local default_config_path config_file

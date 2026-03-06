@@ -26,6 +26,7 @@ cmd_config_show() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
 
   local default_config_path config_file
@@ -66,7 +67,7 @@ cmd_config_show() {
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
-  need_cmd jq
+  ensure_jq
 
   if config_exists "$config_file"; then
     jq . "$config_file"

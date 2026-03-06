@@ -9,6 +9,7 @@
 
 oneTimeSetUp() {
   . "${0%/*}/../vendor/lib/libsh.full.sh"
+  . "lib/anvil/jq.sh"
   . "${SRC:=lib/anvil/config.sh}"
 
   commonOneTimeSetUp

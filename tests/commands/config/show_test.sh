@@ -13,6 +13,8 @@ oneTimeSetUp() {
   commonOneTimeSetUp
   root="${0%/*}/../../.."
 
+  # shellcheck source=lib/anvil/jq.sh
+  . "$root/lib/anvil/jq.sh"
   # shellcheck source=lib/anvil/config.sh
   . "$root/lib/anvil/config.sh"
 }

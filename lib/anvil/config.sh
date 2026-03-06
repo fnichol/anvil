@@ -81,7 +81,7 @@ config_create_json() {
   local tags_str
   tags_str="$1"
 
-  need_cmd jq
+  ensure_jq
 
   jq -n --arg tags_str "$tags_str" '{
     tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" ")),
@@ -103,7 +103,8 @@ config_read_tags() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
-    need_cmd jq
+    ensure_jq
+
     need_cmd tr
 
     jq -r '.tags[]? // empty' "$config_file" | tr '\n' ' '
@@ -120,7 +121,7 @@ config_read_role() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
-    need_cmd jq
+    ensure_jq
 
     jq -r '.role // empty' "$config_file"
   fi
@@ -136,7 +137,7 @@ config_read_skip_steps() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
-    need_cmd jq
+    ensure_jq
 
     jq -r '.skip_steps[]? // empty' "$config_file"
   fi
@@ -155,7 +156,7 @@ config_read_custom_add() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
-    need_cmd jq
+    ensure_jq
 
     jq -r '.custom_packages.add[]? // empty' "$config_file"
   fi
@@ -174,7 +175,7 @@ config_read_custom_remove() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
-    need_cmd jq
+    ensure_jq
 
     jq -r '.custom_packages.remove[]? // empty' "$config_file"
   fi

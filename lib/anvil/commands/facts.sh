@@ -54,6 +54,7 @@ cmd_facts() {
   done
   shift "$((OPTIND - 1))"
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/facts.sh"
 
   facts_json

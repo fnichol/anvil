@@ -63,7 +63,7 @@ tags_list() {
     return 1
   fi
 
-  need_cmd jq
+  ensure_jq
 
   {
     for tag_file in "$tags_path"/*.json; do
@@ -182,7 +182,7 @@ tags_packages_for() {
   local arch="$4"
   local package_type="$5"
 
-  need_cmd jq
+  ensure_jq
 
   # Select all packages for the specific architecture and the `"all"`
   # architecture

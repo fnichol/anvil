@@ -22,6 +22,8 @@ cmd_role_list() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
+
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
@@ -54,8 +56,9 @@ cmd_role_list() {
   done
   shift "$((OPTIND - 1))"
 
+  ensure_jq
+
   need_cmd basename
-  need_cmd jq
   need_cmd ls
 
   section "Available Roles"

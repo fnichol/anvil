@@ -28,6 +28,7 @@ cmd_diff() {
   program="$1"
   shift
 
+  . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
   . "$root/lib/anvil/facts.sh"
   . "$root/lib/anvil/tags.sh"

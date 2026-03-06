@@ -20,6 +20,13 @@ runCli() {
   run "$root/bin/anvil" "$@"
 }
 
+runCliWithConfig() {
+  local config_file="$1"
+  shift
+
+  ANVIL_CONFIG_PATH="$config_file" runCli "$@"
+}
+
 testCmdStatusHelpShortFlag() {
   runCli status -h
 
@@ -38,17 +45,28 @@ testCmdStatusHelpLongFlag() {
   assertStderrNull
 }
 
-testCmdStatus() {
+testCmdStatusNoConfig() {
   runCli status
 
-  assertTrue 'cli command failed' "$return_status"
+  assertFalse 'cli command passed and should have failed' "$return_status"
+  assertStdoutContains 'No config found'
+  assertStderrContains 'Config file not found'
+}
+
+testCmdStatusWithConfigNoTags() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init
+
+  runCliWithConfig "$config_file" status
+
+  assertFalse 'cli command passed and should have failed' "$return_status"
   assertStdoutContains 'Anvil Status'
   assertStdoutContains 'Operating System: '
-  assertStdoutContains 'Tags: '
-  assertStdoutContains 'Desired Packages: '
-  assertStdoutContains 'Installed Packages: '
-  assertStdoutContains 'Pending Installs: '
-  assertStderrNull
+  assertStdoutContains 'Architecture: '
+  assertStdoutContains 'Operating System Version: '
+  assertStderrContains 'No tags configured'
 }
 
 shell_compat "$0"
