@@ -1,6 +1,6 @@
 {
   "tags": ["base", "development"],
-  "skip_steps": ["hostname"],
+  "skip_steps": ["configure:hostname"],
   "custom_packages": {
     "add": ["neovim"],
     "remove": ["badnews"]

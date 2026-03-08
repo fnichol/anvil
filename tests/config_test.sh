@@ -253,7 +253,7 @@ testReadSkipStepsSimple() {
   run config_read_skip_steps "$root/tests/fixtures/config-simple.json"
 
   assertTrue 'function failed' "$return_status"
-  assertStdoutEquals "hostname"
+  assertStdoutEquals "configure:hostname"
   assertStderrNull
 }
 
