@@ -63,23 +63,22 @@ use_system_jq() {
   fi
 
   need_cmd jq
-  echo "PATH IS: [$PATH]"
 }
 
 _install_jq() {
-  local distribution
-  distribution="$(facts_distribution)"
+  local kernel
+  kernel="$(facts_kernel)"
 
-  case "$distribution" in
+  case "$kernel" in
     linux | macos)
       local path
-      path="$(_install_static_jq "$distribution")"
+      path="$(_install_static_jq "$kernel")"
 
       __JQ_VENDORED_PATH="$path"
       export __JQ_VENDORED_PATH
       ;;
     *)
-      warn "Currently unsupported distribution: $distribution"
+      warn "Currently unsupported distribution: $kernel"
       return 1
       ;;
   esac

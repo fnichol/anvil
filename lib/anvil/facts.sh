@@ -1,21 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# Determines the system distribution (i.e. the kernel of the running system).
+# Determines the system kernel.
 #
-# Detects the distribution by examining `uname -s` output. Returns normalized
-# names in lower case.
+# Detects the kernel by examining `uname -s` output. Returns normalized names
+# in lower case.
 #
 # * `@stdout` normalized system name
 # * `@return 0` if successful
 #
-# # Explicitly supported distribution names
+# # Explicitly supported kernel names
 #
 # * `darwin` - macOS distributions
 # * `freebsd` - FreeBSD distributions
 # * `linux` - Linux distributions
 # * `openbsd` - OpenBSD distributions
-facts_distribution() {
+facts_kernel() {
   need_cmd uname
   need_cmd tr
 
@@ -310,10 +310,11 @@ facts_hostname() {
 #
 # ```json
 # {
+#   "hostname": "my-laptop",
 #   "os": "macos",
-#   "arch": "aarch64",
 #   "version": "14.5",
-#   "hostname": "my-laptop"
+#   "kernel": "darwin",
+#   "arch": "aarch64"
 # }
 # ```
 facts_json() {
@@ -322,14 +323,14 @@ facts_json() {
   jq -n \
     --arg os "$(facts_os)" \
     --arg arch "$(facts_arch)" \
-    --arg distribution "$(facts_distribution)" \
+    --arg kernel "$(facts_kernel)" \
     --arg version "$(facts_version)" \
     --arg hostname "$(hostname)" \
     '{
+      hostname: $hostname,
       os: $os,
-      arch: $arch,
-      distribution: $distribution,
       version: $version,
-      hostname: $hostname
+      kernel: $kernel,
+      arch: $arch
     }'
 }

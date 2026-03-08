@@ -6,7 +6,20 @@ facts_steps() {
 }
 
 facts_step_gather() {
-  # TODO: implement
+  local root="$1"
 
-  info "facts:gather - stub"
+  # shellcheck source=lib/anvil/facts.sh
+  . "$root/lib/anvil/facts.sh"
+
+  __ANVIL_HOSTNAME="$(facts_hostname)"
+  __ANVIL_OS="$(facts_os)"
+  __ANVIL_VERSION="$(facts_version)"
+  __ANVIL_KERNEL="$(facts_kernel)"
+  __ANVIL_ARCH="$(facts_arch)"
+
+  info "  Hostname:                 $__ANVIL_HOSTNAME"
+  info "  Operating System:         $__ANVIL_OS"
+  info "  Operating System Version: $__ANVIL_VERSION"
+  info "  Kernel:                   $__ANVIL_DISTRIBUTION"
+  info "  Architecture:             $__ANVIL_ARCH"
 }
