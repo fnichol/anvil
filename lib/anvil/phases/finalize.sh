@@ -7,9 +7,25 @@ finalize_steps() {
 }
 
 finalize_step_record_run() {
-  # TODO: implement
+  local _root="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local _os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local _arch="$1"
+  shift
 
-  info "finalize:record_run - stub"
+  # shellcheck source=lib/anvil/jq.sh
+  . "$root/lib/anvil/jq.sh"
+  # shellcheck source=lib/anvil/state.sh
+  . "$root/lib/anvil/state.sh"
+
+  state_write_last_run
 }
 
 finalize_step_cleanup() {

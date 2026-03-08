@@ -13,8 +13,10 @@ print_apply_usage() {
 	    $program apply [FLAGS]
 
 	FLAGS:
-	    -h, --help       Prints help information
-	    -n, --dry-run    Show what would change without applying
+	    -h, --help                  Prints help information
+	    -n, --dry-run               Show what would change without applying
+	        --skip=<p:s>[,<p:s>..]  Skip steps (supports:
+                                        phase:*, *:step, *:*)
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_CONFIG_PATH       [default: $default_config_path]
@@ -31,15 +33,15 @@ cmd_apply() {
 
   . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
-  . "$root/lib/anvil/facts.sh"
-  . "$root/lib/anvil/tags.sh"
-  . "$root/lib/anvil/discovery.sh"
-  . "$root/lib/anvil/convergence.sh"
+  . "$root/lib/anvil/phases.sh"
+
+  local default_config_path
+  default_config_path="$(config_path)"
 
   local default_config_path config_file
-  local dry_run=""
 
-  default_config_path="$(config_path)"
+  local dry_run=""
+  local cli_skip_steps=""
 
   OPTIND=1
   while getopts "hn-:" arg; do
@@ -52,6 +54,7 @@ cmd_apply() {
         dry_run=true
         ;;
       -)
+        long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
           help)
             print_apply_usage "$program" "$default_config_path"
@@ -59,6 +62,13 @@ cmd_apply() {
             ;;
           dry-run)
             dry_run=true
+            ;;
+          skip=?*)
+            cli_skip_steps="$long_optarg"
+            ;;
+          skip*)
+            print_apply_usage "$program" "$default_config_path" >&2
+            die "missing required argument for --$OPTARG option"
             ;;
           '')
             # "--" terminates argument processing
@@ -86,114 +96,29 @@ cmd_apply() {
     die "Config file not found"
   fi
 
-  need_cmd tr
-  need_cmd wc
+  # Convert CLI-provided skip steps to be space-delimited
+  cli_skip_steps="$(echo "$cli_skip_steps" | tr ',' ' ')"
+
+  # Build skip coordinates by merging config skip_steps (newline-delimited)
+  # with CLI provided values (space-delimited)
+  local config_skip_steps
+  config_skip_steps="$(config_read_skip_steps "$config_file")"
+  local skip_coords
+  skip_coords="$(
+    printf '%s\n%s' "$config_skip_steps" "$cli_skip_steps" | tr '\n' ' '
+  )"
+
+  # If running in dry run mode, skip all apply phases, but still gather facts
+  # and show diff
+  if [ -n "$dry_run" ]; then
+    skip_coords="$skip_coords bootstrap:* update:* install:* configure:* finalize:*"
+    warn "Dry-run mode: no changes will be applied"
+  fi
 
   section "Anvil Apply"
 
-  # Gather system facts
-  section "Discovering system facts..."
-  local os arch
-  os="$(facts_os)"
-  arch="$(facts_arch)"
-  info "Operating System: $os"
-  info "Architecture: $arch"
+  phases_run "$root" "$skip_coords"
 
-  # Read config
-  section "Reading configuration..."
-  local tags
-  tags="$(config_read_tags "$config_file")"
-  if [ -z "$tags" ]; then
-    die "No tags configured. Run: $program config init"
-  fi
-  info "Configured tags: $tags"
-
-  # Resolve tag dependencies
-  section "Resolving tag dependencies..."
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
-  info "Resolved tags (with dependencies): $resolved_tags"
-
-  # Build desired package list
-  section "Building desired package list..."
-  local desired_packages
-  desired_packages="$(
-    desired_packages "$root" "$os" "$arch" "homebrew" "$resolved_tags"
-  )"
-  local desired_count
-  desired_count="$(echo "$desired_packages" | wc -l | tr -d ' ')"
-  info "Desired packages: $desired_count"
-
-  # Discover installed packages
-  section "Discovering installed packages..."
-  local installed_packages
-  installed_packages="$(
-    discover_installed_packages "$os" "homebrew"
-  )"
-  local installed_count
-  installed_count="$(echo "$installed_packages" | wc -l | tr -d ' ')"
-  info "Currently installed: $installed_count"
-
-  # Calculate delta
-  section "Calculating changes..."
-  local packages_to_install
-  packages_to_install="$(
-    convergence_delta "$desired_packages" "$installed_packages"
-  )"
-  local pending_count
-  if [ -n "$packages_to_install" ]; then
-    pending_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
-  else
-    pending_count=0
-  fi
-
-  # Show results
-  if [ "$pending_count" -eq 0 ]; then
-    section "System Converged"
-    info "No changes needed - system is already in desired state"
-    return 0
-  fi
-
-  if [ -n "$dry_run" ]; then
-    section "Dry Run - Would Install ($pending_count packages)"
-    echo "$packages_to_install" | while IFS= read -r pkg; do
-      if [ -n "$pkg" ]; then
-        indent echo "+ $pkg"
-      fi
-    done
-    echo ""
-    info "Run without --dry-run to apply changes"
-  else
-    section "Installing Packages ($pending_count packages)"
-
-    # Ensure package manager is set up
-    case "$os" in
-      macos)
-        . "$root/lib/common.sh"
-        . "$root/lib/unix.sh"
-        . "$root/lib/darwin.sh"
-        info "Setting up package system..."
-
-        case "$arch" in
-          aarch64)
-            _arch="arm64"
-            ;;
-          *)
-            _arch="$arch"
-            ;;
-        esac
-        darwin_setup_package_system
-        unset _arch
-        ;;
-      *)
-        die "Platform not yet supported: $os"
-        ;;
-    esac
-
-    # Install packages
-    install_packages "$root" "$os" "$packages_to_install"
-
-    section "Apply Complete"
-    info "Successfully installed $pending_count packages"
-  fi
+  echo
+  section "Apply Complete"
 }

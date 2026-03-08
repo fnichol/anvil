@@ -27,15 +27,16 @@ phases_run() {
     # shellcheck source=/dev/null
     . "$root/lib/anvil/phases/$phase.sh"
 
+    echo
     section "Phase: $phase"
 
-    for step in $("${phase}_steps"); do
+    for step in $("${phase}_steps" "$os" "$version" "$kernel" "$arch"); do
       if _should_skip_phase_step "$phase" "$step" "$skip_coords"; then
         info "  Skipping $phase:$step"
         continue
       fi
 
-      info "  Running $phase:$step"
+      section "Section: $phase:$step"
       "${phase}_step_${step}" \
         "$root" \
         "$hostname" \

@@ -7,7 +7,16 @@
 # emitted. Pre-installed system package managers such as apt, apk, pacman,
 # pkg_add, pkg are omitted as no installation is required.
 bootstrap_steps() {
-  case "$__ANVIL_OS" in
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local _arch="$1"
+  shift
+
+  case "$os" in
     macos)
       echo "homebrew"
       echo "homeshick"

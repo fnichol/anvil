@@ -95,7 +95,7 @@ config_create_json() {
 
 # Reads the tags array from a configuration file.
 #
-# * `@param [String]` configuration file path (optional, defaults to
+# * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
 # * `@stdout` space-seperated list of tag names
 # * `@return 0` if successful
@@ -113,7 +113,7 @@ config_read_tags() {
 
 # Reads the role field from a configuration file.
 #
-# * `@param [String]` configuration file path (optional, defaults to
+# * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
 # * `@stdout` role value if present
 # * `@return 0` if successful
@@ -129,7 +129,7 @@ config_read_role() {
 
 # Reads the skip_steps array from a configuration file.
 #
-# * `@param [String]` configuration file path (optional, defaults to
+# * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
 # * `@stdout` list of step names to skip, one per line
 # * `@return 0` if successful
@@ -148,7 +148,7 @@ config_read_skip_steps() {
 # This function extracts the custom_packages.add array which contains
 # additional packages to install beyond those defined in tags.
 #
-# * `@param [String]` configuration file path (optional, defaults to
+# * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
 # * `@stdout` list of package names to add, one per line
 # * `@return 0` if successful
@@ -167,7 +167,7 @@ config_read_custom_add() {
 # This function extracts the custom_packages.remove array which contains
 # packages to exclude from installation even if defined in tags.
 #
-# * `@param [String]` configuration file path (optional, defaults to
+# * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
 # * `@stdout` list of package names to remove, one per line
 # * `@return 0` if successful

@@ -17,9 +17,9 @@ facts_step_gather() {
   __ANVIL_KERNEL="$(facts_kernel)"
   __ANVIL_ARCH="$(facts_arch)"
 
-  info "  Hostname:                 $__ANVIL_HOSTNAME"
-  info "  Operating System:         $__ANVIL_OS"
-  info "  Operating System Version: $__ANVIL_VERSION"
-  info "  Kernel:                   $__ANVIL_DISTRIBUTION"
-  info "  Architecture:             $__ANVIL_ARCH"
+  indent printf "%-20s %s\n" "Hostname" "$__ANVIL_HOSTNAME"
+  indent printf "%-20s %s\n" "Operating System" "$__ANVIL_OS"
+  indent printf "%-20s %s\n" "Version" "$__ANVIL_VERSION"
+  indent printf "%-20s %s\n" "Kernel" "$__ANVIL_KERNEL"
+  indent printf "%-20s %s\n" "Architecture" "$__ANVIL_ARCH"
 }
