@@ -134,6 +134,62 @@ testCreateFileAlreadyExists() {
   assertStderrNull
 }
 
+testReadFqdnSimple() {
+  run config_read_fqdn "$root/tests/fixtures/config-simple.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testReadFqdnWithFqdnKey() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "fqdn": "myhost.local"
+	}
+	EOF
+
+  run config_read_fqdn "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "myhost.local"
+  assertStderrNull
+}
+
+testReadFqdnWithNoFqdnKey() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{}
+	EOF
+
+  run config_read_fqdn "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testReadFqdnWithNullFqdnKey() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "fqdn": null
+	}
+	EOF
+
+  run config_read_fqdn "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testReadFqdnWithNonexistentConfig() {
+  run config_read_fqdn "$tmpdir/nonexistent.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
 testReadTagsSimple() {
   run config_read_tags "$root/tests/fixtures/config-simple.json"
 

@@ -93,6 +93,22 @@ config_create_json() {
   }'
 }
 
+# Reads the FQDN field from a configuration file.
+#
+# * `@param [optional, String]` configuration file path (optional, defaults to
+#   `config_path` output)
+# * `@stdout` FQDN value if present
+# * `@return 0` if successful
+config_read_fqdn() {
+  local config_file="${1:-$(config_path)}"
+
+  if config_exists "$config_file"; then
+    ensure_jq
+
+    jq -r '.fqdn // empty' "$config_file"
+  fi
+}
+
 # Reads the tags array from a configuration file.
 #
 # * `@param [optional, String]` configuration file path (optional, defaults to
