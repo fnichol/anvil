@@ -15,6 +15,8 @@ print_usage_config_init() {
 	    -h, --help              Prints help information
 
 	OPTIONS:
+            -f, --fqdn=<FQDN>       Host FQDN (bare hostname will append .local
+                                    as FQDN)
 	    -t, --tags=<T>[,<T>..]  Tags to use in config
 
 	ENVIRONMENT VARIABLES:
@@ -35,15 +37,19 @@ cmd_config_init() {
 
   local default_config_path config_file
   local tags=""
+  local fqdn=""
 
   default_config_path="$(config_path)"
 
   OPTIND=1
-  while getopts "ht:-:" arg; do
+  while getopts "hf:t:-:" arg; do
     case "$arg" in
       h)
         print_usage_config_init "$program" "$default_config_path"
         return 0
+        ;;
+      f)
+        fqdn="$OPTARG"
         ;;
       t)
         tags="$OPTARG"
@@ -54,6 +60,13 @@ cmd_config_init() {
           help)
             print_usage_config_init "$program" "$default_config_path"
             return 0
+            ;;
+          fqdn=?*)
+            fqdn="$long_optarg"
+            ;;
+          fqdn*)
+            print_usage_config_init "$program" "$default_config_path" >&2
+            die "missing required argument for --$OPTARG option"
             ;;
           tags=?*)
             tags="$long_optarg"
@@ -80,9 +93,19 @@ cmd_config_init() {
   done
   shift "$((OPTIND - 1))"
 
+  # Append `.local` to fqdn if no domain part is present
+  case "$fqdn" in
+    *.*)
+      :
+      ;;
+    ?*)
+      fqdn="$fqdn.local"
+      ;;
+  esac
+
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
-  config_create "$config_file" "$tags" || die "Failed to init config"
+  config_create "$config_file" "$tags" "$fqdn" || die "Failed to init config"
 
   section "Created config file: $config_file"
 }

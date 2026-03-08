@@ -86,6 +86,68 @@ testCmdConfigInitWithTags() {
   assertNull "$(config_read_custom_remove "$config_file")"
 }
 
+testCmdConfigInitWithFqdnShortFlag() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init -f mybox.example.com
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertEquals "mybox.example.com" "$(config_read_fqdn "$config_file")"
+}
+
+testCmdConfigInitWithFqdnLongFlag() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init --fqdn=anvil.local
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertEquals "anvil.local" "$(config_read_fqdn "$config_file")"
+}
+
+testCmdConfigInitFqdnAppendsLocalWhenNoDot() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init -f mybox
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStderrNull
+
+  assertEquals "mybox.local" "$(config_read_fqdn "$config_file")"
+}
+
+testCmdConfigInitFqdnPassesThroughWhenHasDot() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init -f mybox.corp.example.com
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStderrNull
+
+  assertEquals "mybox.corp.example.com" "$(config_read_fqdn "$config_file")"
+}
+
+testCmdConfigInitWithoutFqdnHasNoFqdnKey() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStderrNull
+
+  assertNull "$(config_read_fqdn "$config_file")"
+}
+
 shell_compat "$0"
 
 . "${0%/*}/../../../$shunit2RelRoot"

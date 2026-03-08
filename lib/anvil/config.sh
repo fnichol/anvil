@@ -40,13 +40,15 @@ config_exists() {
 #
 # * `@param [String]` configuration file path
 # * `@param [String]` comma-separated list of tag names
+# * `@param [optional, String]` an FQDN for the host
 # * `@stderr` warning message if file already exists
 # * `@return 0` if successful
 # * `@return 1` if configuration file already exists
 config_create() {
-  local config_file tags_str
+  local config_file tags_str fqdn_str
   config_file="$1"
   tags_str="$2"
+  fqdn_str="${3:-}"
 
   if config_exists "$config_file"; then
     warn "Can't create new config, file already exists: $config_file"
@@ -56,7 +58,7 @@ config_create() {
   mkdir -p "$(dirname "$config_file")"
 
   touch "$config_file"
-  config_create_json "$tags_str" >"$config_file"
+  config_create_json "$tags_str" "$fqdn_str" >"$config_file"
 }
 
 # Generates JSON configuration data.
@@ -66,6 +68,7 @@ config_create() {
 # of whitespace.
 #
 # * `@param [String]` comma-separated list of tag names
+# * `@param [optional, String]` an FQDN for the host
 # * `@stdout` JSON configuration data
 # * `@return 0` if successful
 # * `@return 1` if `jq` command is not available
@@ -78,19 +81,21 @@ config_create() {
 # config_create_json "base, multimedia, base-gui"
 # ```
 config_create_json() {
-  local tags_str
+  local tags_str fqdn_str
   tags_str="$1"
+  fqdn_str="${2:-}"
 
   ensure_jq
 
-  jq -n --arg tags_str "$tags_str" '{
-    tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" ")),
-    skip_steps: [],
-    custom_packages: {
-      add: [],
-      remove: []
-    }
-  }'
+  jq -n --arg tags_str "$tags_str" --arg fqdn "$fqdn_str" '
+    (if $fqdn != "" then {fqdn: $fqdn} else {} end) + {
+      tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" ")),
+      skip_steps: [],
+      custom_packages: {
+        add: [],
+        remove: []
+      }
+    }'
 }
 
 # Reads the FQDN field from a configuration file.

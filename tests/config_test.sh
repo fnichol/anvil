@@ -134,6 +134,50 @@ testCreateFileAlreadyExists() {
   assertStderrNull
 }
 
+testCreateJsonWithFqdn() {
+  local config
+
+  run config_create_json "one,two" "host.example.com"
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.fqdn == "host.example.com"'
+  assertJsonFromFile "$config" '.tags | length == 2'
+}
+
+testCreateJsonWithoutFqdn() {
+  local config
+
+  run config_create_json "one,two" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.fqdn == null'
+  assertJsonFromFile "$config" '.tags | length == 2'
+}
+
+testCreateJsonFqdnAbsentWhenEmpty() {
+  local config
+
+  run config_create_json "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" 'has("fqdn") | not'
+}
+
 testReadFqdnSimple() {
   run config_read_fqdn "$root/tests/fixtures/config-simple.json"
 
