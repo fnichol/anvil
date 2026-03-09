@@ -17,6 +17,8 @@ prepare_step_hostname() {
 
   # shellcheck source=lib/anvil/jq.sh
   . "$root/lib/anvil/jq.sh"
+  # shellcheck source=lib/anvil/sudo.sh
+  . "$root/lib/anvil/sudo.sh"
   # shellcheck source=lib/anvil/config.sh
   . "$root/lib/anvil/config.sh"
   # shellcheck source=lib/anvil/facts.sh
@@ -45,26 +47,26 @@ prepare_step_hostname() {
       need_cmd hostname
       need_cmd tee
 
-      echo "$fqdn" | sudo tee /etc/hostname >/dev/null
-      sudo hostname -F /etc/hostname \
+      echo "$fqdn" | as_root tee /etc/hostname >/dev/null
+      as_root hostname -F /etc/hostname \
         || warn "Failed to update hostname to '$fqdn'; continuing"
       ;;
     arch | bazzite | cachyos | debian | ubuntu)
       need_cmd sed
       need_cmd tee
 
-      echo "$fqdn" | sudo tee /etc/hostname >/dev/null
+      echo "$fqdn" | as_root tee /etc/hostname >/dev/null
 
       if check_cmd hostnamectl; then
-        sudo hostnamectl set-hostname "$fqdn" \
+        as_root hostnamectl set-hostname "$fqdn" \
           || warn "Failed to update hostname to '$fqdn'; continuing"
       elif check_cmd hostname; then
-        sudo hostname -F /etc/hostname \
+        as_root hostname -F /etc/hostname \
           || warn "Failed to update hostname to '$fqdn'; continuing"
       fi
 
       if ! grep -q -w "$fqdn" /etc/hosts; then
-        sudo sed -i "1i 127.0.0.1\\t${fqdn}\\t${fqdn%%.*}" /etc/hosts
+        as_root sed -i "1i 127.0.0.1\\t${fqdn}\\t${fqdn%%.*}" /etc/hosts
       fi
       ;;
     freebsd)
@@ -76,19 +78,19 @@ prepare_step_hostname() {
     macos)
       need_cmd scutil
 
-      sudo scutil --set HostName "$fqdn" \
+      as_root scutil --set HostName "$fqdn" \
         || warn "Failed to update HostName to '$fqdn'; continuing"
-      sudo scutil --set LocalHostName "${fqdn%%.*}" \
+      as_root scutil --set LocalHostName "${fqdn%%.*}" \
         || warn "Failed to update LocalHostName to '${fqdn%%.*}'; continuing"
-      sudo scutil --set ComputerName "${fqdn%%.*}" \
+      as_root scutil --set ComputerName "${fqdn%%.*}" \
         || warn "Failed to update ComputerName to '${fqdn%%.*}'; continuing"
       ;;
     openbsd)
       need_cmd hostname
       need_cmd tee
 
-      echo "$fqdn" | doas tee /etc/myname >/dev/null
-      doas hostname "$fqdn" \
+      echo "$fqdn" | as_root tee /etc/myname >/dev/null
+      as_root hostname "$fqdn" \
         || warn "Failed to update hostname to '$fqdn'; continuing"
       ;;
     *)
