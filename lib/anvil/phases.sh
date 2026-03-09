@@ -38,7 +38,7 @@ phases_run() {
         continue
       fi
 
-      section "Section: $phase:$step"
+      section "Step: $phase:$step"
       "${phase}_step_${step}" \
         "$root" \
         "$config_path" \
