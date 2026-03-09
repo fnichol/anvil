@@ -7,6 +7,7 @@ __ANVIL_PHASES__="init facts prepare bootstrap update install configure finalize
 # Runs all phases in order, executing each step unless the step is skipped.
 #
 # * `@param [String]` root directory of the codebase
+# * `@param [String]` path to config file
 # * `@param [String]` space-delimited skip set of `phase:step` coordinate tokens
 #
 # # Global Variables
@@ -14,7 +15,8 @@ __ANVIL_PHASES__="init facts prepare bootstrap update install configure finalize
 # * `__ANVIL_PHASES__`: the ordered list of phases to iterate through
 phases_run() {
   local root="$1"
-  local skip_coords="$2"
+  local config_path="$2"
+  local skip_coords="$3"
 
   local hostname os version kernel arch
   hostname=""
@@ -32,13 +34,14 @@ phases_run() {
 
     for step in $("${phase}_steps" "$os" "$version" "$kernel" "$arch"); do
       if _should_skip_phase_step "$phase" "$step" "$skip_coords"; then
-        info "  Skipping $phase:$step"
+        info "Skipping $phase:$step"
         continue
       fi
 
       section "Section: $phase:$step"
       "${phase}_step_${step}" \
         "$root" \
+        "$config_path" \
         "$hostname" \
         "$os" \
         "$version" \

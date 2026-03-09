@@ -42,6 +42,8 @@ install_steps() {
 install_step_homebrew() {
   local root="$1"
   shift
+  local _config_file="$1"
+  shift
   local _hostname="$1"
   shift
   local os="$1"

@@ -117,7 +117,7 @@ cmd_apply() {
 
   section "Anvil Apply"
 
-  phases_run "$root" "$skip_coords"
+  phases_run "$root" "$config_file" "$skip_coords"
 
   echo
   section "Apply Complete"
