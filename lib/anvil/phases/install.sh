@@ -115,7 +115,7 @@ install_step_homebrew() {
   local _arch
   case "$arch" in
     aarch64) _arch="arm64" ;;
-    *)       _arch="$arch" ;;
+    *) _arch="$arch" ;;
   esac
   darwin_setup_package_system
   unset _arch

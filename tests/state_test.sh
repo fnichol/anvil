@@ -70,7 +70,6 @@ testReadLastRunMissingFile() {
   assertStderrNull
 }
 
-
 shell_compat "$0"
 
 . "$shunit2"

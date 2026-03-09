@@ -27,7 +27,7 @@ state_path() {
 }
 
 # Writes a last run timestamp to the state file.
-# 
+#
 # * `@param [optional, String]` ISO 8601 timestamp string, or current time if
 #    unset
 # * `@return 0` if successful
