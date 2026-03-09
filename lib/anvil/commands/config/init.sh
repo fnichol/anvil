@@ -15,8 +15,8 @@ print_usage_config_init() {
 	    -h, --help              Prints help information
 
 	OPTIONS:
-            -f, --fqdn=<FQDN>       Host FQDN (bare hostname will append .local
-                                    as FQDN)
+	    -f, --fqdn=<FQDN>       Host FQDN (bare hostname will append .local
+	                            as FQDN)
 	    -t, --tags=<T>[,<T>..]  Tags to use in config
 
 	ENVIRONMENT VARIABLES:
