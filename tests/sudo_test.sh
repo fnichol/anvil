@@ -95,6 +95,7 @@ testGetSudoCallsDoasTrue() {
 testKeepSudoSpawnsBackgroundJobAndReturns() {
   mkdir -p "$isolated_path"
   # Fake sudo that sleeps forever — verifies keep_sudo doesn't block
+  # shellcheck disable=SC2016
   printf '#!/bin/sh\ncase "$1" in -n) sleep 9999 ;; esac\n' \
     >"$isolated_path/sudo"
   chmod +x "$isolated_path/sudo"

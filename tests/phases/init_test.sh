@@ -36,6 +36,7 @@ testDetectPrivilegeSetsEmptyWhenRoot() {
   local arch=""
 
   # Stub id to return 0 (root)
+  # shellcheck disable=SC2329
   id() { echo "0"; }
 
   run init_step_detect_privilege \
@@ -55,10 +56,13 @@ testDetectPrivilegeSetsDoasOnOpenBSD() {
   local arch=""
 
   # Stub id to return a non-root user uid
+  # shellcheck disable=SC2329
   id() { echo "1000"; }
   # Stub uname for desired kernel
+  # shellcheck disable=SC2329
   uname() { echo "OpenBSD"; }
   # Stub need_cmd to succeed without checking real commands
+  # shellcheck disable=SC2329
   need_cmd() { :; }
 
   run init_step_detect_privilege \
@@ -78,10 +82,13 @@ testDetectPrivilegeSetsSudoOnLinux() {
   local arch=""
 
   # Stub id to return a non-root user uid
+  # shellcheck disable=SC2329
   id() { echo "1000"; }
   # Stub uname for desired kernel
+  # shellcheck disable=SC2329
   uname() { echo "Linux"; }
   # Stub need_cmd to succeed without checking real commands
+  # shellcheck disable=SC2329
   need_cmd() { :; }
 
   run init_step_detect_privilege \
@@ -104,7 +111,9 @@ testAcquireSudoFastPathWhenRoot() {
   __ANVIL_SUDO__=""
 
   # If get_sudo or keep_sudo are called this will fail the test
+  # shellcheck disable=SC2329
   get_sudo() { return 1; }
+  # shellcheck disable=SC2329
   keep_sudo() { return 1; }
 
   run init_step_acquire_sudo \
@@ -129,8 +138,10 @@ testAcquireSudoCallsGetAndKeepForNonRoot() {
 
   # Mock out get_sudo and keep_sudo
   _get_sudo_called=""
+  # shellcheck disable=SC2329
   get_sudo() { _get_sudo_called="yes"; }
   _keep_sudo_called=""
+  # shellcheck disable=SC2329
   keep_sudo() { _keep_sudo_called="yes"; }
 
   run init_step_acquire_sudo \

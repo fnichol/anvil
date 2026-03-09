@@ -19,7 +19,7 @@ setUp() {
   commonSetUp
 
   # Override XDG_STATE_HOME to an isolated tmpdir for every test
-  XDG_STATE_HOME="$tmpdir/state"
+  export XDG_STATE_HOME="$tmpdir/state"
 }
 
 testStatePathRespectsXdgStateHome() {

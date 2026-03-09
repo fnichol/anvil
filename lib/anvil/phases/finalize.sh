@@ -7,7 +7,7 @@ finalize_steps() {
 }
 
 finalize_step_record_run() {
-  local _root="$1"
+  local root="$1"
   shift
   local _config_file="$1"
   shift

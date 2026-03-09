@@ -54,6 +54,7 @@ testPrepareStepHostnameNoopWhenFqdnMatchesCurrent() {
 	EOF
 
   # Override facts_hostname to return the configured fqdn
+  # shellcheck disable=SC2329
   facts_hostname() { echo "host.local"; }
 
   run prepare_step_hostname \
