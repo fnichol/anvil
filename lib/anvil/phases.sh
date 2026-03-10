@@ -18,6 +18,11 @@ phases_run() {
   local config_path="$2"
   local skip_coords="$3"
 
+  # shellcheck source=lib/anvil/tags.sh
+  . "$root/lib/anvil/tags.sh"
+  # shellcheck source=lib/anvil/convergence.sh
+  . "$root/lib/anvil/convergence.sh"
+
   local hostname os version kernel arch
   hostname=""
   os=""

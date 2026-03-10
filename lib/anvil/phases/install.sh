@@ -34,12 +34,68 @@ install_steps() {
       echo "pkg_add"
       ;;
   esac
+
+  # Homeshick castle installation — every platform
+  echo "homeshick"
+}
+
+install_step_homeshick() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="homeshick"
+
+  local tags
+  tags="$(config_read_tags "$config_path")"
+
+  # No tags are configured, early return
+  if [ -z "$tags" ]; then
+    return 0
+  fi
+
+  local resolved_tags
+  resolved_tags="$(tags_resolve "$root" "$tags")"
+
+  local desired_castles
+  desired_castles="$(
+    desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
+  )"
+
+  # If no castles are found desired, early return
+  if [ -z "$desired_castles" ]; then
+    return 0
+  fi
+
+  # Load homeshick so subcommands are available in this shell
+  # shellcheck source=/dev/null
+  . "$HOME/.homesick/repos/homeshick/homeshick.sh"
+
+  local castle repo_name
+  for castle in $desired_castles; do
+    repo_name="${castle##*/}"
+
+    if [ ! -d "$HOME/.homesick/repos/$repo_name" ]; then
+      homeshick clone --batch "$castle"
+    fi
+  done
 }
 
 install_step_homebrew() {
   local root="$1"
   shift
-  local _config_file="$1"
+  local config_path="$1"
   shift
   local _hostname="$1"
   shift
@@ -57,19 +113,8 @@ install_step_homebrew() {
   need_cmd tr
   need_cmd wc
 
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/config.sh
-  . "$root/lib/anvil/config.sh"
-  # shellcheck source=lib/anvil/tags.sh
-  . "$root/lib/anvil/tags.sh"
-  # shellcheck source=lib/anvil/discovery.sh
-  . "$root/lib/anvil/discovery.sh"
-  # shellcheck source=lib/anvil/convergence.sh
-  . "$root/lib/anvil/convergence.sh"
-
   local tags
-  tags="$(config_read_tags)"
+  tags="$(config_read_tags "$config_path")"
 
   # No tags are configured, early return
   if [ -z "$tags" ]; then
