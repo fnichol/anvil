@@ -95,6 +95,32 @@ testTagsPackagesForNoMathingPlatform() {
   assertStderrNull
 }
 
+testTagsPackagesForAllOsReturnsOnEveryPlatform() {
+  run tags_packages_for "${0%/*}/fixtures" echo macos aarch64 homeshick
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "fnichol/dot-echo"
+  assertStdoutContains "fnichol/dot-echo-arm"
+  assertStderrNull
+}
+
+testTagsPackagesForAllOsMergesWithOsSpecific() {
+  run tags_packages_for "${0%/*}/fixtures" echo openbsd x86_64 homeshick
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "fnichol/dot-echo"
+  assertStdoutContains "fnichol/dot-openbsd"
+  assertStderrNull
+}
+
+testTagsPackagesForAllOsDoesNotPollutePmLookup() {
+  run tags_packages_for "${0%/*}/fixtures" echo macos aarch64 homebrew
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
 shell_compat "$0"
 
 . "$shunit2"

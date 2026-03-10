@@ -1,0 +1,19 @@
+{
+  "name": "echo",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": ["fnichol/dot-echo"]
+      },
+      "aarch64": {
+        "homeshick": ["fnichol/dot-echo-arm"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "homeshick": ["fnichol/dot-openbsd"]
+      }
+    }
+  }
+}

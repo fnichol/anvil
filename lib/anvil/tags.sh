@@ -191,8 +191,10 @@ tags_packages_for() {
     --arg arch "$arch" \
     --arg package_type "$package_type" \
     '(
-        (.packages[$os].all[$package_type] // []) + 
-        (.packages[$os][$arch][$package_type])
+        (.packages["all"].all[$package_type] // []) +
+        (.packages["all"][$arch][$package_type] // []) +
+        (.packages[$os].all[$package_type] // []) +
+        (.packages[$os][$arch][$package_type] // [])
      )[]
     ' "$(tags_path_for "$root" "$name")"
 }
