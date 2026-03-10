@@ -511,6 +511,8 @@ testAurOnArchInstallsGitIfMissing() {
   git() { :; }
   # shellcheck disable=SC2329
   makepkg() { :; }
+  # shellcheck disable=SC2329
+  sudo() { :; }
 
   run bootstrap_step_aur \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
@@ -519,7 +521,7 @@ testAurOnArchInstallsGitIfMissing() {
     "echo '$_pacman_args' | grep -q 'git'"
 }
 
-testAurOnArchClonesParuBin() {
+testAurOnArchClonesParu() {
   local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
@@ -544,13 +546,15 @@ testAurOnArchClonesParuBin() {
   # shellcheck disable=SC2329
   as_root() { :; }
   # shellcheck disable=SC2329
+  chown() { :; }
+  # shellcheck disable=SC2329
   makepkg() { :; }
 
   run bootstrap_step_aur \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
 
-  assertTrue 'paru-bin URL used' \
-    "echo '$_git_url' | grep -q 'paru-bin'"
+  assertTrue 'paru URL used' \
+    "echo '$_git_url' | grep -q 'paru'"
 }
 
 testAurOnCachyOsInstallsParuBin() {

@@ -61,8 +61,8 @@ bootstrap_step_aur() {
       indent as_root pacman -S --needed --noconfirm paru-bin
       ;;
     *)
-      # **NOTE**: As of 2026-03 building Paru from Git yields the best results
-      # due to libalpm support issues.
+      # **NOTE**: As of 2026-03 building Paru yields the best results due to
+      # libalpm support issues.
       #
       # See: https://github.com/Morganamilo/paru/issues/1454
 
