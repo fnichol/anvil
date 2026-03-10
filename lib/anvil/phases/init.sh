@@ -5,12 +5,47 @@ init_steps() {
   echo "validate_commands"
   echo "detect_privilege"
   echo "acquire_sudo"
+  echo "ensure_tools"
 }
 
 init_step_validate_commands() {
-  # TODO: verify all required commands are present
+  need_cmd basename
+  need_cmd chmod
+  need_cmd dirname
+  need_cmd gzip
+  need_cmd id
+  need_cmd ln
+  need_cmd mkdir
+  need_cmd sed
+  need_cmd tar
+  need_cmd tr
+  need_cmd uname
 
-  info "init:validate_commands - stub"
+  # Facts phase hasn't been run, so we'll check the kernel ourselves
+  case "$(uname -s)" in
+    OpenBSD)
+      # At least one download tool must be present
+      if ! check_cmd curl && ! check_cmd wget && ! check_cmd ftp; then
+        err "Either 'curl', 'wget', or 'ftp' is required but none was found."
+        err "Install one and re-run:"
+        err "    - https://curl.se"
+        err "    - https://www.gnu.org/software/wget/"
+        return 1
+      fi
+      ;;
+    *)
+      # At least one download tool must be present
+      if ! check_cmd curl && ! check_cmd wget; then
+        err "Either 'curl' or 'wget' is required but neither was found."
+        err "Install one and re-run:"
+        err "    - https://curl.se"
+        err "    - https://www.gnu.org/software/wget/"
+        return 1
+      fi
+      ;;
+  esac
+
+  info "All required commands present"
 }
 
 init_step_detect_privilege() {
@@ -56,4 +91,8 @@ init_step_acquire_sudo() {
   keep_sudo
 
   info "Running $__ANVIL_SUDO__ keepalive in background"
+}
+
+init_step_ensure_tools() {
+  ensure_jq
 }
