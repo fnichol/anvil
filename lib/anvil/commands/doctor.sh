@@ -126,9 +126,10 @@ cmd_doctor() {
   else
     info "✓ no extra commands needed"
   fi
-  echo ""
 
   ensure_jq
+
+  echo ""
 
   # Check config
   section "Configuration"

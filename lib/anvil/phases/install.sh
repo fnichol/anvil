@@ -13,28 +13,25 @@ install_steps() {
   shift
 
   case "$os" in
-    macos)
-      echo "homebrew"
-      echo "homebrew_cask"
+    alpine)
+      echo "apk"
       ;;
     arch | cachyos)
       echo "pacman"
       echo "aur"
       ;;
-    ubuntu)
+    debian | ubuntu)
       echo "apt"
-      ;;
-    alpine)
-      echo "apk"
-      ;;
-    openbsd)
-      echo "pkg_add"
       ;;
     freebsd)
       echo "pkg"
       ;;
-    *)
-      warn "install: no steps defined for OS: $os"
+    macos)
+      echo "homebrew"
+      echo "homebrew_cask"
+      ;;
+    openbsd)
+      echo "pkg_add"
       ;;
   esac
 }

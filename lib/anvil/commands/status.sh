@@ -82,6 +82,9 @@ cmd_status() {
   need_cmd wc
 
   section "Anvil Status"
+
+  ensure_jq
+
   info "Config: $config_file"
   echo ""
 
