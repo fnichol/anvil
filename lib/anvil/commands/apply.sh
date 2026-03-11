@@ -31,6 +31,10 @@ cmd_apply() {
   program="$1"
   shift
 
+  # shellcheck source=lib/anvil/logging.sh
+  . "$root/lib/anvil/logging.sh"
+  logging_exec "anvil-apply" "$0" apply "$@"
+
   . "$root/lib/anvil/jq.sh"
   . "$root/lib/anvil/config.sh"
   . "$root/lib/anvil/phases.sh"

@@ -19,7 +19,8 @@ setUp() {
 }
 
 runCli() {
-  ANVIL_CONFIG_PATH="$test_config" run "$root/bin/anvil" "$@"
+  ANVIL_CONFIG_PATH="$test_config" __ANVIL_LOGGING__=1 \
+    run "$root/bin/anvil" "$@"
 }
 
 testCmdConfigHelpShortFlag() {
