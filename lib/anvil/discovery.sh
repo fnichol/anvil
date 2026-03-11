@@ -9,7 +9,7 @@ discover_installed_packages() {
     alpine)
       case "$package_type" in
         apk)
-          apk list --installed | cut -d ' ' -f 1
+          apk info
           ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
@@ -19,6 +19,15 @@ discover_installed_packages() {
       ;;
     arch)
       case "$package_type" in
+        aur)
+          need_cmd pacman
+
+          # Query for locally-installed packages--this is as close as we can
+          # get to looking for AUR packages.
+          #
+          # See: https://bbs.archlinux.org/viewtopic.php?id=76218
+          pacman --query --quiet --foreign
+          ;;
         pacman)
           need_cmd pacman
 
@@ -32,10 +41,12 @@ discover_installed_packages() {
       ;;
     bazzite)
       case "$package_type" in
-        dnf)
+        rpm)
           need_cmd dnf
 
-          dnf list --installed | cut -d ' ' -f 1
+          dnf list --installed \
+            | cut -d ' ' -f 1 \
+            | while read -r pkg; do echo "${pkg%.*}"; done
           ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
@@ -45,6 +56,15 @@ discover_installed_packages() {
       ;;
     cachyos)
       case "$package_type" in
+        aur)
+          need_cmd pacman
+
+          # Query for locally-installed packages--this is as close as we can
+          # get to looking for AUR packages.
+          #
+          # See: https://bbs.archlinux.org/viewtopic.php?id=76218
+          pacman --query --quiet --foreign
+          ;;
         pacman)
           need_cmd pacman
 
