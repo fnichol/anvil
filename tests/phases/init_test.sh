@@ -300,7 +300,15 @@ testEnsureToolsCallsEnsureJq() {
 }
 
 testInitStepsIncludesEnsureTools() {
-  run init_steps
+  local config_path="$tmpdir/nonexistent.json"
+  # Init phase doesn't have these values yet as it is run *before* facts phase
+  local hostname=""
+  local os=""
+  local version=""
+  local kernel=""
+  local arch=""
+
+  run init_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   # shellcheck source=lib/anvil/jq.sh
   . "$root/lib/anvil/jq.sh"
@@ -310,7 +318,15 @@ testInitStepsIncludesEnsureTools() {
 }
 
 testInitStepsOrderIsCorrect() {
-  run init_steps
+  local config_path="$tmpdir/nonexistent.json"
+  # Init phase doesn't have these values yet as it is run *before* facts phase
+  local hostname=""
+  local os=""
+  local version=""
+  local kernel=""
+  local arch=""
+
+  run init_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output
   output="$(cat "$stdout")"

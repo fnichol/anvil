@@ -3,6 +3,10 @@
 
 # Returns platform-specific install steps, one package manager per step.
 install_steps() {
+  local _root="$1"
+  shift
+  local _config_path="$1"
+  shift
   local os="$1"
   shift
   local _version="$1"

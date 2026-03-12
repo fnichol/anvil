@@ -39,7 +39,10 @@ phases_run() {
     echo
     section "Phase: $phase"
 
-    for step in $("${phase}_steps" "$os" "$version" "$kernel" "$arch"); do
+    for step in $(
+      "${phase}_steps" "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+    ); do
       if _should_skip_phase_step "$phase" "$step" "$skip_coords"; then
         info "Skipping $phase:$step"
         continue

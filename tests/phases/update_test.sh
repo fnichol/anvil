@@ -12,6 +12,7 @@ oneTimeSetUp() {
   . "${SRC:=lib/anvil/phases/update.sh}"
 
   commonOneTimeSetUp
+  root="${0%/*}/../.."
 }
 
 setUp() {
@@ -22,12 +23,13 @@ setUp() {
 }
 
 testUpdateStepsMacosContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew_sync"
@@ -38,12 +40,13 @@ testUpdateStepsMacosContainsExpectedSteps() {
 }
 
 testUpdateStepsMacosOrdering() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos brew_pos cask_pos
   output="$(cat "$stdout")"
@@ -56,12 +59,13 @@ testUpdateStepsMacosOrdering() {
 }
 
 testUpdateStepsArchContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -72,12 +76,13 @@ testUpdateStepsArchContainsExpectedSteps() {
 }
 
 testUpdateStepsArchOrdering() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos pacman_pos aur_pos
   output="$(cat "$stdout")"
@@ -90,12 +95,13 @@ testUpdateStepsArchOrdering() {
 }
 
 testUpdateStepsCachyosContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -106,12 +112,13 @@ testUpdateStepsCachyosContainsExpectedSteps() {
 }
 
 testUpdateStepsCachyosOrdering() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos pacman_pos aur_pos
   output="$(cat "$stdout")"
@@ -124,12 +131,13 @@ testUpdateStepsCachyosOrdering() {
 }
 
 testUpdateStepsUbuntuContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apt_sync"
@@ -139,12 +147,13 @@ testUpdateStepsUbuntuContainsExpectedSteps() {
 }
 
 testUpdateStepsUbuntuOrdering() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos apt_pos
   output="$(cat "$stdout")"
@@ -155,12 +164,13 @@ testUpdateStepsUbuntuOrdering() {
 }
 
 testUpdateStepsAlpineContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apk_sync"
@@ -170,12 +180,13 @@ testUpdateStepsAlpineContainsExpectedSteps() {
 }
 
 testUpdateStepsFreebsdContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg_sync"
@@ -185,12 +196,13 @@ testUpdateStepsFreebsdContainsExpectedSteps() {
 }
 
 testUpdateStepsOpenbsdContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run update_steps "$os" "$version" "$kernel" "$arch"
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
@@ -202,8 +214,10 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
 }
 
 testUpdateStepsHomeshickPresentOnAllPlatforms() {
+  local config_path="$tmpdir/nonexistent.json"
+
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
-    run update_steps "$os" "" "" ""
+    run update_steps "$root" "$config_path" "$os" "" "" ""
 
     assertTrue "homeshick missing for $os" \
       "grep -q '^homeshick$' '$stdout'"

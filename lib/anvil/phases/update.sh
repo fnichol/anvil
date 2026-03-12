@@ -8,6 +8,10 @@
 # **NOTE**: OpenBSD uses `pkg_add -u` which folds sync and upgrade, so no
 # separate sync step is needed there.
 update_steps() {
+  local _root="$1"
+  shift
+  local _config_path="$1"
+  shift
   local os="$1"
   shift
   local _version="$1"

@@ -20,12 +20,13 @@ setUp() {
 }
 
 testBootstrapStepsMacosContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew"
@@ -35,12 +36,13 @@ testBootstrapStepsMacosContainsExpectedSteps() {
 }
 
 testBootstrapStepsMacosOrdering() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output homebrew_pos bashrc_pos homeshick_pos
   output="$(cat "$stdout")"
@@ -53,12 +55,13 @@ testBootstrapStepsMacosOrdering() {
 }
 
 testBootstrapStepsArchContainsAurBeforeBashrc() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -74,12 +77,13 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
 }
 
 testBootstrapStepsCachyosMatchesArch() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -88,12 +92,13 @@ testBootstrapStepsCachyosMatchesArch() {
 }
 
 testBootstrapStepsUbuntuHasBashrcAndHomeshick() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -101,24 +106,26 @@ testBootstrapStepsUbuntuHasBashrcAndHomeshick() {
 }
 
 testBootstrapStepsUbuntuHasNoPackageManagerStep() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no apt step' "grep -q '^apt$' '$stdout'"
 }
 
 testBootstrapStepsAlpineHasBashrcAndHomeshick() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -126,12 +133,13 @@ testBootstrapStepsAlpineHasBashrcAndHomeshick() {
 }
 
 testBootstrapStepsFreebsdHasBashrcAndHomeshick() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -139,12 +147,13 @@ testBootstrapStepsFreebsdHasBashrcAndHomeshick() {
 }
 
 testBootstrapStepsOpenbsdHasBashrcAndHomeshick() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run bootstrap_steps "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"

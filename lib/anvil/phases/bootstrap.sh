@@ -7,6 +7,10 @@
 # emitted. Pre-installed system package managers such as apt, apk, pacman,
 # pkg_add, pkg are omitted as no installation is required.
 bootstrap_steps() {
+  local _root="$1"
+  shift
+  local _config_path="$1"
+  shift
   local os="$1"
   shift
   local _version="$1"

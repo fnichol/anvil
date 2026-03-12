@@ -2,6 +2,19 @@
 # shellcheck disable=SC3043
 
 prepare_steps() {
+  local _root="$1"
+  shift
+  local _config_path="$1"
+  shift
+  local _os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local _arch="$1"
+  shift
+
   echo "hostname"
 }
 

@@ -35,20 +35,23 @@ setUp() {
 }
 
 testInstallStepsIncludesHomeshick() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run install_steps "$os" "$version" "$kernel" "$arch"
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homeshick"
 }
 
 testInstallStepsHomeshickPresentOnAllPlatforms() {
+  local config_path="$tmpdir/nonexistent.json"
+
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
-    run install_steps "$os" "" "" ""
+    run install_steps "$root" "$config_path" "$os" "" "" ""
 
     assertTrue "homeshick missing for $os" \
       "grep -q 'homeshick' '$stdout'"
@@ -56,12 +59,13 @@ testInstallStepsHomeshickPresentOnAllPlatforms() {
 }
 
 testInstallStepsFreebsdContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run install_steps "$os" "$version" "$kernel" "$arch"
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg"
@@ -70,12 +74,13 @@ testInstallStepsFreebsdContainsExpectedSteps() {
 }
 
 testInstallStepsOpenbsdContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run install_steps "$os" "$version" "$kernel" "$arch"
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
