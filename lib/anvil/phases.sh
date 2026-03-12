@@ -22,6 +22,8 @@ phases_run() {
   . "$root/lib/anvil/tags.sh"
   # shellcheck source=lib/anvil/convergence.sh
   . "$root/lib/anvil/convergence.sh"
+  # shellcheck source=lib/anvil/discovery.sh
+  . "$root/lib/anvil/discovery.sh"
 
   local hostname os version kernel arch
   hostname=""
