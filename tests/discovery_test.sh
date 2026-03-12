@@ -87,7 +87,7 @@ testDiscoverInstalledArchPacmanUsesPacman() {
   assertStderrNull
 }
 
-testDiscoverInstalledBazziteRpmUsesDnf() {
+testDiscoverInstalledBazziteDnfUsesDnf() {
   # Stub out `dnf`
   cat <<-'EOF' >"$isolated_path/dnf"
 	#!/bin/sh
@@ -97,7 +97,7 @@ testDiscoverInstalledBazziteRpmUsesDnf() {
   chmod +x "$isolated_path/dnf"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "bazzite" "rpm"
+  run discover_installed_packages "bazzite" "dnf"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "xz"

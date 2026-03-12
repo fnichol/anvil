@@ -41,7 +41,7 @@ discover_installed_packages() {
       ;;
     bazzite)
       case "$package_type" in
-        rpm)
+        dnf)
           need_cmd dnf
 
           dnf list --installed \
