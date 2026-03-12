@@ -78,7 +78,7 @@ discover_installed_packages() {
       ;;
     debian | truenas | ubuntu)
       case "$package_type" in
-        deb)
+        apt)
           need_cmd dpkg-query
 
           dpkg-query -f '${Package}\n' -W

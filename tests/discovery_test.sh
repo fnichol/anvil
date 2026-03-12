@@ -146,7 +146,7 @@ testDiscoverInstalleCachyosPacmanUsesPacman() {
   assertStderrNull
 }
 
-testDiscoverInstalledDebianDebUsesDpkgQuery() {
+testDiscoverInstalledDebianAptUsesDpkgQuery() {
   # Stub out `dpkg-query`
   cat <<-'EOF' >"$isolated_path/dpkg-query"
 	#!/bin/sh
@@ -155,7 +155,7 @@ testDiscoverInstalledDebianDebUsesDpkgQuery() {
   chmod +x "$isolated_path/dpkg-query"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "debian" "deb"
+  run discover_installed_packages "debian" "apt"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "git"
@@ -260,7 +260,7 @@ testDiscoverInstalledOpenbsdPkgAddUsesPkgInfo() {
   assertStderrNull
 }
 
-testDiscoverInstalledTruenasDebUsesDpkgQuery() {
+testDiscoverInstalledTruenasAptUsesDpkgQuery() {
   # Stub out `dpkg-query`
   cat <<-'EOF' >"$isolated_path/dpkg-query"
 	#!/bin/sh
@@ -269,14 +269,14 @@ testDiscoverInstalledTruenasDebUsesDpkgQuery() {
   chmod +x "$isolated_path/dpkg-query"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "truenas" "deb"
+  run discover_installed_packages "truenas" "apt"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "udev"
   assertStderrNull
 }
 
-testDiscoverInstalledUbuntuDebUsesDpkgQuery() {
+testDiscoverInstalledUbuntuAptUsesDpkgQuery() {
   # Stub out `dpkg-query`
   cat <<-'EOF' >"$isolated_path/dpkg-query"
 	#!/bin/sh
@@ -286,7 +286,7 @@ testDiscoverInstalledUbuntuDebUsesDpkgQuery() {
   chmod +x "$isolated_path/dpkg-query"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "ubuntu" "deb"
+  run discover_installed_packages "ubuntu" "apt"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bash"
