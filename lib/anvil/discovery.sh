@@ -91,7 +91,7 @@ discover_installed_packages() {
       ;;
     freebsd)
       case "$package_type" in
-        pkg)
+        freebsd_pkg)
           need_cmd pkg
 
           pkg info -q
@@ -122,7 +122,7 @@ discover_installed_packages() {
       ;;
     openbsd)
       case "$package_type" in
-        pkg)
+        openbsd_pkg)
           need_cmd pkg_info
 
           pkg_info -q

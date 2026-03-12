@@ -179,7 +179,7 @@ testDiscoverInstalledFreebsdPkgUsesPkg() {
   chmod +x "$isolated_path/pkg"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "freebsd" "pkg"
+  run discover_installed_packages "freebsd" "freebsd_pkg"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bash"
@@ -252,7 +252,7 @@ testDiscoverInstalledOpenbsdPkgAddUsesPkgInfo() {
   chmod +x "$isolated_path/pkg_info"
   PATH="$isolated_path:$PATH"
 
-  run discover_installed_packages "openbsd" "pkg"
+  run discover_installed_packages "openbsd" "openbsd_pkg"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "rsync"
