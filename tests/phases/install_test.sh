@@ -55,6 +55,33 @@ testInstallStepsHomeshickPresentOnAllPlatforms() {
   done
 }
 
+testInstallStepsFreebsdContainsExpectedSteps() {
+  local os="freebsd"
+  local version="15.0"
+  local kernel="freebsd"
+  local arch="x86_64"
+
+  run install_steps "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "freebsd_pkg"
+  assertStdoutContains "homeshick"
+  assertStderrNull
+}
+
+testInstallStepsOpenbsdContainsExpectedSteps() {
+  local os="openbsd"
+  local version="7.7"
+  local kernel="openbsd"
+  local arch="x86_64"
+
+  run install_steps "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "openbsd_pkg"
+  assertStdoutContains "homeshick"
+  assertStderrNull
+}
 testInstallStepPackagesNoOpWhenNoTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"

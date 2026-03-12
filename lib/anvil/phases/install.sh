@@ -24,14 +24,14 @@ install_steps() {
       echo "apt"
       ;;
     freebsd)
-      echo "pkg"
+      echo "freebsd_pkg"
       ;;
     macos)
       echo "homebrew"
       echo "homebrew_cask"
       ;;
     openbsd)
-      echo "pkg_add"
+      echo "openbsd_pkg"
       ;;
   esac
 
