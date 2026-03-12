@@ -39,6 +39,111 @@ install_steps() {
   echo "homeshick"
 }
 
+install_step_apk() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="apk"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_apt() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="apt"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_aur() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="aur"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_homebrew() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="homebrew"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_homebrew_cask() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="homebrew_cask"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
 install_step_homeshick() {
   local root="$1"
   shift
@@ -92,7 +197,7 @@ install_step_homeshick() {
   done
 }
 
-install_step_homebrew() {
+install_step_pacman() {
   local root="$1"
   shift
   local config_path="$1"
@@ -108,7 +213,71 @@ install_step_homebrew() {
   local arch="$1"
   shift
 
-  local package_type="homebrew"
+  local package_type="pacman"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_freebsd_pkg() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="freebsd_pkg"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+install_step_openbsd_pkg() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="openbsd_pkg"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+}
+
+# Common package installation using convergence.
+#
+# Reads desired packages from config tags, discovers installed packages,
+# computes the delta, and dispatches to the appropriate
+# `_install_packages_<type>` function if any packages need installing.
+#
+# * `@param [String]` root directory of the codebase
+# * `@param [String]` path to config file
+# * `@param [String]` operating system (e.g. "macos", "arch")
+# * `@param [String]` architecture (e.g. "x86_64", "aarch64")
+# * `@param [String]` package type (e.g. "homebrew", "pacman", "apt")
+# * `@return 0` if successful
+_install_step_packages() {
+  local root="$1"
+  local config_path="$2"
+  local os="$3"
+  local arch="$4"
+  local package_type="$5"
 
   need_cmd tr
   need_cmd wc
@@ -124,85 +293,200 @@ install_step_homebrew() {
   local resolved_tags
   resolved_tags="$(tags_resolve "$root" "$tags")"
 
-  local desired_packages
-  desired_packages="$(
+  local desired
+  desired="$(
     desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
   )"
 
-  local installed_packages
-  installed_packages="$(discover_installed_packages "$os" "$package_type")"
-
-  local packages_to_install
-  packages_to_install="$(
-    convergence_delta "$desired_packages" "$installed_packages"
-  )"
-
-  local pending_count=0
-  if [ -n "$packages_to_install" ]; then
-    pending_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
-  fi
-
-  if [ "$pending_count" -eq 0 ]; then
-    info "  [install:$package_type] System is already in desired state"
+  # If no packages are found desired, early return
+  if [ -z "$desired" ]; then
     return 0
   fi
 
-  info "  [install:$package_type] Packages to install: $pending_count"
+  local installed
+  installed="$(discover_installed_packages "$os" "$package_type")"
 
-  # Load platform libraries and install
-  . "$root/lib/common.sh"
-  . "$root/lib/unix.sh"
-  . "$root/lib/darwin.sh"
+  local to_install
+  to_install="$(convergence_delta "$desired" "$installed")"
 
-  local _arch
-  case "$arch" in
-    aarch64) _arch="arm64" ;;
-    *) _arch="$arch" ;;
-  esac
-  darwin_setup_package_system
-  unset _arch
+  if [ -z "$to_install" ]; then
+    info "[install:$package_type] System is already in desired state"
+    return 0
+  fi
 
-  install_packages "$root" "$os" "$packages_to_install"
+  local pending_count
+  pending_count="$(echo "$to_install" | wc -l | tr -d ' ')"
+  info "[install:$package_type] Packages to install: $pending_count"
+
+  "_install_packages_${package_type}" "$to_install"
 }
 
-install_step_homebrew_cask() {
-  # TODO: implement
+# Installs a list of Apk packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_apk() {
+  local packages="$1"
 
-  info "install:homebrew_cask - stub"
+  need_cmd apk
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent as_root apk add "$pkg"
+    fi
+  done
 }
 
-install_step_pacman() {
-  # TODO: implement
+# Installs a list of Apt packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_apt() {
+  local packages="$1"
 
-  info "install:pacman - stub"
+  need_cmd apt-get
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent as_root env DEBIAN_FRONTEND=noninteractive \
+        apt-get install -y "$pkg"
+    fi
+  done
+}
+# Installs a list of AUR packages via Paru.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_aur() {
+  local packages="$1"
+
+  need_cmd paru
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent paru -S --needed --noconfirm "$pkg"
+    fi
+  done
 }
 
-install_step_aur() {
-  # TODO: implement
+# Installs a list of Homebrew formulae.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_homebrew() {
+  local packages="$1"
 
-  info "install:aur - stub"
+  need_cmd brew
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent env HOMEBREW_NO_AUTO_UPDATE=true \
+        brew install "$pkg" </dev/null
+    fi
+  done
 }
 
-install_step_apt() {
-  # TODO: implement
+# Installs a list of Homebrew casks.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_homebrew_cask() {
+  local packages="$1"
 
-  info "install:apt - stub"
+  need_cmd brew
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent env HOMEBREW_NO_AUTO_UPDATE=true \
+        brew install --cask "$pkg" </dev/null
+    fi
+  done
 }
 
-install_step_apk() {
-  # TODO: implement
+# Installs a list of Pacman system packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_pacman() {
+  local packages="$1"
 
-  info "install:apk - stub"
+  need_cmd pacman
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent as_root pacman -S --needed --noconfirm "$pkg"
+    fi
+  done
 }
 
-install_step_pkg_add() {
-  # TODO: implement
+# Installs a list of FreeBSD Pkg packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_freebsd_pkg() {
+  local packages="$1"
 
-  info "install:pkg_add - stub"
+  need_cmd pkg
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent as_root pkg install --yes --no-repo-update "$pkg"
+    fi
+  done
 }
 
-install_step_pkg() {
-  # TODO: implement
+# Installs a list of OpenBSD Pkg packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_openbsd_pkg() {
+  local packages="$1"
 
-  info "install:pkg - stub"
+  need_cmd pkg_add
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent as_root pkg_add -Iv "$pkg"
+    fi
+  done
 }

@@ -23,6 +23,8 @@ oneTimeSetUp() {
   . "$root/lib/anvil/tags.sh"
   # shellcheck source=lib/anvil/convergence.sh
   . "$root/lib/anvil/convergence.sh"
+  # shellcheck source=lib/anvil/discovery.sh
+  . "$root/lib/anvil/discovery.sh"
 }
 
 setUp() {
@@ -51,6 +53,117 @@ testInstallStepsHomeshickPresentOnAllPlatforms() {
     assertTrue "homeshick missing for $os" \
       "grep -q 'homeshick' '$stdout'"
   done
+}
+
+testInstallStepPackagesNoOpWhenNoTags() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local arch="x86_64"
+
+  local package_type="pacman"
+
+  # Stub config_read_tags to return empty
+  # shellcheck disable=SC2329
+  config_read_tags() { :; }
+
+  _dispatched=""
+  # shellcheck disable=SC2329
+  _install_packages_pacman() { _dispatched="yes"; }
+
+  run _install_step_packages \
+    "$root" "$config_path" "$os" "$arch" "$package_type"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'should not dispatch when no tags' "" "${_dispatched:-}"
+}
+
+testInstallStepPackagesNoOpWhenAlreadyConverged() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local arch="x86_64"
+
+  local package_type="pacman"
+
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "base"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "base"; }
+  # shellcheck disable=SC2329
+  desired_packages() { printf 'git\ncurl\n'; }
+  # shellcheck disable=SC2329
+  discover_installed_packages() { printf 'git\ncurl\n'; }
+
+  _dispatched=""
+  # shellcheck disable=SC2329
+  _install_packages_pacman() { _dispatched="yes"; }
+
+  run _install_step_packages \
+    "$root" "$config_path" "$os" "$arch" "$package_type"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'should not dispatch when converged' "" "${_dispatched:-}"
+  assertStdoutContains "already in desired state"
+}
+
+testInstallStepPackagesDispatchesDeltaToInstaller() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local arch="x86_64"
+
+  local package_type="pacman"
+
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "base"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "base"; }
+  # shellcheck disable=SC2329
+  desired_packages() { printf 'git\ncurl\nvim\n'; }
+  # shellcheck disable=SC2329
+  discover_installed_packages() { printf 'git\ncurl\n'; }
+
+  _dispatched_packages=""
+  # shellcheck disable=SC2329
+  _install_packages_pacman() { _dispatched_packages="$1"; }
+
+  run _install_step_packages \
+    "$root" "$config_path" "$os" "$arch" "$package_type"
+
+  assertTrue 'function failed' "$return_status"
+  assertTrue 'should dispatch vim' \
+    "echo '$_dispatched_packages' | grep -q '^vim$'"
+  assertFalse 'should not dispatch already-installed git' \
+    "echo '$_dispatched_packages' | grep -q '^git$'"
+}
+
+testInstallStepPackagesDispatchesToCorrectFunction() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="macos"
+  local arch="aarch64"
+
+  local package_type="homebrew"
+
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "base"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "base"; }
+  # shellcheck disable=SC2329
+  desired_packages() { printf 'bat\n'; }
+  # shellcheck disable=SC2329
+  discover_installed_packages() { :; }
+
+  _brew_called=""
+  _pacman_called=""
+  # shellcheck disable=SC2329
+  _install_packages_homebrew() { _brew_called="yes"; }
+  # shellcheck disable=SC2329
+  _install_packages_pacman() { _pacman_called="yes"; }
+
+  run _install_step_packages \
+    "$root" "$config_path" "$os" "$arch" "$package_type"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'homebrew should be called' "yes" "${_brew_called:-}"
+  assertEquals 'pacman should not be called' "" "${_pacman_called:-}"
 }
 
 testInstallHomeshickNoOpWhenNoDesiredCastles() {
