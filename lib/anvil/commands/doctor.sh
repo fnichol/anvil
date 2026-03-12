@@ -35,6 +35,7 @@ cmd_doctor() {
   shift
 
   . "$root/lib/anvil/jq.sh"
+  . "$root/lib/anvil/script.sh"
   . "$root/lib/anvil/config.sh"
   . "$root/lib/anvil/facts.sh"
 
@@ -128,6 +129,7 @@ cmd_doctor() {
   fi
 
   ensure_jq
+  ensure_script
 
   echo ""
 
