@@ -16,31 +16,69 @@ oneTimeSetUp() {
 }
 
 setUp() {
+  . "lib/anvil/jq.sh"
+  . "lib/anvil/config.sh"
+  . "lib/anvil/tags.sh"
+  . "lib/anvil/convergence.sh"
+
   commonSetUp
 }
 
-testBootstrapStepsMacosContainsExpectedSteps() {
+testBootstrapStepsMacosNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() { :; }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsMacosEmitsHomebrewWhenTagsDeclareIt() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="macos"
+  local version="26.2"
+  local kernel="darwin"
+  local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homebrew"
+    echo "homeshick"
+  }
 
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew"
-  assertStdoutContains "bashrc"
   assertStdoutContains "homeshick"
+  assertStdoutContains "bashrc"
   assertStderrNull
 }
 
-testBootstrapStepsMacosOrdering() {
+testBootstrapStepsOrderingHomebrewBeforeBashrcBeforeHomeshick() {
   local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homebrew"
+    echo "homeshick"
+  }
 
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
@@ -54,7 +92,7 @@ testBootstrapStepsMacosOrdering() {
   assertTrue 'bashrc before homeshick' "[ $bashrc_pos -lt $homeshick_pos ]"
 }
 
-testBootstrapStepsArchContainsAurBeforeBashrc() {
+testBootstrapStepsArchNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
@@ -64,9 +102,56 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsArchContainsAurIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "aur"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsArchContainsAurBeforeBashrc() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
   assertStdoutContains "bashrc"
   assertStdoutContains "homeshick"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
 
   local output aur_pos bashrc_pos
   output="$(cat "$stdout")"
@@ -76,7 +161,7 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
   assertTrue 'aur before bashrc' "[ $aur_pos -lt $bashrc_pos ]"
 }
 
-testBootstrapStepsCachyosMatchesArch() {
+testBootstrapStepsCachyosNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
@@ -86,12 +171,66 @@ testBootstrapStepsCachyosMatchesArch() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsCachyosContainsAurIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "aur"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsCachyosContainsAurBeforeBashrc() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
   assertStdoutContains "bashrc"
   assertStdoutContains "homeshick"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+
+  local output aur_pos bashrc_pos
+  output="$(cat "$stdout")"
+  aur_pos="$(echo "$output" | grep -n "^aur$" | cut -d: -f1)"
+  bashrc_pos="$(echo "$output" | grep -n "^bashrc$" | cut -d: -f1)"
+
+  assertTrue 'aur before bashrc' "[ $aur_pos -lt $bashrc_pos ]"
 }
 
-testBootstrapStepsUbuntuHasBashrcAndHomeshick() {
+testBootstrapStepsUbuntuNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
@@ -101,8 +240,33 @@ testBootstrapStepsUbuntuHasBashrcAndHomeshick() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsUbuntuHasBashrcAndHomeshickIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="ubuntu"
+  local version="25.10"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
   assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
 }
 
 testBootstrapStepsUbuntuHasNoPackageManagerStep() {
@@ -118,7 +282,7 @@ testBootstrapStepsUbuntuHasNoPackageManagerStep() {
   assertFalse 'no apt step' "grep -q '^apt$' '$stdout'"
 }
 
-testBootstrapStepsAlpineHasBashrcAndHomeshick() {
+testBootstrapStepsAlpineNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
@@ -128,11 +292,36 @@ testBootstrapStepsAlpineHasBashrcAndHomeshick() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
-  assertStdoutContains "bashrc"
-  assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
 }
 
-testBootstrapStepsFreebsdHasBashrcAndHomeshick() {
+testBootstrapStepsAlpineHasBashrcAndHomeshickIfDefined() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "bashrc"
+  assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+}
+
+testBootstrapStepsFreebsdNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
@@ -142,11 +331,36 @@ testBootstrapStepsFreebsdHasBashrcAndHomeshick() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
-  assertStdoutContains "bashrc"
-  assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
 }
 
-testBootstrapStepsOpenbsdHasBashrcAndHomeshick() {
+testBootstrapStepsFreebsdHasBashrcAndHomeshickIfDefined() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="freebsd"
+  local version="15.0"
+  local kernel="freebsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "bashrc"
+  assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+}
+
+testBootstrapStepsOpenbsdNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
@@ -156,8 +370,33 @@ testBootstrapStepsOpenbsdHasBashrcAndHomeshick() {
   run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
+testBootstrapStepsOpenbsdHasBashrcAndHomeshickIfDefined() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="openbsd"
+  local version="7.7"
+  local kernel="openbsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+    echo "homeshick"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
   assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
 }
 
 testBashrcSkipsIfAlreadyInstalled() {
@@ -176,6 +415,11 @@ testBashrcSkipsIfAlreadyInstalled() {
   # If download function is invoked, the test must fail
   # shellcheck disable=SC2329
   download() { return 1; }
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+  }
 
   run bootstrap_step_bashrc \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
@@ -210,6 +454,11 @@ testBashrcDownloadsAndInvokesInstallerWhenNotPresent() {
 	EOF
   }
 
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "bashrc"
+  }
+
   run bootstrap_step_bashrc \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
 
@@ -235,6 +484,11 @@ testHomeshickSkipsIfAlreadyInstalled() {
   # git must not be called
   # shellcheck disable=SC2329
   git() { return 1; }
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   run bootstrap_step_homeshick \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
@@ -268,6 +522,11 @@ testHomeshickClonesRepo() {
   check_cmd() { return 0; }
   # shellcheck disable=SC2329
   as_root() { "$@"; }
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   run bootstrap_step_homeshick \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"

@@ -7,9 +7,9 @@
 # emitted. Pre-installed system package managers such as apt, apk, pacman,
 # pkg_add, pkg are omitted as no installation is required.
 bootstrap_steps() {
-  local _root="$1"
+  local root="$1"
   shift
-  local _config_path="$1"
+  local config_path="$1"
   shift
   local os="$1"
   shift
@@ -17,22 +17,29 @@ bootstrap_steps() {
   shift
   local _kernel="$1"
   shift
-  local _arch="$1"
+  local arch="$1"
   shift
 
-  # Package manager bootstrap (only where installation is required)
-  case "$os" in
-    macos)
-      echo "homebrew"
-      ;;
-    arch | cachyos)
-      echo "aur"
-      ;;
-  esac
+  local extra_managers
+  extra_managers="$(
+    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+  )"
 
-  # User environment bootstrap (every platform)
-  echo "bashrc"
-  echo "homeshick"
+  # Only extra (installable) package managers are emitted as native package
+  # managers are pre-installed and never required bootstrapping.
+  for extra_manager in homebrew aur; do
+    if echo "$extra_managers" | grep -q "^${extra_manager}$"; then
+      echo "$extra_manager"
+    fi
+  done
+
+  # User environment bootstrap (every platform), only emitted when tags declare
+  # them
+  for extra_manager in bashrc homeshick; do
+    if echo "$extra_managers" | grep -q "^${extra_manager}$"; then
+      echo "$extra_manager"
+    fi
+  done
 }
 
 bootstrap_step_aur() {
