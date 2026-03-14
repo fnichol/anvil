@@ -25,11 +25,13 @@ init_step_validate_commands() {
   need_cmd basename
   need_cmd chmod
   need_cmd dirname
+  need_cmd grep
   need_cmd gzip
   need_cmd id
   need_cmd ln
   need_cmd mkdir
   need_cmd sed
+  need_cmd sort
   need_cmd tar
   need_cmd tr
   need_cmd uname

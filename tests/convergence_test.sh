@@ -9,6 +9,8 @@
 
 oneTimeSetUp() {
   . "${0%/*}/../vendor/lib/libsh.full.sh"
+  . "lib/anvil/jq.sh"
+  . "lib/anvil/tags.sh"
   . "${SRC:=lib/anvil/convergence.sh}"
 
   commonOneTimeSetUp
@@ -40,6 +42,174 @@ curl"
     "cat '$stdout' | grep -q '^git$'"
   assertFalse 'Should not include already installed packages' \
     "cat '$stdout' | grep -q '^curl$'"
+}
+
+testStepsAdditiveToolsReturnsEmptyWhenNoTags() {
+  # shellcheck disable=SC2329
+  config_read_tags() { :; }
+
+  run _steps_extra_package_managers "$root" "" "cachyos" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+}
+
+testStepsAdditiveToolsDetectsHomebrewOnLinux() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "brew-test"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "brew-test"; }
+
+  local tag_file="$tmpdir/data/tags/brew-test.json"
+  mkdir -p "$(dirname "$tag_file")"
+  jq -n '
+    {
+      name: "brew-test",
+      depends_on: [],
+      packages: {
+        cachyos: {
+          all: {
+            homebrew: ["some-tool"]
+          }
+        }
+      }
+    }
+  ' >"$tag_file"
+
+  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "homebrew"
+  assertFalse 'should not include aur' "grep -q '^aur$' '$stdout'"
+}
+
+testStepsAdditiveToolsDetectsAurWhenDeclared() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "aur-test"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "aur-test"; }
+
+  local tag_file="$tmpdir/data/tags/aur-test.json"
+  mkdir -p "$tmpdir/data/tags"
+  jq -n '
+    {
+      name: "aur-test",
+      depends_on: [],
+      packages: {
+        cachyos: {
+          all: {
+            aur: ["some-aur-pkg"]
+          }
+        }
+      }
+    }
+  ' >"$tag_file"
+
+  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "aur"
+}
+
+testStepsAdditiveToolsDetectsHomeshickFromAllOs() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "dotfiles"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "dotfiles"; }
+
+  local tag_file="$tmpdir/data/tags/dotfiles.json"
+  mkdir -p "$tmpdir/data/tags"
+  jq -n '
+    {
+      name: "dotfiles",
+      depends_on: [],
+      packages: {
+        all: {
+          all: {
+            homeshick: ["fnichol/dotfiles"]
+          }
+        }
+      }
+    }
+  ' >"$tag_file"
+
+  run _steps_extra_package_managers "$tmpdir" "" "ubuntu" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "homeshick"
+}
+
+testStepsAdditiveToolsIgnoresNativePackageManagers() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "base"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "base"; }
+
+  local tag_file="$tmpdir/data/tags/base.json"
+  mkdir -p "$tmpdir/data/tags"
+  jq -n '
+    {
+      name: "base",
+      depends_on: [],
+      packages: {
+        cachyos: {
+          all: {
+            pacman: ["git"]
+          }
+        }
+      }
+    }
+  ' >"$tag_file"
+
+  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+}
+
+testStepsAdditiveToolsDeduplicatesAcrossTags() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "tag-a tag-b"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "tag-a tag-b"; }
+
+  local tag_a_file="$tmpdir/data/tags/tag-a.json"
+  local tag_b_file="$tmpdir/data/tags/tag-b.json"
+
+  mkdir -p "$tmpdir/data/tags"
+  jq -n '
+    {
+      name: "tag-a",
+      depends_on: [],
+      packages: {
+        cachyos: {
+          all: {
+            homebrew: ["a"]
+          }
+        }
+      }
+    }
+  ' >"$tag_a_file"
+  jq -n '
+    {
+      name: "tag-b",
+      depends_on: [],
+      packages: {
+        cachyos: {
+          all: {
+            homebrew: ["b"]
+          }
+        }
+      }
+    }
+  ' >"$tag_b_file"
+
+  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  # homebrew should appear exactly once
+  assertEquals 'homebrew appears once' "1" \
+    "$(grep -c '^homebrew$' "$stdout" || echo 0)"
 }
 
 shell_compat "$0"
