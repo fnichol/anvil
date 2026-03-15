@@ -8,9 +8,9 @@
 # **NOTE**: OpenBSD uses `pkg_add -u` which folds sync and upgrade, so no
 # separate sync step is needed there.
 update_steps() {
-  local _root="$1"
+  local root="$1"
   shift
-  local _config_path="$1"
+  local config_path="$1"
   shift
   local os="$1"
   shift
@@ -18,9 +18,15 @@ update_steps() {
   shift
   local _kernel="$1"
   shift
-  local _arch="$1"
+  local arch="$1"
   shift
 
+  local extra_managers
+  extra_managers="$(
+    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+  )"
+
+  # Native system package managers sync + upgrade are first and unconditional
   case "$os" in
     alpine)
       echo "apk_sync"
@@ -29,7 +35,6 @@ update_steps() {
     arch | cachyos)
       echo "pacman_sync"
       echo "pacman"
-      echo "aur"
       ;;
     debian | ubuntu)
       echo "apt_sync"
@@ -39,17 +44,27 @@ update_steps() {
       echo "freebsd_pkg_sync"
       echo "freebsd_pkg"
       ;;
-    macos)
-      echo "homebrew_sync"
-      echo "homebrew"
-      echo "homebrew_cask"
-      ;;
     openbsd)
       echo "openbsd_pkg"
       ;;
   esac
 
-  echo "homeshick"
+  # Extra package managers sync + upgrade only when tags declare them
+  if echo "$extra_managers" | grep -q "^homebrew$"; then
+    echo "homebrew_sync"
+    echo "homebrew"
+    if [ "$os" = "macos" ]; then
+      echo "homebrew_cask"
+    fi
+  fi
+
+  if echo "$extra_managers" | grep -q "^aur$"; then
+    echo "aur"
+  fi
+
+  if echo "$extra_managers" | grep -q "^homeshick$"; then
+    echo "homeshick"
+  fi
 }
 
 update_step_homebrew_sync() {

@@ -16,13 +16,18 @@ oneTimeSetUp() {
 }
 
 setUp() {
+  . "lib/anvil/jq.sh"
+  . "lib/anvil/config.sh"
+  . "lib/anvil/tags.sh"
+  . "lib/anvil/convergence.sh"
+
   commonSetUp
 
   HOME="$tmpdir/home"
   mkdir -p "$HOME"
 }
 
-testUpdateStepsMacosContainsExpectedSteps() {
+testUpdateStepsMacosContainsNoExtraManagersByDefault() {
   local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
@@ -32,10 +37,31 @@ testUpdateStepsMacosContainsExpectedSteps() {
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
+  # No extra managers and no native package manager to sync
+  assertStdoutNull
+  assertStderrNull
+}
+
+testUpdateStepsMacosContainsExpectedHomebrewStepsIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="macos"
+  local version="26.2"
+  local kernel="darwin"
+  local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homebrew"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew_sync"
   assertStdoutContains "homebrew"
   assertStdoutContains "homebrew_cask"
-  assertStdoutContains "homeshick"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
   assertStderrNull
 }
 
@@ -45,6 +71,11 @@ testUpdateStepsMacosOrdering() {
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homebrew"
+  }
 
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
@@ -58,7 +89,7 @@ testUpdateStepsMacosOrdering() {
   assertTrue 'homebrew before homebrew_cask' "[ $brew_pos -lt $cask_pos ]"
 }
 
-testUpdateStepsArchContainsExpectedSteps() {
+testUpdateStepsArchNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
@@ -70,8 +101,38 @@ testUpdateStepsArchContainsExpectedSteps() {
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
   assertStdoutContains "pacman"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+
+}
+
+testUpdateStepsArchContainsExpectedStepsIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+    echo "homeshick"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "pacman_sync"
+  assertStdoutContains "pacman"
   assertStdoutContains "aur"
   assertStdoutContains "homeshick"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
   assertStderrNull
 }
 
@@ -82,6 +143,11 @@ testUpdateStepsArchOrdering() {
   local kernel="linux"
   local arch="x86_64"
 
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+  }
+
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos pacman_pos aur_pos
@@ -94,7 +160,7 @@ testUpdateStepsArchOrdering() {
   assertTrue 'pacman before aur' "[ $pacman_pos -lt $aur_pos ]"
 }
 
-testUpdateStepsCachyosContainsExpectedSteps() {
+testUpdateStepsCachyosNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
@@ -106,8 +172,38 @@ testUpdateStepsCachyosContainsExpectedSteps() {
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
   assertStdoutContains "pacman"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+
+}
+
+testUpdateStepsCachyosContainsExpectedStepsIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+    echo "homeshick"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "pacman_sync"
+  assertStdoutContains "pacman"
   assertStdoutContains "aur"
   assertStdoutContains "homeshick"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
   assertStderrNull
 }
 
@@ -117,6 +213,11 @@ testUpdateStepsCachyosOrdering() {
   local version=""
   local kernel="linux"
   local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "aur"
+  }
 
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
@@ -130,12 +231,39 @@ testUpdateStepsCachyosOrdering() {
   assertTrue 'pacman before aur' "[ $pacman_pos -lt $aur_pos ]"
 }
 
-testUpdateStepsUbuntuContainsExpectedSteps() {
+testUpdateStepsUbuntuNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apt_sync"
+  assertStdoutContains "apt"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'pacman_sync absent without tags' "grep -q '^pacman_sync$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+  assertStderrNull
+}
+
+testUpdateStepsUbuntuContainsExpectedStepsIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="ubuntu"
+  local version="25.10"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
@@ -163,7 +291,7 @@ testUpdateStepsUbuntuOrdering() {
   assertTrue 'apt_sync before apt' "[ $sync_pos -lt $apt_pos ]"
 }
 
-testUpdateStepsAlpineContainsExpectedSteps() {
+testUpdateStepsAlpineNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
@@ -175,11 +303,38 @@ testUpdateStepsAlpineContainsExpectedSteps() {
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apk_sync"
   assertStdoutContains "apk"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'pacman_sync absent without tags' "grep -q '^pacman_sync$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+  assertStderrNull
+}
+
+testUpdateStepsAlpineContainsExpectedStepsIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apk_sync"
+  assertStdoutContains "apk"
   assertStdoutContains "homeshick"
   assertStderrNull
 }
 
-testUpdateStepsFreebsdContainsExpectedSteps() {
+testUpdateStepsFreebsdNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
@@ -191,7 +346,56 @@ testUpdateStepsFreebsdContainsExpectedSteps() {
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg_sync"
   assertStdoutContains "freebsd_pkg"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'pacman_sync absent without tags' "grep -q '^pacman_sync$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+  assertStderrNull
+}
+
+testUpdateStepsFreebsdContainsExpectedSteps() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="freebsd"
+  local version="15.0"
+  local kernel="freebsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "freebsd_pkg_sync"
+  assertStdoutContains "freebsd_pkg"
   assertStdoutContains "homeshick"
+  assertStderrNull
+}
+
+testUpdateStepsOpenbsdNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="openbsd"
+  local version="7.7"
+  local kernel="openbsd"
+  local arch="x86_64"
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "openbsd_pkg"
+  assertFalse 'openbsd_sync absent without tags' "grep -q '^openbsd_sync$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew_sync absent without tags' "grep -q '^homebrew_sync$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'pacman_sync absent without tags' "grep -q '^pacman_sync$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
   assertStderrNull
 }
 
@@ -201,6 +405,11 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
@@ -213,8 +422,13 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
   assertStderrNull
 }
 
-testUpdateStepsHomeshickPresentOnAllPlatforms() {
+testUpdateStepsHomeshickPresentOnAllPlatformsIfDeclared() {
   local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
     run update_steps "$root" "$config_path" "$os" "" "" ""
@@ -241,6 +455,11 @@ testUpdateHomeshickPullsWhenInstalled() {
   # Create a minimal homeshick.sh stub that defines homeshick()
   printf '#!/bin/sh\nhomeshick() { _homeshick_args="$*"; }\n' \
     >"$homeshick_dir/homeshick.sh"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   run update_step_homeshick \
     "" "" "" "" "" "" ""
