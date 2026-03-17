@@ -3,9 +3,9 @@
 
 # Returns platform-specific install steps, one package manager per step.
 install_steps() {
-  local _root="$1"
+  local root="$1"
   shift
-  local _config_path="$1"
+  local config_path="$1"
   shift
   local os="$1"
   shift
@@ -13,16 +13,21 @@ install_steps() {
   shift
   local _kernel="$1"
   shift
-  local _arch="$1"
+  local arch="$1"
   shift
 
+  local extra_managers
+  extra_managers="$(
+    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+  )"
+
+  # Native system package managers installs are first and unconditional
   case "$os" in
     alpine)
       echo "apk"
       ;;
     arch | cachyos)
       echo "pacman"
-      echo "aur"
       ;;
     debian | ubuntu)
       echo "apt"
@@ -30,17 +35,26 @@ install_steps() {
     freebsd)
       echo "freebsd_pkg"
       ;;
-    macos)
-      echo "homebrew"
-      echo "homebrew_cask"
-      ;;
     openbsd)
       echo "openbsd_pkg"
       ;;
   esac
 
-  # Homeshick castle installation — every platform
-  echo "homeshick"
+  # Extra package managers installs only when tags declare them
+  if echo "$extra_managers" | grep -q "^aur$"; then
+    echo "aur"
+  fi
+
+  if echo "$extra_managers" | grep -q "^homebrew$"; then
+    echo "homebrew"
+    if [ "$os" = "macos" ]; then
+      echo "homebrew_cask"
+    fi
+  fi
+
+  if echo "$extra_managers" | grep -q "^homeshick$"; then
+    echo "homeshick"
+  fi
 }
 
 install_step_apk() {

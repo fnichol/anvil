@@ -14,41 +14,92 @@ oneTimeSetUp() {
 
   commonOneTimeSetUp
   root="${0%/*}/../.."
-
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/config.sh
-  . "$root/lib/anvil/config.sh"
-  # shellcheck source=lib/anvil/tags.sh
-  . "$root/lib/anvil/tags.sh"
-  # shellcheck source=lib/anvil/convergence.sh
-  . "$root/lib/anvil/convergence.sh"
-  # shellcheck source=lib/anvil/discovery.sh
-  . "$root/lib/anvil/discovery.sh"
 }
 
 setUp() {
   commonSetUp
 
+  # shellcheck source=lib/anvil/jq.sh
+  . "lib/anvil/jq.sh"
+  # shellcheck source=lib/anvil/config.sh
+  . "lib/anvil/config.sh"
+  # shellcheck source=lib/anvil/tags.sh
+  . "lib/anvil/tags.sh"
+  # shellcheck source=lib/anvil/convergence.sh
+  . "lib/anvil/convergence.sh"
+  # shellcheck source=lib/anvil/discovery.sh
+  . "lib/anvil/discovery.sh"
+
   HOME="$tmpdir/home"
   mkdir -p "$HOME"
 }
 
-testInstallStepsIncludesHomeshick() {
+testInstallStepsNoExtraManagersByDefault() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  for os in alpine arch cachyos debian freebsd macos openbsd ubuntu; do
+    run install_steps "$root" "$config_path" "$os" "" "" ""
+
+    assertFalse "homeshick absent without tags ($os)" \
+      "grep -q '^homeshick$' '$stdout'"
+    assertFalse "homebrew absent without tags ($os)" \
+      "grep -q '^homebrew$' '$stdout'"
+  done
+}
+
+testInstallStepsEmitsHomeshickIfDeclared() {
   local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
+
+  run install_steps "$root" "$config_path" "arch" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homeshick"
 }
 
-testInstallStepsHomeshickPresentOnAllPlatforms() {
+testInstallStepsEmitsHomebrewOnLinuxIfDeclared() {
   local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homebrew"
+  }
+
+  run install_steps "$root" "$config_path" "cachyos" "" "" ""
+
+  assertStdoutContains "homebrew"
+  assertFalse 'no cask on linux' "grep -q '^homebrew_cask$' '$stdout'"
+}
+
+testInstallStepsEmitsHomebrewCaskOnMacosIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homebrew"
+  }
+
+  run install_steps "$root" "$config_path" "macos" "" "" ""
+
+  assertStdoutContains "homebrew"
+  assertStdoutContains "homebrew_cask"
+}
+
+testInstallStepsEmitsHomeshickOnAllPlatformsIfDefined() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "homeshick"
+  }
 
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
     run install_steps "$root" "$config_path" "$os" "" "" ""
@@ -58,7 +109,91 @@ testInstallStepsHomeshickPresentOnAllPlatforms() {
   done
 }
 
-testInstallStepsFreebsdContainsExpectedSteps() {
+testInstallStepsEmitsAlpineNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apk"
+  assertFalse 'apt absent without tags' "grep -q '^apt$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+}
+
+testInstallStepsEmitsArchNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "pacman"
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'apt absent without tags' "grep -q '^apt$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+}
+
+testInstallStepsEmitsCachyosNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "pacman"
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'apt absent without tags' "grep -q '^apt$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+}
+
+testInstallStepsEmitsDebianNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="debian"
+  local version="12.13"
+  local kernel="linux"
+  local arch="x86_64"
+
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apt"
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+}
+
+testInstallStepsEmitsFreebsdNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
@@ -69,11 +204,17 @@ testInstallStepsFreebsdContainsExpectedSteps() {
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg"
-  assertStdoutContains "homeshick"
-  assertStderrNull
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'apt absent without tags' "grep -q '^apt$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
 }
 
-testInstallStepsOpenbsdContainsExpectedSteps() {
+testInstallStepsEmitsOpenbsdNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
@@ -84,9 +225,37 @@ testInstallStepsOpenbsdContainsExpectedSteps() {
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
-  assertStdoutContains "homeshick"
-  assertStderrNull
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'apt absent without tags' "grep -q '^apt$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
 }
+
+testInstallStepsEmitsUbuntuNativePackageManagersAlwaysPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="ubuntu"
+  local version="25.10"
+  local kernel="linux"
+  local arch="x86_64"
+
+  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apt"
+  assertFalse 'apk absent without tags' "grep -q '^apk$' '$stdout'"
+  assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homebrew_cask absent without tags' "grep -q '^homebrew_cask$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertFalse 'freebsd_pkg absent without tags' "grep -q '^freebsd_pkg$' '$stdout'"
+  assertFalse 'openbsd_pkg absent without tags' "grep -q '^openbsd_pkg$' '$stdout'"
+  assertFalse 'pacman absent without tags' "grep -q '^pacman$' '$stdout'"
+}
+
 testInstallStepPackagesNoOpWhenNoTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"
