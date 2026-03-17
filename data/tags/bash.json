@@ -1,0 +1,12 @@
+{
+  "name": "bash",
+  "description": "Bash shell support",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "bashrc": ["fnichol/bashrc"]
+      }
+    }
+  }
+}

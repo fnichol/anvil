@@ -943,6 +943,73 @@ testAurOnCachyOsInstallsParuBin() {
     "echo '$_pacman_args' | grep -q 'paru-bin'"
 }
 
+testBootstrapStepBashrcInstallsFramework() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # Pre-condition: bashrc not yet installed
+  rm -rf "$HOME/.bash"
+
+  local _downloaded_url=""
+  local _downloaded_script=""
+  # shellcheck disable=SC2329
+  download() {
+    _downloaded_url="$1"
+    touch "$2"
+    _downloaded_script="$2"
+  }
+
+  # shellcheck disable=SC2329
+  _ensure_bash() { :; }
+  # shellcheck disable=SC2329
+  _ensure_git() { :; }
+  # shellcheck disable=SC2329
+  mktemp_file() { mktemp; }
+  # shellcheck disable=SC2329
+  cleanup_file() { :; }
+  # shellcheck disable=SC2329
+  indent() { :; }
+
+  run bootstrap_step_bashrc \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function succeeded' "$return_status"
+  assertTrue 'downloaded install script' \
+    "echo '$_downloaded_url' | grep -q 'fnichol/bashrc'"
+}
+
+testBootstrapStepBashrcSkipsIfAlreadyInstalled() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  mkdir -p "$HOME/.bash"
+  touch "$HOME/.bash/bashrc"
+
+  _ensure_bash_called=""
+  # shellcheck disable=SC2329
+  _ensure_bash() { _ensure_bash_called="yes"; }
+  # shellcheck disable=SC2329
+  _ensure_git() { :; }
+
+  _install_called=""
+  # shellcheck disable=SC2329
+  download() { _install_called="yes"; }
+
+  run bootstrap_step_bashrc \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function succeeded' "$return_status"
+  assertEquals 'should not re-download' "" "$_install_called"
+}
+
 shell_compat "$0"
 
 . "${0%/*}/../../$shunit2RelRoot"
