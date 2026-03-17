@@ -121,7 +121,7 @@ bootstrap_step_homebrew() {
   shift
   local _version="$1"
   shift
-  local _kernel="$1"
+  local kernel="$1"
   shift
   local arch="$1"
   shift
@@ -137,6 +137,14 @@ bootstrap_step_homebrew() {
   _ensure_git "$os"
   _ensure_system_bash "$os"
 
+  # Install any missing build dependencies before running the installer on
+  # Linux systems
+  case "$kernel" in
+    linux)
+      _install_linux_brew_build_deps "$os"
+      ;;
+  esac
+
   local install_sh
   install_sh="$(mktemp_file)"
   cleanup_file "$install_sh"
@@ -149,14 +157,24 @@ bootstrap_step_homebrew() {
   indent env NONINTERACTIVE=1 bash "$install_sh" </dev/null
 
   # Update PATH for the current process so subsequent steps can find `brew`.
-  #
-  # - Apple Silicon installs to `/opt/homebrew`
-  # - Intel to `/usr/local` (already in PATH)
-  case "$arch" in
-    aarch64)
-      if [ -x /opt/homebrew/bin/brew ]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+  case "$kernel" in
+    linux)
+      # Homebrew on Linux installs to `/home/linuxbrew/.linuxbrew`
+      if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        _write_brew_shellenv_to_profile
       fi
+      ;;
+    macos)
+      # Apple Silicon installs to `/opt/homebrew` whereas on Intel installation
+      # is under `/usr/local` which is already on PATH
+      case "$arch" in
+        aarch64)
+          if [ -x /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          fi
+          ;;
+      esac
       ;;
   esac
 }
@@ -347,5 +365,65 @@ _ensure_system_bash() {
         indent as_root pkg_add bash
         ;;
     esac
+  fi
+}
+
+# Installs build dependencies required by Homebrew on Linux.
+#
+# See: https://docs.brew.sh/Homebrew-on-Linux#requirements
+#
+# * `@param [String]` operating system
+_install_linux_brew_build_deps() {
+  local os="$1"
+
+  # **Note*: TrueNAS may not have all pre-requisite packages installed but is
+  # also an immutable system so no additional packages can be installed.
+  case "$os" in
+    alpine)
+      info "Installing Homebrew build dependencies"
+      indent as_root apk add --no-cache \
+        build-base
+      ;;
+    arch | cachyos)
+      info "Installing Homebrew build dependencies"
+      indent as_root pacman -Sy --noconfirm
+      indent as_root pacman -S --needed --noconfirm \
+        base-devel \
+        curl \
+        file \
+        git \
+        procps-ng
+      ;;
+    bazzite)
+      # Bazzite Linux already has an installation of Homebrew set up
+      need_cmd brew
+      ;;
+    debian | ubuntu)
+      info "Installing Homebrew build dependencies"
+      indent as_root apt-get update
+      indent as_root apt-get install -y \
+        build-essential \
+        curl \
+        file \
+        git \
+        procps
+      ;;
+  esac
+}
+
+# Writes the Homebrew shellenv eval line to the shell profile.
+_write_brew_shellenv_to_profile() {
+  local eval_line='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+
+  if [ -d "$HOME/.bash.d" ]; then
+    local bash_d="$HOME/.bash.d/homebrew.bash"
+
+    if [ ! -f "$bash_d" ]; then
+      printf '%s\n' "$eval_line" >"$bash_d"
+    fi
+  else
+    if ! grep -qF 'linuxbrew' "$HOME/.bashrc" 2>/dev/null; then
+      printf '\n%s\n' "$eval_line" >>"$HOME/.bashrc"
+    fi
   fi
 }

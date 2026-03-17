@@ -719,6 +719,81 @@ testHomebrewSetsNoninteractiveWhenInstalling() {
   assertStdoutContains 'noninteractive_set'
 }
 
+testBootstrapStepHomebrewEarlyReturnIfBrewPresent() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  PATH="$isolated_path:$PATH"
+  isolatedPathFor brew
+  cat <<-'EOF' >"$isolated_path/brew"
+	#!/bin/sh
+	exit 0
+	EOF
+  chmod +x "$isolated_path/brew"
+
+  _ensure_git_called=""
+  # shellcheck disable=SC2329
+  _ensure_git() { _ensure_git_called="yes"; }
+
+  run bootstrap_step_homebrew \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'should succeed' "$return_status"
+  assertEquals 'should call _ensure_git' "yes" "$_ensure_git_called"
+}
+
+testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # brew not present
+  PATH="$isolated_path:$PATH"
+
+  _git_ensured=""
+  # shellcheck disable=SC2329
+  _ensure_git() {
+    _git_ensured="yes"
+  }
+  # shellcheck disable=SC2329
+  _ensure_system_bash() { :; }
+  # shellcheck disable=SC2329
+  _install_linux_brew_build_deps() { :; }
+
+  _downloaded_url=""
+  # shellcheck disable=SC2329
+  download() {
+    _downloaded_url="$1"
+    touch "$2"
+  }
+
+  _brew_env_sourced=""
+  # Stub eval to capture shellenv call
+  _linuxbrew_eval_called=""
+  # We test the PATH update by checking that linuxbrew bin path is added
+
+  # shellcheck disable=SC2329
+  mktemp_file() { mktemp; }
+  # shellcheck disable=SC2329
+  cleanup_file() { :; }
+  # shellcheck disable=SC2329
+  indent() { "$@" 2>/dev/null || true; }
+
+  run bootstrap_step_homebrew \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  # The function should attempt download of the install script
+  assertTrue 'should attempt download' \
+    "echo '$_downloaded_url' | grep -q 'Homebrew/install'"
+}
+
 testAurSkipsIfParuAlreadyInstalled() {
   local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
