@@ -413,6 +413,7 @@ _install_linux_brew_build_deps() {
 
 # Writes the Homebrew shellenv eval line to the shell profile.
 _write_brew_shellenv_to_profile() {
+  # shellcheck disable=SC2016
   local eval_line='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
 
   if [ -d "$HOME/.bash.d" ]; then
