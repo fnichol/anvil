@@ -98,6 +98,9 @@ cmd_apply() {
   done
   shift "$((OPTIND - 1))"
 
+  local start_time
+  start_time="$(date +%s)"
+
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
   if ! config_exists "$config_file"; then
@@ -131,4 +134,10 @@ cmd_apply() {
 
   echo
   section "Apply Complete"
+
+  local elapsed_s
+  elapsed_s="$(($(date +%s) - start_time))"
+  info "Run time: $(
+    printf '%02d:%02d (mm:ss)' "$((elapsed_s / 60))" "$((elapsed_s % 60))"
+  )"
 }
