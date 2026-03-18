@@ -2,7 +2,7 @@
 # shellcheck disable=SC3043
 
 # Extra package managers that aren't built-in/system managers
-__ANVIL_EXTRA_PACKAGE_MANAGERS__="aur bashrc homebrew homeshick"
+__ANVIL_EXTRA_PACKAGE_MANAGERS__="aur bashrc homebrew homeshick mise"
 
 # Calculates packages to install (desired - installed)
 convergence_delta() {

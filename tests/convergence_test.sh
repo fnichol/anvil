@@ -44,7 +44,7 @@ curl"
     "cat '$stdout' | grep -q '^curl$'"
 }
 
-testStepsAdditiveToolsReturnsEmptyWhenNoTags() {
+testStepsExtraPackageManagersReturnsEmptyWhenNoTags() {
   # shellcheck disable=SC2329
   config_read_tags() { :; }
 
@@ -54,7 +54,7 @@ testStepsAdditiveToolsReturnsEmptyWhenNoTags() {
   assertStdoutNull
 }
 
-testStepsAdditiveToolsDetectsHomebrewOnLinux() {
+testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
   # shellcheck disable=SC2329
   config_read_tags() { echo "brew-test"; }
   # shellcheck disable=SC2329
@@ -83,7 +83,7 @@ testStepsAdditiveToolsDetectsHomebrewOnLinux() {
   assertFalse 'should not include aur' "grep -q '^aur$' '$stdout'"
 }
 
-testStepsAdditiveToolsDetectsAurWhenDeclared() {
+testStepsExtraPackageManagersDetectsAurWhenDeclared() {
   # shellcheck disable=SC2329
   config_read_tags() { echo "aur-test"; }
   # shellcheck disable=SC2329
@@ -111,7 +111,7 @@ testStepsAdditiveToolsDetectsAurWhenDeclared() {
   assertStdoutContains "aur"
 }
 
-testStepsAdditiveToolsDetectsHomeshickFromAllOs() {
+testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
   # shellcheck disable=SC2329
   config_read_tags() { echo "dotfiles"; }
   # shellcheck disable=SC2329
@@ -139,7 +139,7 @@ testStepsAdditiveToolsDetectsHomeshickFromAllOs() {
   assertStdoutContains "homeshick"
 }
 
-testStepsAdditiveToolsIgnoresNativePackageManagers() {
+testStepsExtraPackageManagersIgnoresNativePackageManagers() {
   # shellcheck disable=SC2329
   config_read_tags() { echo "base"; }
   # shellcheck disable=SC2329
@@ -167,7 +167,7 @@ testStepsAdditiveToolsIgnoresNativePackageManagers() {
   assertStdoutNull
 }
 
-testStepsAdditiveToolsDeduplicatesAcrossTags() {
+testStepsExtraPackageManagersDeduplicatesAcrossTags() {
   # shellcheck disable=SC2329
   config_read_tags() { echo "tag-a tag-b"; }
   # shellcheck disable=SC2329
@@ -212,6 +212,31 @@ testStepsAdditiveToolsDeduplicatesAcrossTags() {
     "$(grep -c '^homebrew$' "$stdout" || echo 0)"
 }
 
+testStepsExtraPackageManagersDetectsMise() {
+  # shellcheck disable=SC2329
+  config_read_tags() { echo "mise-test"; }
+  # shellcheck disable=SC2329
+  tags_resolve() { echo "$2"; }
+  # shellcheck disable=SC2329
+  tags_path_for() { echo "$tmpdir/mise-test.json"; }
+
+  cat <<-'EOF' >"$tmpdir/mise-test.json"
+	{
+	  "name": "mise-test",
+	  "packages": {
+	    "arch": {
+	      "all": {"mise": ["node@lts"]}
+	    }
+	  }
+	}
+	EOF
+
+  run _steps_extra_package_managers "$root" "" "arch" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
 shell_compat "$0"
 
 . "$shunit2"

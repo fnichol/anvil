@@ -89,6 +89,26 @@ testUpdateStepsMacosOrdering() {
   assertTrue 'homebrew before homebrew_cask' "[ $brew_pos -lt $cask_pos ]"
 }
 
+testUpdateStepsEmitsMiseSyncAndMiseOnMacosWhenDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="macos"
+  local version="26.2"
+  local kernel="darwin"
+  local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise_sync"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
 testUpdateStepsArchNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"
@@ -158,6 +178,47 @@ testUpdateStepsArchOrdering() {
 
   assertTrue 'pacman_sync before pacman' "[ $sync_pos -lt $pacman_pos ]"
   assertTrue 'pacman before aur' "[ $pacman_pos -lt $aur_pos ]"
+}
+
+testUpdateStepsArchContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise_sync"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
+testUpdateStepsMiseSyncAppearsBeforeMise() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version="6.1"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertTrue 'mise_sync before mise' \
+    "grep -n 'mise_sync\|^mise$' '$stdout' \
+      | awk -F: 'NR==1{first=\$1} NR==2{if(\$1>first) exit 0; exit 1}'"
+  assertStderrNull
 }
 
 testUpdateStepsCachyosNativePackageManagersAlwaysPresent() {
@@ -231,6 +292,26 @@ testUpdateStepsCachyosOrdering() {
   assertTrue 'pacman before aur' "[ $pacman_pos -lt $aur_pos ]"
 }
 
+testUpdateStepsCachyosContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise_sync"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
 testUpdateStepsUbuntuNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
@@ -291,6 +372,26 @@ testUpdateStepsUbuntuOrdering() {
   assertTrue 'apt_sync before apt' "[ $sync_pos -lt $apt_pos ]"
 }
 
+testUpdateStepsUbuntuContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="ubuntu"
+  local version="25.10"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise_sync"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
 testUpdateStepsAlpineNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
@@ -331,6 +432,26 @@ testUpdateStepsAlpineContainsExpectedStepsIfDeclared() {
   assertStdoutContains "apk_sync"
   assertStdoutContains "apk"
   assertStdoutContains "homeshick"
+  assertStderrNull
+}
+
+testUpdateStepsAlpineContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise_sync"
+  assertStdoutContains "mise"
   assertStderrNull
 }
 
@@ -377,6 +498,26 @@ testUpdateStepsFreebsdContainsExpectedSteps() {
   assertStderrNull
 }
 
+testUpdateStepsFreebsdOmitsMise() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="freebsd"
+  local version="14.0"
+  local kernel="freebsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise_sync absent on freebsd' "grep -q '^mise_sync$' '$stdout'"
+  assertFalse 'mise absent on freebsd' "grep -q '^mise$' '$stdout'"
+  assertStderrNull
+}
+
 testUpdateStepsOpenbsdNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
@@ -419,6 +560,26 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
   # No separate sync step for openbsd (pkg_add -u handles both)
   assertFalse 'openbsd should not have openbsd_pkg_sync' \
     "grep -q 'openbsd_pkg_sync' '$stdout'"
+  assertStderrNull
+}
+
+testUpdateStepsOpenbsdOmitsMise() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="openbsd"
+  local version="7.4"
+  local kernel="openbsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise_sync absent on openbsd' "grep -q '^mise_sync$' '$stdout'"
+  assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
   assertStderrNull
 }
 

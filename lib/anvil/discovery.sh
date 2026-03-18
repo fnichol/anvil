@@ -11,6 +11,9 @@ discover_installed_packages() {
         apk)
           apk info
           ;;
+        mise)
+          _discover_mise_global_tools
+          ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
           return 1
@@ -27,6 +30,9 @@ discover_installed_packages() {
           #
           # See: https://bbs.archlinux.org/viewtopic.php?id=76218
           pacman --query --quiet --foreign
+          ;;
+        mise)
+          _discover_mise_global_tools
           ;;
         pacman)
           need_cmd pacman
@@ -48,6 +54,9 @@ discover_installed_packages() {
             | cut -d ' ' -f 1 \
             | while read -r pkg; do echo "${pkg%.*}"; done
           ;;
+        mise)
+          _discover_mise_global_tools
+          ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
           return 1
@@ -64,6 +73,9 @@ discover_installed_packages() {
           #
           # See: https://bbs.archlinux.org/viewtopic.php?id=76218
           pacman --query --quiet --foreign
+          ;;
+        mise)
+          _discover_mise_global_tools
           ;;
         pacman)
           need_cmd pacman
@@ -82,6 +94,9 @@ discover_installed_packages() {
           need_cmd dpkg-query
 
           dpkg-query -f '${Package}\n' -W
+          ;;
+        mise)
+          _discover_mise_global_tools
           ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
@@ -113,6 +128,9 @@ discover_installed_packages() {
           need_cmd brew
 
           brew list --cask --versions | cut -d ' ' -f 1
+          ;;
+        mise)
+          _discover_mise_global_tools
           ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"
@@ -164,4 +182,14 @@ is_package_installed() {
       die "FIXME: unimplemented"
       ;;
   esac
+}
+
+# Discovers globally installed Mise tools, emitting `tool@version` strings.
+_discover_mise_global_tools() {
+  need_cmd mise
+
+  ensure_jq
+
+  mise ls --global --json \
+    | jq -r 'to_entries[] | "\(.key)@\(.value[0].requested_version)"'
 }

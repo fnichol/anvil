@@ -109,6 +109,65 @@ testInstallStepsEmitsHomeshickOnAllPlatformsIfDefined() {
   done
 }
 
+testInstallStepsEmitsMiseOnLinuxWhenDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run install_steps "$root" "$config_path" "arch" "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
+testInstallStepsEmitsMiseOnMacosWhenDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run install_steps "$root" "$config_path" "macos" "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
+testInstallStepsOmitsMiseOnFreebsd() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run install_steps "$root" "$config_path" "freebsd" "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise absent on freebsd' "grep -q '^mise$' '$stdout'"
+  assertStderrNull
+}
+
+testInstallStepsOmitsMiseOnOpenbsd() {
+  local config_path="$tmpdir/nonexistent.json"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run install_steps "$root" "$config_path" "openbsd" "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
+  assertStderrNull
+}
 testInstallStepsEmitsAlpineNativePackageManagersAlwaysPresent() {
   local config_path="$tmpdir/nonexistent.json"
   local os="alpine"

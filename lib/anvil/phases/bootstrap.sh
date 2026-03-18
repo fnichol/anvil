@@ -40,6 +40,16 @@ bootstrap_steps() {
       echo "$extra_manager"
     fi
   done
+
+  # Mise is only installed on Linux and macOS systems (not on BSD systems)
+  case "$os" in
+    freebsd | openbsd) ;;
+    *)
+      if echo "$extra_managers" | grep -q "^mise$"; then
+        echo "mise"
+      fi
+      ;;
+  esac
 }
 
 bootstrap_step_aur() {
@@ -256,6 +266,37 @@ bootstrap_step_bashrc() {
   indent bash "$install_local_sh"
 }
 
+boostrap_step_mise() {
+  local _root="$1"
+  shift
+  local _config_file="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local _os="$1"
+  shift
+
+  # Early return if already installed
+  if check_cmd mise; then
+    return 0
+  fi
+
+  local install_sh
+  install_sh="$(mktemp_file)"
+  cleanup_file "$install_sh"
+
+  download https://mise.run "$install_sh"
+
+  info "Installing mise"
+  indent env MISE_INSTALL_HELP=0 sh "$install_sh"
+
+  # Update PATH for the current process so subsequent steps can find `mise`
+  if [ -x "$HOME/.local/bin/mise" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+    _write_mise_activate_to_profile
+  fi
+}
+
 _ensure_bash() {
   local os="$1"
 
@@ -424,6 +465,24 @@ _write_brew_shellenv_to_profile() {
     fi
   else
     if ! grep -qF 'linuxbrew' "$HOME/.bashrc" 2>/dev/null; then
+      printf '\n%s\n' "$eval_line" >>"$HOME/.bashrc"
+    fi
+  fi
+}
+
+# Writes the mise shell activation eval line to the shell profile.
+_write_mise_activate_to_profile() {
+  # shellcheck disable=SC2016
+  local eval_line='eval "$(mise activate bash)"'
+
+  if [ -d "$HOME/.bash.d" ]; then
+    local bash_d="$HOME/.bash.d/mise.bash"
+
+    if [ ! -f "$bash_d" ]; then
+      printf '%s\n' "$eval_line" >"$bash_d"
+    fi
+  else
+    if ! grep -qF 'mise activate' "$HOME/.bashrc" 2>/dev/null; then
       printf '\n%s\n' "$eval_line" >>"$HOME/.bashrc"
     fi
   fi

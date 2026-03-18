@@ -55,6 +55,16 @@ install_steps() {
   if echo "$extra_managers" | grep -q "^homeshick$"; then
     echo "homeshick"
   fi
+
+  # Mise is only installed on Linux and macOS systems (not on BSD systems)
+  case "$os" in
+    freebsd | openbsd) ;;
+    *)
+      if echo "$extra_managers" | grep -q "^mise$"; then
+        echo "mise"
+      fi
+      ;;
+  esac
 }
 
 install_step_apk() {
@@ -213,6 +223,27 @@ install_step_homeshick() {
       homeshick clone --batch "$castle"
     fi
   done
+}
+
+install_step_mise() {
+  local root="$1"
+  shift
+  local config_path="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="mise"
+
+  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
 }
 
 install_step_pacman() {
@@ -442,6 +473,27 @@ _install_packages_homebrew_cask() {
       info "[$current/$total] Installing: $pkg"
       indent env HOMEBREW_NO_AUTO_UPDATE=true \
         brew install --cask "$pkg" </dev/null
+    fi
+  done
+}
+
+# Installs a list of Mise global tools.
+#
+# * `@param [String]` newline-delimited tool@version list
+_install_packages_mise() {
+  local packages="$1"
+
+  need_cmd mise
+
+  local total current
+  total="$(echo "$packages" | grep -c . || echo 0)"
+  current=0
+
+  echo "$packages" | while IFS= read -r pkg; do
+    if [ -n "$pkg" ]; then
+      current=$((current + 1))
+      info "[$current/$total] Installing: $pkg"
+      indent mise use --global "$pkg"
     fi
   done
 }

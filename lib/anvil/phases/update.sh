@@ -65,6 +65,17 @@ update_steps() {
   if echo "$extra_managers" | grep -q "^homeshick$"; then
     echo "homeshick"
   fi
+
+  # Mise is only installed on Linux and macOS systems (not on BSD systems)
+  case "$os" in
+    freebsd | openbsd) ;;
+    *)
+      if echo "$extra_managers" | grep -q "^mise$"; then
+        echo "mise_sync"
+        echo "mise"
+      fi
+      ;;
+  esac
 }
 
 update_step_homebrew_sync() {

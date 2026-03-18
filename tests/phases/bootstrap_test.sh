@@ -92,6 +92,23 @@ testBootstrapStepsOrderingHomebrewBeforeBashrcBeforeHomeshick() {
   assertTrue 'bashrc before homeshick' "[ $bashrc_pos -lt $homeshick_pos ]"
 }
 
+testBootstrapStepsEmitsMiseOnMacosWhenDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="macos"
+  local version="26.2"
+  local kernel="darwin"
+  local arch="aarch64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() { echo "mise"; }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertStderrNull
+}
+
 testBootstrapStepsArchNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="arch"
@@ -159,6 +176,28 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
   bashrc_pos="$(echo "$output" | grep -n "^bashrc$" | cut -d: -f1)"
 
   assertTrue 'aur before bashrc' "[ $aur_pos -lt $bashrc_pos ]"
+}
+
+testBootstrapStepsArchContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
 }
 
 testBootstrapStepsCachyosNoExtraManagersWithoutTags() {
@@ -230,6 +269,28 @@ testBootstrapStepsCachyosContainsAurBeforeBashrc() {
   assertTrue 'aur before bashrc' "[ $aur_pos -lt $bashrc_pos ]"
 }
 
+testBootstrapStepsCachyosContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="cachyos"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
 testBootstrapStepsUbuntuNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
@@ -282,6 +343,28 @@ testBootstrapStepsUbuntuHasNoPackageManagerStep() {
   assertFalse 'no apt step' "grep -q '^apt$' '$stdout'"
 }
 
+testBootstrapStepsUbuntuContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="ubuntu"
+  local version="25.10"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
+}
+
 testBootstrapStepsAlpineNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
@@ -319,6 +402,28 @@ testBootstrapStepsAlpineHasBashrcAndHomeshickIfDefined() {
   assertStdoutContains "homeshick"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
   assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+}
+
+testBootstrapStepsAlpineContainsMiseIfDeclared() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() {
+    echo "mise"
+  }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mise"
+  assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
+  assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+  assertFalse 'homeshick absent without tags' "grep -q '^homeshick$' '$stdout'"
+  assertStderrNull
 }
 
 testBootstrapStepsFreebsdNoExtraManagersWithoutTags() {
@@ -360,6 +465,23 @@ testBootstrapStepsFreebsdHasBashrcAndHomeshickIfDefined() {
   assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
 }
 
+testBootstrapStepsOmitsMiseOnFreebsd() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="freebsd"
+  local version="14.0"
+  local kernel="freebsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() { echo "mise"; }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise absent on freebsd' "grep -q '^mise$' '$stdout'"
+  assertStderrNull
+}
+
 testBootstrapStepsOpenbsdNoExtraManagersWithoutTags() {
   local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
@@ -397,6 +519,23 @@ testBootstrapStepsOpenbsdHasBashrcAndHomeshickIfDefined() {
   assertStdoutContains "homeshick"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
   assertFalse 'homebrew absent without tags' "grep -q '^homebrew$' '$stdout'"
+}
+
+testBootstrapStepsOmitsMiseOnOpenbsd() {
+  local config_path="$tmpdir/nonexistent.json"
+  local os="openbsd"
+  local version="7.4"
+  local kernel="openbsd"
+  local arch="x86_64"
+
+  # shellcheck disable=SC2329
+  _steps_extra_package_managers() { echo "mise"; }
+
+  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
+  assertStderrNull
 }
 
 testBashrcSkipsIfAlreadyInstalled() {

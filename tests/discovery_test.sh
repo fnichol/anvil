@@ -12,6 +12,9 @@ oneTimeSetUp() {
   . "${SRC:=lib/anvil/discovery.sh}"
 
   commonOneTimeSetUp
+
+  # shellcheck disable=SC2329
+  ensure_jq() { :; }
 }
 
 setUp() {
@@ -291,6 +294,135 @@ testDiscoverInstalledUbuntuAptUsesDpkgQuery() {
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bash"
   assertStdoutContains "curl"
+  assertStderrNull
+}
+
+testDiscoverInstalledAlpineMiseUsesMise() {
+  # Stub out `mise`
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{
+	  "node":[{"version":"22.0.0","requested_version":"lts"}],
+	  "rust":[{"version":"1.80.0","requested_version":"stable"}]
+	}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "alpine" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "node@lts"
+  assertStdoutContains "rust@stable"
+  assertStderrNull
+}
+
+testDiscoverInstalledArchMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"node":[{"version":"22.0.0","requested_version":"lts"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "arch" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "node@lts"
+  assertStderrNull
+}
+
+testDiscoverInstalledBazziteMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"python":[{"version":"3.12.0","requested_version":"3.12"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "bazzite" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "python@3.12"
+  assertStderrNull
+}
+
+testDiscoverInstalledCachyosMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"deno":[{"version":"2.0.0","requested_version":"latest"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "cachyos" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "deno@latest"
+  assertStderrNull
+}
+
+testDiscoverInstalledDebianMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"node":[{"version":"22.0.0","requested_version":"lts"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "debian" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "node@lts"
+  assertStderrNull
+}
+
+testDiscoverInstalledTruenasMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"go":[{"version":"1.22.0","requested_version":"latest"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "truenas" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "go@latest"
+  assertStderrNull
+}
+
+testDiscoverInstalledUbuntuMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{"rust":[{"version":"1.80.0","requested_version":"stable"}]}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "ubuntu" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "rust@stable"
+  assertStderrNull
+}
+
+testDiscoverInstalledMacosMiseUsesMise() {
+  cat <<-'EOF' >"$isolated_path/mise"
+	#!/bin/sh
+	echo '{
+	  "node":[{"version":"22.0.0","requested_version":"lts"}],
+	  "python":[{"version":"3.12.0","requested_version":"3.12"}]
+	}'
+	EOF
+  chmod +x "$isolated_path/mise"
+  PATH="$isolated_path:$PATH"
+
+  run discover_installed_packages "macos" "mise"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "node@lts"
+  assertStdoutContains "python@3.12"
   assertStderrNull
 }
 
