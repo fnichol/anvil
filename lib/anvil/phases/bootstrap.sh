@@ -147,46 +147,6 @@ bootstrap_step_homebrew() {
     return 0
   fi
 
-  # case "$kernel" in
-  #   linux)
-  #     # Homebrew on Linux installs to `/home/linuxbrew/.linuxbrew`
-  #     if check_cmd brew || [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
-  #       eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  #
-  #       # Ensure Git is installed for updating later
-  #       _ensure_git "$os"
-  #
-  #       return 0
-  #     fi
-  #     ;;
-  #   darwin)
-  #     # Apple Silicon installs to `/opt/homebrew` whereas on Intel installation
-  #     # is under `/usr/local` which is already on PATH
-  #     case "$arch" in
-  #       aarch64)
-  #         if check_cmd brew || [ -x /opt/homebrew/bin/brew ]; then
-  #           eval "$(/opt/homebrew/bin/brew shellenv)"
-  #
-  #           # Ensure Git is installed for updating later
-  #           _ensure_git "$os"
-  #
-  #           return 0
-  #         fi
-  #         ;;
-  #       x86_64)
-  #         if check_cmd brew || [ -x /usr/homebrew/bin/brew ]; then
-  #           eval "$(/usr/homebrew/bin/brew shellenv)"
-  #
-  #           # Ensure Git is installed for updating later
-  #           _ensure_git "$os"
-  #
-  #           return 0
-  #         fi
-  #         ;;
-  #     esac
-  #     ;;
-  # esac
-
   _ensure_git "$os"
   _ensure_system_bash "$os"
 
