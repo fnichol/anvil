@@ -15,10 +15,16 @@ init_steps() {
   local _arch="$1"
   shift
 
+  echo "setup_traps"
   echo "validate_commands"
   echo "detect_privilege"
   echo "acquire_sudo"
   echo "ensure_tools"
+}
+
+init_step_setup_traps() {
+  setup_cleanups
+  setup_traps trap_cleanups
 }
 
 init_step_validate_commands() {
