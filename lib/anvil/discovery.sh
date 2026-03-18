@@ -11,6 +11,11 @@ discover_installed_packages() {
         apk)
           apk info
           ;;
+        homebrew)
+          need_cmd brew
+
+          brew list --formula --versions | cut -d ' ' -f 1
+          ;;
         mise)
           _discover_mise_global_tools
           ;;
@@ -30,6 +35,11 @@ discover_installed_packages() {
           #
           # See: https://bbs.archlinux.org/viewtopic.php?id=76218
           pacman --query --quiet --foreign
+          ;;
+        homebrew)
+          need_cmd brew
+
+          brew list --formula --versions | cut -d ' ' -f 1
           ;;
         mise)
           _discover_mise_global_tools
@@ -54,6 +64,11 @@ discover_installed_packages() {
             | cut -d ' ' -f 1 \
             | while read -r pkg; do echo "${pkg%.*}"; done
           ;;
+        homebrew)
+          need_cmd brew
+
+          brew list --formula --versions | cut -d ' ' -f 1
+          ;;
         mise)
           _discover_mise_global_tools
           ;;
@@ -73,6 +88,11 @@ discover_installed_packages() {
           #
           # See: https://bbs.archlinux.org/viewtopic.php?id=76218
           pacman --query --quiet --foreign
+          ;;
+        homebrew)
+          need_cmd brew
+
+          brew list --formula --versions | cut -d ' ' -f 1
           ;;
         mise)
           _discover_mise_global_tools
@@ -94,6 +114,11 @@ discover_installed_packages() {
           need_cmd dpkg-query
 
           dpkg-query -f '${Package}\n' -W
+          ;;
+        homebrew)
+          need_cmd brew
+
+          brew list --formula --versions | cut -d ' ' -f 1
           ;;
         mise)
           _discover_mise_global_tools

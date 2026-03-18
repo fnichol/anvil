@@ -188,3 +188,22 @@ update_step_homeshick() {
   info "[update:homeshick] Pulling castle updates"
   indent homeshick pull --batch
 }
+
+update_step_mise_sync() {
+  need_cmd mise
+
+  info "[update:mise_sync] Updating Mise"
+  indent mise self-update --yes
+}
+
+update_step_mise() {
+  need_cmd mise
+
+  info "[update:mise] Upgrading Mise global tools"
+
+  # **NOTE**: Ensure that current directory isn't a project with its own local
+  # Mise configuration. We want to upgrade the *global* tools, not any local
+  # tool that might be activated. Unfortunetly, there doesn't appear to be an
+  # option to only select global tools for upgrade.
+  (cd "/" && indent mise upgrade)
+}

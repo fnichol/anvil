@@ -137,12 +137,55 @@ bootstrap_step_homebrew() {
   shift
 
   # Early return if already installed
-  if check_cmd brew; then
+  local brew_path
+  if brew_path="$(_brew_installed_path "$kernel" "$arch")"; then
+    eval "$("$brew_path" shellenv)"
+
     # Ensure Git is installed for updating later
     _ensure_git "$os"
 
     return 0
   fi
+
+  # case "$kernel" in
+  #   linux)
+  #     # Homebrew on Linux installs to `/home/linuxbrew/.linuxbrew`
+  #     if check_cmd brew || [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  #       eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  #
+  #       # Ensure Git is installed for updating later
+  #       _ensure_git "$os"
+  #
+  #       return 0
+  #     fi
+  #     ;;
+  #   darwin)
+  #     # Apple Silicon installs to `/opt/homebrew` whereas on Intel installation
+  #     # is under `/usr/local` which is already on PATH
+  #     case "$arch" in
+  #       aarch64)
+  #         if check_cmd brew || [ -x /opt/homebrew/bin/brew ]; then
+  #           eval "$(/opt/homebrew/bin/brew shellenv)"
+  #
+  #           # Ensure Git is installed for updating later
+  #           _ensure_git "$os"
+  #
+  #           return 0
+  #         fi
+  #         ;;
+  #       x86_64)
+  #         if check_cmd brew || [ -x /usr/homebrew/bin/brew ]; then
+  #           eval "$(/usr/homebrew/bin/brew shellenv)"
+  #
+  #           # Ensure Git is installed for updating later
+  #           _ensure_git "$os"
+  #
+  #           return 0
+  #         fi
+  #         ;;
+  #     esac
+  #     ;;
+  # esac
 
   _ensure_git "$os"
   _ensure_system_bash "$os"
@@ -175,7 +218,7 @@ bootstrap_step_homebrew() {
         _write_brew_shellenv_to_profile
       fi
       ;;
-    macos)
+    darwin)
       # Apple Silicon installs to `/opt/homebrew` whereas on Intel installation
       # is under `/usr/local` which is already on PATH
       case "$arch" in
@@ -266,7 +309,7 @@ bootstrap_step_bashrc() {
   indent bash "$install_local_sh"
 }
 
-boostrap_step_mise() {
+bootstrap_step_mise() {
   local _root="$1"
   shift
   local _config_file="$1"
@@ -277,7 +320,11 @@ boostrap_step_mise() {
   shift
 
   # Early return if already installed
-  if check_cmd mise; then
+  if [ -x "$HOME/.local/bin/mise" ]; then
+    if ! check_cmd mise; then
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
+
     return 0
   fi
 
@@ -287,7 +334,7 @@ boostrap_step_mise() {
 
   download https://mise.run "$install_sh"
 
-  info "Installing mise"
+  info "Installing Mise"
   indent env MISE_INSTALL_HELP=0 sh "$install_sh"
 
   # Update PATH for the current process so subsequent steps can find `mise`
@@ -409,6 +456,41 @@ _ensure_system_bash() {
   fi
 }
 
+_brew_installed_path() {
+  local kernel="$1"
+  local arch="$2"
+
+  case "$kernel" in
+    linux)
+      # Homebrew on Linux installs to `/home/linuxbrew/.linuxbrew`
+      if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+        echo "/home/linuxbrew/.linuxbrew/bin/brew"
+        return 0
+      fi
+      ;;
+    darwin)
+      # Apple Silicon installs to `/opt/homebrew` whereas on Intel installation
+      # is under `/usr/local` which is already on PATH
+      case "$arch" in
+        aarch64)
+          if [ -x /opt/homebrew/bin/brew ]; then
+            echo "/opt/homebrew/bin/brew"
+            return 0
+          fi
+          ;;
+        x86_64)
+          if [ -x /usr/homebrew/bin/brew ]; then
+            echo "/usr/homebrew/bin/brew"
+            return 0
+          fi
+          ;;
+      esac
+      ;;
+  esac
+
+  return 1
+}
+
 # Installs build dependencies required by Homebrew on Linux.
 #
 # See: https://docs.brew.sh/Homebrew-on-Linux#requirements
@@ -422,8 +504,25 @@ _install_linux_brew_build_deps() {
   case "$os" in
     alpine)
       info "Installing Homebrew build dependencies"
+      # Alpine Linux setup thanks to:
+      # https://github.com/chirsz-ever/install-homebrew-on-alpine-linux
       indent as_root apk add --no-cache \
-        build-base
+        bash \
+        curl \
+        git \
+        libc6-compat \
+        sudo
+
+      info "Patching /usr/bin/ldd"
+      # shellcheck disable=SC2016
+      sed -i -- '1a\
+case $1 in --version)\
+    echo "ldd 2.16"\
+    exit\
+esac' /usr/bin/ldd
+
+      info "Symlinking /usr/bin/stat to /bin/stat"
+      ln -snf /bin/stat /usr/bin/stat
       ;;
     arch | cachyos)
       info "Installing Homebrew build dependencies"
@@ -473,7 +572,7 @@ _write_brew_shellenv_to_profile() {
 # Writes the mise shell activation eval line to the shell profile.
 _write_mise_activate_to_profile() {
   # shellcheck disable=SC2016
-  local eval_line='eval "$(mise activate bash)"'
+  local eval_line='eval "$($HOME/.local/bin/mise activate bash)"'
 
   if [ -d "$HOME/.bash.d" ]; then
     local bash_d="$HOME/.bash.d/mise.bash"

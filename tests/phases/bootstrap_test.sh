@@ -778,10 +778,22 @@ testHomebrewSkipsIfAlreadyInstalled() {
   local kernel="darwin"
   local arch="aarch64"
 
+  isolatedPathFor brew
+  cat <<-'EOF' >"$isolated_path/brew"
+	#!/bin/sh
+	exit 0
+	EOF
+  chmod +x "$isolated_path/brew"
+
+  # shellcheck disable=SC2329
+  _brew_installed_path() {
+    echo "$isolated_path/brew"
+  }
+
   # shellcheck disable=SC2329
   check_cmd() {
     case "$1" in
-      brew | git)
+      git)
         return 0
         ;;
       *)
@@ -809,10 +821,16 @@ testHomebrewSetsNoninteractiveWhenInstalling() {
 
   # shellcheck disable=SC2329
   indent() { "$@"; }
+
+  # shellcheck disable=SC2329
+  _brew_installed_path() {
+    return 1
+  }
+
   # shellcheck disable=SC2329
   check_cmd() {
     case "$1" in
-      brew) # brew no present
+      brew) # brew not present
         return 1
         ;;
       *)
@@ -874,6 +892,11 @@ testBootstrapStepHomebrewEarlyReturnIfBrewPresent() {
 	EOF
   chmod +x "$isolated_path/brew"
 
+  # shellcheck disable=SC2329
+  _brew_installed_path() {
+    echo "$isolated_path/brew"
+  }
+
   _ensure_git_called=""
   # shellcheck disable=SC2329
   _ensure_git() { _ensure_git_called="yes"; }
@@ -895,6 +918,11 @@ testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
 
   # brew not present
   PATH="$isolated_path:$PATH"
+
+  # shellcheck disable=SC2329
+  _brew_installed_path() {
+    return 1
+  }
 
   _git_ensured=""
   # shellcheck disable=SC2329
