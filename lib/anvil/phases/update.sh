@@ -186,7 +186,10 @@ update_step_homeshick() {
   . "$homeshick_path/homeshick.sh"
 
   info "[update:homeshick] Pulling castle updates"
-  indent homeshick pull --batch
+  if ! indent homeshick --batch check; then
+    indent homeshick pull --batch
+    indent homeshick link --batch
+  fi
 }
 
 update_step_mise_sync() {

@@ -220,7 +220,8 @@ install_step_homeshick() {
     repo_name="${castle##*/}"
 
     if [ ! -d "$HOME/.homesick/repos/$repo_name" ]; then
-      homeshick clone --batch "$castle"
+      homeshick --batch clone "$castle"
+      homeshick --batch link "$repo_name"
     fi
   done
 }
