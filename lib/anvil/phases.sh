@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/hooks.sh
+. "$SRC_ROOT/lib/anvil/hooks.sh"
+
 # Ordered phase list
 __ANVIL_PHASES__="init facts prepare bootstrap update install configure finalize"
 
@@ -42,14 +45,27 @@ phases_run() {
       fi
 
       section "Step: $phase:$step"
-      "${phase}_step_${step}" \
-        "$root" \
-        "$config_path" \
-        "$hostname" \
-        "$os" \
-        "$version" \
-        "$kernel" \
-        "$arch"
+      if echo "$step" | grep -q '^hook_'; then
+        _phases_run_hook_step \
+          "$phase" \
+          "$step" \
+          "$root" \
+          "$config_path" \
+          "$hostname" \
+          "$os" \
+          "$version" \
+          "$kernel" \
+          "$arch"
+      else
+        "${phase}_step_${step}" \
+          "$root" \
+          "$config_path" \
+          "$hostname" \
+          "$os" \
+          "$version" \
+          "$kernel" \
+          "$arch"
+      fi
 
       if [ -n "${__ANVIL_HOSTNAME:-}" ]; then
         hostname="$__ANVIL_HOSTNAME"
@@ -121,4 +137,63 @@ _should_skip_phase_step() {
 
   # Otherwise, should not be skipped
   return 1
+}
+
+# Runs a single hook step as an isolated subprocess.
+#
+# Exports system facts and Anvil context into the subprocess environment inside
+# a subshell so they do not leak back into the main process.
+#
+# * `@param [String]` phase name
+# * `@param [String]` step name (e.g. "hook_tailscaled")
+# * `@param [String]` root directory of the codebase
+# * `@param [String]` path to config file
+# * `@param [String]` system hostname
+# * `@param [String]` operating system
+# * `@param [String]` OS version
+# * `@param [String]` kernel name
+# * `@param [String]` CPU architecture
+# * `@return 0` if the hook subprocess exits 0
+# * `@return non-zero` if the hook subprocess exits non-zero
+_phases_run_hook_step() {
+  local phase="$1"
+  local step="$2"
+  local root="$3"
+  local config_path="$4"
+  local hostname="$5"
+  local os="$6"
+  local version="$7"
+  local kernel="$8"
+  local arch="$9"
+
+  # Compute the shell interpreter to use for hook subprocesses.
+  #
+  # **Note**: `SHELL` is the user's login shell and `sh` is a safe fallback.
+  if [ -z "${__ANVIL_SHELL__:-}" ]; then
+    __ANVIL_SHELL__="${SHELL:-sh}"
+  fi
+
+  # Derive the hook function name: "hook_tailscaled" -> "tailscaled"
+  local name="${step#hook_}"
+  local func_name="${phase}_hook_${name}"
+
+  local hook_script
+  hook_script="$(hooks_script_for_step "$root" "$phase" "$name")"
+
+  # Run in a subshell so ANVIL_* exports do not leak into the main process
+  (
+    export ANVIL_ROOT="$root"
+    export ANVIL_CONFIG_PATH="$config_path"
+    export ANVIL_HOSTNAME="$hostname"
+    export ANVIL_OS="$os"
+    export ANVIL_VERSION="$version"
+    export ANVIL_KERNEL="$kernel"
+    export ANVIL_ARCH="$arch"
+    export __ANVIL_SUDO__="${__ANVIL_SUDO__:-}"
+
+    "$__ANVIL_SHELL__" -c \
+      ". '$SRC_ROOT/lib/anvil/hook_runner.sh' \
+      && . '$hook_script' \
+      && $func_name"
+  )
 }

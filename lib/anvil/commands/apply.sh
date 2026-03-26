@@ -100,6 +100,7 @@ cmd_apply() {
   local start_time
   start_time="$(date +%s)"
 
+  # shellcheck disable=SC2031
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
   if ! config_exists "$config_file"; then
