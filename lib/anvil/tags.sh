@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+
 # Returns the path to the tags directory.
 #
 # * `@param [String]` root directory path
@@ -110,6 +113,8 @@ tags_resolve() {
   need_cmd awk
   need_cmd sed
   need_cmd tr
+
+  ensure_jq
 
   local resolved=""
   local to_process="$requested_tags"

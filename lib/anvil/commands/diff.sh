@@ -1,6 +1,15 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+# shellcheck source=lib/anvil/discovery.sh
+. "$SRC_ROOT/lib/anvil/discovery.sh"
+# shellcheck source=lib/anvil/convergence.sh
+. "$SRC_ROOT/lib/anvil/convergence.sh"
+
 # Prints usage for the diff command.
 print_usage_diff() {
   local program="$1"
@@ -27,13 +36,6 @@ cmd_diff() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/config.sh"
-  . "$root/lib/anvil/facts.sh"
-  . "$root/lib/anvil/tags.sh"
-  . "$root/lib/anvil/discovery.sh"
-  . "$root/lib/anvil/convergence.sh"
 
   local default_config_path config_file
 
@@ -87,7 +89,7 @@ cmd_diff() {
   local os arch tags
   os="$(facts_os)"
   arch="$(facts_arch)"
-  tags="$(config_read_tags "$config_file")"
+  tags="$(config_resolve_tags "$config_file")"
 
   if [ -z "$tags" ]; then
     die "No tags configured. Run: $program config init"

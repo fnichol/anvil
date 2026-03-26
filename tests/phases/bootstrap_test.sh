@@ -1,27 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../../vendor/lib/libsh.full.sh"
-  . "${SRC:=lib/anvil/phases/bootstrap.sh}"
+  TEST_ROOT="${0%/*}/../.."
 
   commonOneTimeSetUp
-  root="${0%/*}/../.."
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
-  . "lib/anvil/jq.sh"
-  . "lib/anvil/config.sh"
-  . "lib/anvil/tags.sh"
-  . "lib/anvil/convergence.sh"
-
   commonSetUp
+
+  . "${SRC:=lib/anvil/phases/bootstrap.sh}"
 }
 
 testBootstrapStepsMacosNoExtraManagersWithoutTags() {
@@ -620,6 +614,12 @@ testHomeshickSkipsIfAlreadyInstalled() {
 
   mkdir -p "$HOME/.homesick/repos/homeshick"
 
+  local file_sourced_cookie="$tmpdir/homeshick-sourced"
+  cat <<-EOF >"$HOME/.homesick/repos/homeshick/homeshick.sh"
+        #!/usr/bin/env sh
+        touch "$file_sourced_cookie"
+	EOF
+
   # git must not be called
   # shellcheck disable=SC2329
   git() { return 1; }
@@ -633,6 +633,7 @@ testHomeshickSkipsIfAlreadyInstalled() {
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed (idempotent)' "$return_status"
+  assertTrue 'failed to source file' "[ -f '$file_sourced_cookie' ]"
 }
 
 testHomeshickClonesRepo() {
@@ -645,6 +646,9 @@ testHomeshickClonesRepo() {
 
   HOME="$tmpdir/home"
 
+  local file_sourced_cookie="$tmpdir/homeshick-sourced"
+
+  # git must not be called
   _git_cloned=""
   # shellcheck disable=SC2329
   git() {
@@ -652,6 +656,10 @@ testHomeshickClonesRepo() {
       clone)
         _git_cloned="yes"
         mkdir -p "$HOME/.homesick/repos/homeshick"
+        cat <<-EOF >"$HOME/.homesick/repos/homeshick/homeshick.sh"
+		#!/usr/bin/env sh
+		touch "$file_sourced_cookie"
+		EOF
         ;;
     esac
   }
@@ -672,6 +680,7 @@ testHomeshickClonesRepo() {
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'git clone not called' "yes" "$_git_cloned"
+  assertTrue 'failed to source file' "[ -f '$file_sourced_cookie' ]"
 }
 
 testHomeshickWritesDropinWhenBashDExists() {
@@ -691,6 +700,7 @@ testHomeshickWritesDropinWhenBashDExists() {
     case "$1" in
       clone)
         mkdir -p "$HOME/.homesick/repos/homeshick"
+        touch "$HOME/.homesick/repos/homeshick/homeshick.sh"
         ;;
     esac
   }
@@ -727,6 +737,7 @@ testHomeshickAppendsToBashrcWhenNoBashD() {
     case "$1" in
       clone)
         mkdir -p "$HOME/.homesick/repos/homeshick"
+        touch "$HOME/.homesick/repos/homeshick/homeshick.sh"
         ;;
     esac
   }
@@ -759,6 +770,7 @@ testHomeshickDropinIsIdempotent() {
   printf 'source "$HOME/.homesick/repos/homeshick/homeshick.sh"\n' \
     >"$HOME/.bash.d/homeshick.bash"
   mkdir -p "$HOME/.homesick/repos/homeshick"
+  touch "$HOME/.homesick/repos/homeshick/homeshick.sh"
 
   run bootstrap_step_homeshick \
     "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
@@ -1176,6 +1188,9 @@ testBootstrapStepBashrcSkipsIfAlreadyInstalled() {
   assertTrue 'function succeeded' "$return_status"
   assertEquals 'should not re-download' "" "$_install_called"
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/../test_helpers.sh"
 
 shell_compat "$0"
 

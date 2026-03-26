@@ -1,23 +1,19 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../vendor/lib/libsh.full.sh"
-  . "lib/anvil/jq.sh"
-  . "lib/anvil/tags.sh"
-  . "${SRC:=lib/anvil/convergence.sh}"
-
   commonOneTimeSetUp
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
+
+  . "${SRC:=lib/anvil/convergence.sh}"
 }
 
 testCalculatePackagesToInstall() {
@@ -45,9 +41,6 @@ curl"
 }
 
 testStepsExtraPackageManagersReturnsEmptyWhenNoTags() {
-  # shellcheck disable=SC2329
-  config_read_tags() { :; }
-
   run _steps_extra_package_managers "$root" "" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
@@ -55,8 +48,10 @@ testStepsExtraPackageManagersReturnsEmptyWhenNoTags() {
 }
 
 testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "brew-test"; }
+  config_resolve_tags() { echo "brew-test"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "brew-test"; }
 
@@ -84,8 +79,10 @@ testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
 }
 
 testStepsExtraPackageManagersDetectsAurWhenDeclared() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "aur-test"; }
+  config_resolve_tags() { echo "aur-test"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "aur-test"; }
 
@@ -112,8 +109,10 @@ testStepsExtraPackageManagersDetectsAurWhenDeclared() {
 }
 
 testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "dotfiles"; }
+  config_resolve_tags() { echo "dotfiles"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "dotfiles"; }
 
@@ -140,8 +139,10 @@ testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
 }
 
 testStepsExtraPackageManagersIgnoresNativePackageManagers() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "base"; }
+  config_resolve_tags() { echo "base"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "base"; }
 
@@ -168,8 +169,10 @@ testStepsExtraPackageManagersIgnoresNativePackageManagers() {
 }
 
 testStepsExtraPackageManagersDeduplicatesAcrossTags() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "tag-a tag-b"; }
+  config_resolve_tags() { echo "tag-a tag-b"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "tag-a tag-b"; }
 
@@ -213,8 +216,10 @@ testStepsExtraPackageManagersDeduplicatesAcrossTags() {
 }
 
 testStepsExtraPackageManagersDetectsMise() {
+  writeConfigFile
+
   # shellcheck disable=SC2329
-  config_read_tags() { echo "mise-test"; }
+  config_resolve_tags() { echo "mise-test"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "$2"; }
   # shellcheck disable=SC2329
@@ -237,6 +242,10 @@ testStepsExtraPackageManagersDetectsMise() {
   assertStdoutContains "mise"
   assertStderrNull
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/test_helpers.sh"
+
 shell_compat "$0"
 
 . "$shunit2"

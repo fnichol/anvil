@@ -15,6 +15,7 @@ main() {
   . "${0%/*}/../lib/realpath.sh"
 
   root="$(realpath "${0%/*}/..")"
+  SRC_ROOT="$root"
 
   # shellcheck source=vendor/lib/libsh.full.sh
   . "$root/vendor/lib/libsh.full.sh"

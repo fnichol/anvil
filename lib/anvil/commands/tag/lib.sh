@@ -67,11 +67,13 @@ cmd_tag() {
 
   case "$subcommand" in
     list)
-      . "$root/lib/anvil/commands/tag/list.sh"
+      # shellcheck source=lib/anvil/commands/tag/list.sh
+      . "$SRC_ROOT/lib/anvil/commands/tag/list.sh"
       cmd_tag_list "$root" "$program" "$@"
       ;;
     show)
-      . "$root/lib/anvil/commands/tag/show.sh"
+      # shellcheck source=lib/anvil/commands/tag/show.sh
+      . "$SRC_ROOT/lib/anvil/commands/tag/show.sh"
       cmd_tag_show "$root" "$program" "$@"
       ;;
     *)

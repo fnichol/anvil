@@ -18,13 +18,6 @@ phases_run() {
   local config_path="$2"
   local skip_coords="$3"
 
-  # shellcheck source=lib/anvil/tags.sh
-  . "$root/lib/anvil/tags.sh"
-  # shellcheck source=lib/anvil/convergence.sh
-  . "$root/lib/anvil/convergence.sh"
-  # shellcheck source=lib/anvil/discovery.sh
-  . "$root/lib/anvil/discovery.sh"
-
   local hostname os version kernel arch
   hostname=""
   os=""
@@ -34,7 +27,7 @@ phases_run() {
 
   for phase in $__ANVIL_PHASES__; do
     # shellcheck source=/dev/null
-    . "$root/lib/anvil/phases/$phase.sh"
+    . "$SRC_ROOT/lib/anvil/phases/$phase.sh"
 
     echo
     section "Phase: $phase"
@@ -101,6 +94,7 @@ _should_skip_phase_step() {
   local step="$2"
   local skip_coords="$3"
 
+  need_cmd grep
   need_cmd tr
 
   skip_coords="$(echo "$skip_coords" | tr ' ' '\n')"

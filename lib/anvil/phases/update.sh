@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/convergence.sh
+. "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/sudo.sh
+. "$SRC_ROOT/lib/anvil/sudo.sh"
+
 # Returns platform-specific update steps, one per package manager.
 #
 # Emits a sync step before each upgrade step so indices are fresh.
@@ -177,18 +182,15 @@ update_step_openbsd_pkg() {
 update_step_homeshick() {
   local homeshick_path="$HOME/.homesick/repos/homeshick"
 
-  if [ ! -d "$homeshick_path" ]; then
+  if [ ! -f "$homeshick_path/homeshick.sh" ]; then
     warn "[update:homeshick] Homeshick not installed, skipping"
     return 0
   fi
 
-  # shellcheck source=/dev/null
-  . "$homeshick_path/homeshick.sh"
-
   info "[update:homeshick] Pulling castle updates"
   if ! indent homeshick --batch check; then
-    indent homeshick pull --batch
-    indent homeshick link --batch
+    indent homeshick --batch pull
+    indent homeshick --batch link
   fi
 }
 

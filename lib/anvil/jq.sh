@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# Import cookie to prevent circular loading
+__ANVIL_SOURCED_JQ__=true
+
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 # Ensures that a version of jq is present on the system.
 ensure_jq() {
   # If vendored program was already computed, early return

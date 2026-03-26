@@ -1,22 +1,19 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../vendor/lib/libsh.full.sh"
-  . "lib/anvil/jq.sh"
-  . "${SRC:=lib/anvil/config.sh}"
-
   commonOneTimeSetUp
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
+
+  . "${SRC:=lib/anvil/config.sh}"
 }
 
 testConfigFilePath() {
@@ -46,7 +43,7 @@ testConfigExistsCheckExisting() {
 testCreateJson() {
   local config
 
-  run config_create_json "one,two,three"
+  run config_create_json "one,two,three" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
@@ -66,7 +63,7 @@ testCreateJson() {
 testCreateJsonNoTags() {
   local config
 
-  run config_create_json ""
+  run config_create_json "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
@@ -83,7 +80,7 @@ testCreateJsonNoTags() {
 testCreateJsonStripsWhitespaceFromTags() {
   local config
 
-  run config_create_json "  one,  two,   three    "
+  run config_create_json "  one,  two,   three    " "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
@@ -105,7 +102,7 @@ testCreateFile() {
 
   tags="one,two,three"
 
-  run config_create_json "$tags"
+  run config_create_json "$tags" "" ""
   expected_file="$tmpdir/expected.json"
   cp "$stdout" "$expected_file"
 
@@ -137,7 +134,7 @@ testCreateFileAlreadyExists() {
 testCreateJsonWithFqdn() {
   local config
 
-  run config_create_json "one,two" "host.example.com"
+  run config_create_json "one,two" "" "host.example.com"
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
@@ -152,7 +149,7 @@ testCreateJsonWithFqdn() {
 testCreateJsonWithoutFqdn() {
   local config
 
-  run config_create_json "one,two" ""
+  run config_create_json "one,two" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
@@ -293,56 +290,195 @@ testReadTagsWithNonexistentConfig() {
   assertStderrNull
 }
 
-testReadRoleSimple() {
-  run config_read_role "$root/tests/fixtures/config-simple.json"
+testReadRolesSimple() {
+  run config_read_roles "$root/tests/fixtures/config-simple.json"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
   assertStderrNull
 }
 
-testReadRoleWithRoleKey() {
+testReadRolesWithRolesKey() {
   cat <<-EOF >"$tmpdir/config.json"
 	{
-	  "role": "server"
+	  "roles": ["server", "headless"]
 	}
 	EOF
 
-  run config_read_role "$tmpdir/config.json"
+  run config_read_roles "$tmpdir/config.json"
 
   assertTrue 'function failed' "$return_status"
-  assertStdoutEquals "server"
+  assertStdoutContains "server"
+  assertStdoutContains "headless"
   assertStderrNull
 }
 
-testReadRoleWithNoRoleKey() {
+testReadRolesWithNoRolesKey() {
   cat <<-EOF >"$tmpdir/config.json"
 	{}
 	EOF
 
-  run config_read_role "$tmpdir/config.json"
+  run config_read_roles "$tmpdir/config.json"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
   assertStderrNull
 }
 
-testReadRoleWithNullRoleKey() {
+testReadRolesWithNullRolesKey() {
   cat <<-EOF >"$tmpdir/config.json"
 	{
-	  "role": null
+	  "roles": null
 	}
 	EOF
 
-  run config_read_role "$tmpdir/config.json"
+  run config_read_roles "$tmpdir/config.json"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
   assertStderrNull
 }
 
-testReadRoleWithNonexistentConfig() {
-  run config_read_role "$tmpdir/nonexistent.json"
+testReadRolesWithNonexistentConfig() {
+  run config_read_roles "$tmpdir/nonexistent.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testCreateJsonWithRoles() {
+  local config
+
+  run config_create_json "" "server,headless" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.roles | length == 2'
+  assertJsonFromFile "$config" '.roles | contains(["server"])'
+  assertJsonFromFile "$config" '.roles | contains(["headless"])'
+  assertJsonFromFile "$config" 'has("tags") | not'
+}
+
+testCreateJsonWithRolesAndTags() {
+  local config
+
+  run config_create_json "extra-tag" "workstation" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.roles | length == 1'
+  assertJsonFromFile "$config" '.roles | contains(["workstation"])'
+  assertJsonFromFile "$config" '.tags | length == 1'
+  assertJsonFromFile "$config" '.tags | contains(["extra-tag"])'
+}
+
+testCreateJsonRolesAbsentWhenEmpty() {
+  local config
+
+  run config_create_json "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" 'has("roles") | not'
+}
+
+# ---
+
+testResolveTagsWithOnlyTags() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "tags": ["alfa", "bravo"]
+	}
+	EOF
+
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStderrNull
+}
+
+testResolveTagsWithOnlyRoles() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "roles": ["alfa"]
+	}
+	EOF
+
+  # alfa role has tags: alfa, bravo
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStderrNull
+}
+
+testResolveTagsWithRolesAndTags() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "roles": ["alfa"],
+	  "tags": ["charlie"]
+	}
+	EOF
+
+  # alfa role has tags: alfa, bravo; plus explicit tag: charlie
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStdoutContains "charlie"
+  assertStderrNull
+}
+
+testResolveTagsWithNestedRoleDeps() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{
+	  "roles": ["charlie"]
+	}
+	EOF
+
+  # charlie depends on bravo depends on alfa
+  # alfa tags: alfa bravo; bravo tags: charlie; charlie tags: delta
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStdoutContains "charlie"
+  assertStdoutContains "delta"
+  assertStderrNull
+}
+
+testResolveTagsWithNoRolesOrTags() {
+  cat <<-EOF >"$tmpdir/config.json"
+	{}
+	EOF
+
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testResolveTagsWithNonexistentConfig() {
+  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/nonexistent.json"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -583,6 +719,9 @@ testReadCustomRemoveWithNonexistentConfig() {
   assertStdoutNull
   assertStderrNull
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/test_helpers.sh"
 
 shell_compat "$0"
 

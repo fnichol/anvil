@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 # Ensures that a version of Busybox with script applet is present on the Linux system.
 ensure_script() {
   local kernel

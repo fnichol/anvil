@@ -1,30 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../../vendor/lib/libsh.full.sh"
-  . "${SRC:=lib/anvil/phases/update.sh}"
+  TEST_ROOT="${0%/*}/../.."
 
   commonOneTimeSetUp
-  root="${0%/*}/../.."
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
-  . "lib/anvil/jq.sh"
-  . "lib/anvil/config.sh"
-  . "lib/anvil/tags.sh"
-  . "lib/anvil/convergence.sh"
-
   commonSetUp
 
-  HOME="$tmpdir/home"
-  mkdir -p "$HOME"
+  . "${SRC:=lib/anvil/phases/update.sh}"
 }
 
 testUpdateStepsMacosContainsNoExtraManagersByDefault() {
@@ -612,11 +603,29 @@ testUpdateHomeshickNoOpWhenHomeshickNotInstalled() {
 testUpdateHomeshickPullsWhenInstalled() {
   local homeshick_dir="$HOME/.homesick/repos/homeshick"
   mkdir -p "$homeshick_dir"
+  touch "$homeshick_dir/homeshick.sh"
 
-  # Create a minimal homeshick.sh stub that defines homeshick()
-  printf '#!/bin/sh\nhomeshick() { _homeshick_args="$*"; }\n' \
-    >"$homeshick_dir/homeshick.sh"
+  _check_called=""
+  _pull_called=""
+  _link_called=""
+  # shellcheck disable=SC2329
+  homeshick() {
+    case "$2" in
+      check) # exit non-zero to signal castles have updates
+        _check_called="yes"
+        return 1
+        ;;
+      pull)
+        _pull_called="yes"
+        ;;
+      link)
+        _link_called="yes"
+        ;;
+    esac
+  }
 
+  # shellcheck disable=SC2329
+  indent() { "$@"; }
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "homeshick"
@@ -626,7 +635,13 @@ testUpdateHomeshickPullsWhenInstalled() {
     "" "" "" "" "" "" ""
 
   assertTrue 'function failed' "$return_status"
+  assertEquals 'check subcommand called' "yes" "$_check_called"
+  assertEquals 'pull subcommand called' "yes" "$_pull_called"
+  assertEquals 'link subcommand called' "yes" "$_link_called"
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/../test_helpers.sh"
 
 shell_compat "$0"
 

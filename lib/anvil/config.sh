@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/roles.sh
+. "$SRC_ROOT/lib/anvil/roles.sh"
+
 # Returns the default configuration file path.
 #
 # The path is determined using the XDG Base Directory specification, falling
@@ -40,15 +45,17 @@ config_exists() {
 #
 # * `@param [String]` configuration file path
 # * `@param [String]` comma-separated list of tag names
+# * `@param [optional, String]` comma-separated list of role names
 # * `@param [optional, String]` an FQDN for the host
 # * `@stderr` warning message if file already exists
 # * `@return 0` if successful
 # * `@return 1` if configuration file already exists
 config_create() {
-  local config_file tags_str fqdn_str
+  local config_file roles_str tags_str fqdn_str
   config_file="$1"
   tags_str="$2"
-  fqdn_str="${3:-}"
+  roles_str="${3:-}"
+  fqdn_str="${4:-}"
 
   if config_exists "$config_file"; then
     warn "Can't create new config, file already exists: $config_file"
@@ -58,7 +65,7 @@ config_create() {
   mkdir -p "$(dirname "$config_file")"
 
   touch "$config_file"
-  config_create_json "$tags_str" "$fqdn_str" >"$config_file"
+  config_create_json "$tags_str" "$roles_str" "$fqdn_str" >"$config_file"
 }
 
 # Generates JSON configuration data.
@@ -68,6 +75,7 @@ config_create() {
 # of whitespace.
 #
 # * `@param [String]` comma-separated list of tag names
+# * `@param [optional, String]` comma-separated list of role names
 # * `@param [optional, String]` an FQDN for the host
 # * `@stdout` JSON configuration data
 # * `@return 0` if successful
@@ -78,18 +86,29 @@ config_create() {
 # Basic usage:
 #
 # ```sh
-# config_create_json "base, multimedia, base-gui"
+# config_create_json "base, multimedia, base-gui" "workstation" "myhost.local"
 # ```
 config_create_json() {
   local tags_str fqdn_str
   tags_str="$1"
-  fqdn_str="${2:-}"
+  roles_str="${2:-}"
+  fqdn_str="${3:-}"
 
   ensure_jq
 
-  jq -n --arg tags_str "$tags_str" --arg fqdn "$fqdn_str" '
-    (if $fqdn != "" then {fqdn: $fqdn} else {} end) + {
-      tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" ")),
+  jq -n \
+    --arg tags_str "$tags_str" \
+    --arg roles_str "$roles_str" \
+    --arg fqdn "$fqdn_str" \
+    '
+    (if $fqdn != "" then {fqdn: $fqdn} else {} end) +
+    (if $roles_str != "" then
+      {roles: $roles_str | split(",") | map(ltrimstr(" ") | rtrimstr(" "))}
+     else {} end) +
+    (if $tags_str != "" then
+      {tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" "))}
+     else {} end) +
+    {
       skip_steps: [],
       custom_packages: {
         add: [],
@@ -132,19 +151,19 @@ config_read_tags() {
   fi
 }
 
-# Reads the role field from a configuration file.
+# Reads the roles array from a configuration file.
 #
 # * `@param [optional, String]` configuration file path (optional, defaults to
 #   `config_path` output)
-# * `@stdout` role value if present
+# * `@stdout` space-seperated list of role names
 # * `@return 0` if successful
-config_read_role() {
+config_read_roles() {
   local config_file="${1:-$(config_path)}"
 
   if config_exists "$config_file"; then
     ensure_jq
 
-    jq -r '.role // empty' "$config_file"
+    jq -r '.roles[]? // empty' "$config_file" | tr '\n' ' '
   fi
 }
 
@@ -200,4 +219,63 @@ config_read_custom_remove() {
 
     jq -r '.custom_packages.remove[]? // empty' "$config_file"
   fi
+}
+
+# Resolves the complete tag list from a configuration file.
+#
+# Reads roles (if any), resolves role dependencies in order, collects their
+# tags, then appends any explicit tags from the "tags" array.
+#
+# * `@param [String]` root directory path
+# * `@param [optional, String]` configuration file path (optional, defaults to
+#   `config_path` output)
+# * `@stdout` space-delimited list of tag names (role sourced first, then
+#   extra tags from config)
+# * `@return 0` if successful
+config_resolve_tags() {
+  local root="$1"
+  local config_file="${2:-$(config_path)}"
+
+  # If no config file is found, then no tags are resolved--done
+  if ! config_exists "$config_file"; then
+    return 0
+  fi
+
+  need_cmd tr
+
+  ensure_jq
+
+  local all_tags=""
+
+  # Load all config defined roles
+  local config_roles
+  config_roles="$(config_read_roles "$config_file")"
+
+  if [ -n "$config_roles" ]; then
+    # Resolve all roles to a dependencies-first ordering
+    local resolved_roles
+    resolved_roles="$(roles_resolve "$root" "$config_roles")"
+
+    # Expand roles to the appropriate set of dependencies-first ordered tags
+    for role in $resolved_roles; do
+      local role_tags
+      role_tags="$(roles_tags_for "$root" "$role")"
+
+      if [ -n "$role_tags" ]; then
+        all_tags="${all_tags}${all_tags:+ }${role_tags}"
+      fi
+    done
+  fi
+
+  # Load all config defined tags
+  local config_tags
+  config_tags="$(config_read_tags "$config_file")"
+
+  # Append config tags to role-resolved and derived tags
+  if [ -n "$config_tags" ]; then
+    all_tags="${all_tags}${all_tags:+ }${config_tags}"
+  fi
+
+  # Note: drop trailing newline, hence the use of `printf`
+  printf '%s' "$all_tags"
 }

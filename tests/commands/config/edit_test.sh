@@ -4,12 +4,10 @@
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/../../test_helpers.sh"
 
-# shellcheck source=tests/_ksh_local.sh
-. "${0%/*}/../../_ksh_local.sh"
-
 oneTimeSetUp() {
+  TEST_ROOT="${0%/*}/../../.."
+
   commonOneTimeSetUp
-  root="${0%/*}/../../.."
 }
 
 setUp() {
@@ -56,6 +54,9 @@ testCmdConfigEditNoConfig() {
   assertStdoutStripAnsiContains "Hint: "
   assertStderrStripAnsiContains "Config file does not exist"
 }
+
+# shellcheck source=tests/_ksh_local.sh
+. "${0%/*}/../../_ksh_local.sh"
 
 shell_compat "$0"
 

@@ -1,26 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../../test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/../../_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../../../vendor/lib/libsh.full.sh"
+  TEST_ROOT="${0%/*}/../../.."
 
   commonOneTimeSetUp
-  root="${0%/*}/../../.."
 
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/config.sh
-  . "$root/lib/anvil/config.sh"
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
+
+  . "$SRC_ROOT/lib/anvil/config.sh"
 }
 
 runCli() {
@@ -61,13 +56,13 @@ testCmdConfigInitDefaults() {
   assertStderrNull
 
   assertNull "$(config_read_tags "$config_file")"
-  assertNull "$(config_read_role "$config_file")"
+  assertNull "$(config_read_roles "$config_file")"
   assertNull "$(config_read_skip_steps "$config_file")"
   assertNull "$(config_read_custom_add "$config_file")"
   assertNull "$(config_read_custom_remove "$config_file")"
 }
 
-testCmdConfigInitWithTags() {
+testCmdConfigInitWithTagsLongOption() {
   local config_file
   config_file="$tmpdir/config.json"
 
@@ -80,10 +75,85 @@ testCmdConfigInitWithTags() {
   assertContains "$(config_read_tags "$config_file")" alfa
   assertContains "$(config_read_tags "$config_file")" bravo
   assertContains "$(config_read_tags "$config_file")" charlie
-  assertNull "$(config_read_role "$config_file")"
+  assertNull "$(config_read_roles "$config_file")"
   assertNull "$(config_read_skip_steps "$config_file")"
   assertNull "$(config_read_custom_add "$config_file")"
   assertNull "$(config_read_custom_remove "$config_file")"
+}
+
+testCmdConfigInitWithTagsShortOption() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init -t alfa,bravo,charlie
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertContains "$(config_read_tags "$config_file")" alfa
+  assertContains "$(config_read_tags "$config_file")" bravo
+  assertContains "$(config_read_tags "$config_file")" charlie
+  assertNull "$(config_read_roles "$config_file")"
+  assertNull "$(config_read_skip_steps "$config_file")"
+  assertNull "$(config_read_custom_add "$config_file")"
+  assertNull "$(config_read_custom_remove "$config_file")"
+}
+
+testCmdConfigInitWithRolesLongOption() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init --roles=headless,workstation
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertContains "$(config_read_roles "$config_file")" headless
+  assertContains "$(config_read_roles "$config_file")" workstation
+  assertNull "$(config_read_tags "$config_file")"
+}
+
+testCmdConfigInitWithRolesShortOption() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init -r headless,workstation
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertContains "$(config_read_roles "$config_file")" headless
+  assertContains "$(config_read_roles "$config_file")" workstation
+  assertNull "$(config_read_tags "$config_file")"
+}
+
+testCmdConfigInitWithoutRolesHasNoRolesKey() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStderrNull
+
+  assertNull "$(config_read_roles "$config_file")"
+}
+
+testCmdConfigInitWithRolesAndTags() {
+  local config_file
+  config_file="$tmpdir/config.json"
+
+  runCliWithConfig "$config_file" config init --roles=headless --tags=extra-tag
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Created config file'
+  assertStderrNull
+
+  assertContains "$(config_read_roles "$config_file")" headless
+  assertContains "$(config_read_tags "$config_file")" extra-tag
 }
 
 testCmdConfigInitWithFqdnShortFlag() {
@@ -147,6 +217,9 @@ testCmdConfigInitWithoutFqdnHasNoFqdnKey() {
 
   assertNull "$(config_read_fqdn "$config_file")"
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/../../test_helpers.sh"
 
 shell_compat "$0"
 

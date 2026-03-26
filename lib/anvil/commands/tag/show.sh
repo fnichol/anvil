@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/tags.sh
+. "$SRC_ROOT/lib/anvil/tags.sh"
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 print_usage_tag_show() {
   local program="$1"
 
@@ -64,16 +71,14 @@ cmd_tag_show() {
     die "required argument: NAME"
   fi
 
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/facts.sh"
-  . "$root/lib/anvil/tags.sh"
-
   local tag_file
   tag_file="$(tags_path_for "$root" "$name")"
 
   if [ ! -f "$tag_file" ]; then
     die "Tag not found: $name"
   fi
+
+  ensure_jq
 
   section "Tag: $name"
 

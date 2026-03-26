@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# shellcheck disable=SC3043
 # Test helper utilities for shUnit2
 
 # shellcheck disable=SC2034
@@ -8,8 +9,10 @@ commonOneTimeSetUp() {
   # Define root of project tree
   if [ -n "${TEST_ROOT:-}" ]; then
     root="$TEST_ROOT"
+    SRC_ROOT="$root"
   else
     root="${0%/*}/.."
+    SRC_ROOT="$root"
   fi
 
   __ORIG_FLAGS="$-"
@@ -42,6 +45,23 @@ commonSetUp() {
   unset return_status
   # Create a scratch directory that will be removed on every test
   mkdir -p "$tmpdir"
+
+  # Ensure any existing XDG config is unset as this may come from a user's
+  # shell session and isn't intended to be used in tests
+  unset XDG_CONFIG_HOME
+  unset XDG_STATE_HOME
+
+  # Override home directory environment variable
+  HOME="$tmpdir/home"
+  mkdir -p "$HOME"
+}
+
+writeConfigFile() {
+  local content="${1:-{}}"
+  local location="${2:-$HOME/.config/anvil/config.json}"
+
+  mkdir -p "$(dirname "$location")"
+  echo "$content" >"$location"
 }
 
 assertStdoutEquals() {

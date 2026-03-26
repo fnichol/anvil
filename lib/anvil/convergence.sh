@@ -1,6 +1,15 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/roles.sh
+. "$SRC_ROOT/lib/anvil/roles.sh"
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/tags.sh
+. "$SRC_ROOT/lib/anvil/tags.sh"
+
 # Extra package managers that aren't built-in/system managers
 __ANVIL_EXTRA_PACKAGE_MANAGERS__="aur bashrc homebrew homeshick mise"
 
@@ -25,11 +34,6 @@ desired_packages() {
   local package_type="$4"
   shift 4
   local tags="$*"
-
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/tags.sh
-  . "$root/lib/anvil/tags.sh"
 
   local all_pkgs=""
 
@@ -75,7 +79,7 @@ _steps_extra_package_managers() {
   ensure_jq
 
   local tags
-  tags="$(config_read_tags "$config_path")"
+  tags="$(config_resolve_tags "$root" "$config_path")"
 
   # No tags are configured, early return
   if [ -z "$tags" ]; then

@@ -1,17 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../vendor/lib/libsh.full.sh"
-  . "${SRC:=lib/anvil/discovery.sh}"
-
   commonOneTimeSetUp
+
+  . "${0%/*}/../vendor/lib/libsh.full.sh"
 
   # shellcheck disable=SC2329
   ensure_jq() { :; }
@@ -19,6 +15,9 @@ oneTimeSetUp() {
 
 setUp() {
   commonSetUp
+
+  . "${SRC:=lib/anvil/discovery.sh}"
+
   mkdir -p "$isolated_path"
 }
 
@@ -425,6 +424,9 @@ testDiscoverInstalledMacosMiseUsesMise() {
   assertStdoutContains "python@3.12"
   assertStderrNull
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/test_helpers.sh"
 
 shell_compat "$0"
 

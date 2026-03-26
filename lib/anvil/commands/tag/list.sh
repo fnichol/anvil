@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/tags.sh
+. "$SRC_ROOT/lib/anvil/tags.sh"
+
 print_usage_tag_list() {
   local program="$1"
 
@@ -21,10 +26,6 @@ cmd_tag_list() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/facts.sh"
-  . "$root/lib/anvil/tags.sh"
 
   OPTIND=1
   while getopts "h-:" arg; do

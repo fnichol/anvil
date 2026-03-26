@@ -67,11 +67,13 @@ cmd_role() {
 
   case "$subcommand" in
     list)
-      . "$root/lib/anvil/commands/role/list.sh"
+      # shellcheck source=lib/anvil/commands/role/list.sh
+      . "$SRC_ROOT/lib/anvil/commands/role/list.sh"
       cmd_role_list "$root" "$program" "$@"
       ;;
     show)
-      . "$root/lib/anvil/commands/role/show.sh"
+      # shellcheck source=lib/anvil/commands/role/show.sh
+      . "$SRC_ROOT/lib/anvil/commands/role/show.sh"
       cmd_role_show "$root" "$program" "$@"
       ;;
     *)

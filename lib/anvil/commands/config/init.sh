@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+
 print_usage_config_init() {
   local program="$1"
   local default_config_path="$2"
@@ -17,6 +20,7 @@ print_usage_config_init() {
 	OPTIONS:
 	    -f, --fqdn=<FQDN>       Host FQDN (bare hostname will append .local
 	                            as FQDN)
+	    -r, --roles=<R>[,<R>..] Roles to use in config
 	    -t, --tags=<T>[,<T>..]  Tags to use in config
 
 	ENVIRONMENT VARIABLES:
@@ -31,18 +35,15 @@ cmd_config_init() {
   program="$1"
   shift
 
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/facts.sh"
-  . "$root/lib/anvil/config.sh"
-
   local default_config_path config_file
+  local roles=""
   local tags=""
   local fqdn=""
 
   default_config_path="$(config_path)"
 
   OPTIND=1
-  while getopts "hf:t:-:" arg; do
+  while getopts "hf:r:t:-:" arg; do
     case "$arg" in
       h)
         print_usage_config_init "$program" "$default_config_path"
@@ -50,6 +51,9 @@ cmd_config_init() {
         ;;
       f)
         fqdn="$OPTARG"
+        ;;
+      r)
+        roles="$OPTARG"
         ;;
       t)
         tags="$OPTARG"
@@ -65,6 +69,13 @@ cmd_config_init() {
             fqdn="$long_optarg"
             ;;
           fqdn*)
+            print_usage_config_init "$program" "$default_config_path" >&2
+            die "missing required argument for --$OPTARG option"
+            ;;
+          roles=?*)
+            roles="$long_optarg"
+            ;;
+          roles*)
             print_usage_config_init "$program" "$default_config_path" >&2
             die "missing required argument for --$OPTARG option"
             ;;
@@ -105,7 +116,7 @@ cmd_config_init() {
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
-  config_create "$config_file" "$tags" "$fqdn" || die "Failed to init config"
+  config_create "$config_file" "$tags" "$roles" "$fqdn" || die "Failed to init config"
 
   section "Created config file: $config_file"
 }

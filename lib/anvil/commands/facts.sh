@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 print_usage_facts() {
   local program="$1"
 
@@ -16,8 +19,8 @@ print_usage_facts() {
 }
 
 cmd_facts() {
-  local root program
-  root="$1"
+  local _root program
+  _root="$1"
   shift
   program="$1"
   shift
@@ -53,9 +56,6 @@ cmd_facts() {
     esac
   done
   shift "$((OPTIND - 1))"
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/facts.sh"
 
   facts_json
 }

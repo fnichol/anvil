@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/convergence.sh
+. "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/sudo.sh
+. "$SRC_ROOT/lib/anvil/sudo.sh"
+
 # Returns platform-specific bootstrap steps.
 #
 # **Note**: Only steps for package managers that require installation are
@@ -205,9 +210,13 @@ bootstrap_step_homeshick() {
   local homeshick_path="$HOME/.homesick/repos/homeshick"
 
   # Early return if already installed
-  if [ -d "$homeshick_path" ]; then
+  if [ -f "$homeshick_path/homeshick.sh" ]; then
     # Ensure Git is installed for updating later
     _ensure_git "$os"
+
+    # Load homeshick so subcommands are available in this shell
+    # shellcheck source=/dev/null
+    . "$homeshick_path/homeshick.sh"
 
     return 0
   fi
@@ -232,6 +241,10 @@ bootstrap_step_homeshick() {
       printf '\n%s\n' "$source_line" >>"$HOME/.bashrc"
     fi
   fi
+
+  # Load homeshick so subcommands are available in this shell
+  # shellcheck source=/dev/null
+  . "$homeshick_path/homeshick.sh"
 }
 
 bootstrap_step_bashrc() {
@@ -287,6 +300,14 @@ bootstrap_step_mise() {
 
     return 0
   fi
+
+  # Install any missing build dependencies before running the installer on
+  # Linux systems
+  case "$kernel" in
+    linux)
+      _install_linux_mise_build_deps "$os"
+      ;;
+  esac
 
   local install_sh
   install_sh="$(mktemp_file)"
@@ -463,6 +484,9 @@ _install_linux_brew_build_deps() {
   # also an immutable system so no additional packages can be installed.
   case "$os" in
     alpine)
+      need_cmd ln
+      need_cmd sed
+
       info "Installing Homebrew build dependencies"
       # Alpine Linux setup thanks to:
       # https://github.com/chirsz-ever/install-homebrew-on-alpine-linux
@@ -527,6 +551,22 @@ _write_brew_shellenv_to_profile() {
       printf '\n%s\n' "$eval_line" >>"$HOME/.bashrc"
     fi
   fi
+}
+
+# Installs build dependencies required by Mise on Linux.
+#
+# * `@param [String]` operating system
+_install_linux_mise_build_deps() {
+  local os="$1"
+
+  case "$os" in
+    alpine)
+      info "Installing Mise build dependencies"
+      indent as_root apk add --no-cache \
+        gpg \
+        python3
+      ;;
+  esac
 }
 
 # Writes the mise shell activation eval line to the shell profile.

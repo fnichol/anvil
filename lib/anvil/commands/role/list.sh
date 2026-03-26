@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+
 print_usage_role_list() {
   local program="$1"
 
@@ -21,9 +24,6 @@ cmd_role_list() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/facts.sh"
 
   OPTIND=1
   while getopts "h-:" arg; do

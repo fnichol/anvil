@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+if [ -z "${__ANVIL_SOURCED_JQ__:-}" ]; then
+  # shellcheck source=lib/anvil/jq.sh
+  . "$SRC_ROOT/lib/anvil/jq.sh"
+fi
+
 # Determines the system kernel.
 #
 # Detects the kernel by examining `uname -s` output. Returns normalized names

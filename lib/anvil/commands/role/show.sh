@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+
 print_usage_role_show() {
   local program="$1"
 
@@ -24,8 +27,6 @@ cmd_role_show() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
 
   OPTIND=1
   while getopts "h-:" arg; do
@@ -80,6 +81,13 @@ cmd_role_show() {
   local desc
   desc="$(jq -r '.description // "No description"' "$role_file")"
   echo "Description: $desc"
+  echo ""
+
+  # Show depends_on
+  echo "Depends on:"
+  jq -r '.depends_on[]? // empty' "$role_file" | while IFS= read -r dep; do
+    echo "  - $dep"
+  done
   echo ""
 
   # Show tags

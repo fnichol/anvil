@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+
 print_usage_config_edit() {
   local program="$1"
   local default_config_path="$2"
@@ -25,9 +28,6 @@ cmd_config_edit() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/config.sh"
 
   local default_config_path config_file
 

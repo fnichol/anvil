@@ -68,15 +68,18 @@ cmd_config() {
 
   case "$subcommand" in
     edit)
-      . "$root/lib/anvil/commands/config/edit.sh"
+      # shellcheck source=lib/anvil/commands/config/edit.sh
+      . "$SRC_ROOT/lib/anvil/commands/config/edit.sh"
       cmd_config_edit "$root" "$program" "$@"
       ;;
     init)
-      . "$root/lib/anvil/commands/config/init.sh"
+      # shellcheck source=lib/anvil/commands/config/init.sh
+      . "$SRC_ROOT/lib/anvil/commands/config/init.sh"
       cmd_config_init "$root" "$program" "$@"
       ;;
     show)
-      . "$root/lib/anvil/commands/config/show.sh"
+      # shellcheck source=lib/anvil/commands/config/show.sh
+      . "$SRC_ROOT/lib/anvil/commands/config/show.sh"
       cmd_config_show "$root" "$program" "$@"
       ;;
     *)

@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/convergence.sh
+. "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/discovery.sh
+. "$SRC_ROOT/lib/anvil/discovery.sh"
+
 # Returns platform-specific install steps, one package manager per step.
 install_steps() {
   local root="$1"
@@ -210,10 +215,6 @@ install_step_homeshick() {
   if [ -z "$desired_castles" ]; then
     return 0
   fi
-
-  # Load homeshick so subcommands are available in this shell
-  # shellcheck source=/dev/null
-  . "$HOME/.homesick/repos/homeshick/homeshick.sh"
 
   local castle repo_name
   for castle in $desired_castles; do

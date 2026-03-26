@@ -1,11 +1,20 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-REQUIRED_CMDS=""
-REQUIRED_CMDS_ALPINE="apk wget"
-REQUIRED_CMDS_ARCH="curl pacman"
-REQUIRED_CMDS_DEBIAN="apt wget"
-REQUIRED_CMDS_MACOS="xcode-select curl"
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/script.sh
+. "$SRC_ROOT/lib/anvil/script.sh"
+
+__ANVIL_REQUIRED_CMDS=""
+__ANVIL_REQUIRED_CMDS_ALPINE="apk wget"
+__ANVIL_REQUIRED_CMDS_ARCH="curl pacman"
+__ANVIL_REQUIRED_CMDS_DEBIAN="apt wget"
+__ANVIL_REQUIRED_CMDS_MACOS="xcode-select curl"
 
 # Prints usage for the status command.
 print_usage_doctor() {
@@ -33,11 +42,6 @@ cmd_doctor() {
   shift
   program="$1"
   shift
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/script.sh"
-  . "$root/lib/anvil/config.sh"
-  . "$root/lib/anvil/facts.sh"
 
   local default_config_path config_file
 
@@ -83,7 +87,7 @@ cmd_doctor() {
   # Check for required commands
   section "Required Commands"
 
-  for cmd in $REQUIRED_CMDS; do
+  for cmd in $__ANVIL_REQUIRED_CMDS; do
     if check_cmd "$cmd"; then
       info "✓ $cmd found: $(command -v "$cmd")"
     else
@@ -102,16 +106,16 @@ cmd_doctor() {
   local platform_required_cmds=""
   case "$os" in
     alpine)
-      platform_required_cmds="$REQUIRED_CMDS_ALPINE"
+      platform_required_cmds="$__ANVIL_REQUIRED_CMDS_ALPINE"
       ;;
     arch | cachyos)
-      platform_required_cmds="$REQUIRED_CMDS_ARCH"
+      platform_required_cmds="$__ANVIL_REQUIRED_CMDS_ARCH"
       ;;
     debian | ubuntu)
-      platform_required_cmds="$REQUIRED_CMDS_DEBIAN"
+      platform_required_cmds="$__ANVIL_REQUIRED_CMDS_DEBIAN"
       ;;
     macos)
-      platform_required_cmds="$REQUIRED_CMDS_MACOS"
+      platform_required_cmds="$__ANVIL_REQUIRED_CMDS_MACOS"
       ;;
   esac
 

@@ -1,0 +1,6 @@
+{
+  "name": "delta",
+  "description": "Delta role, no depends",
+  "depends_on": [],
+  "tags": []
+}

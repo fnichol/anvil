@@ -1,28 +1,22 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../test_helpers.sh"
-
-# shellcheck source=tests/_ksh_local.sh
-. "${0%/*}/../_ksh_local.sh"
-
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../../vendor/lib/libsh.full.sh"
-  . "${SRC:=lib/anvil/phases/init.sh}"
+  TEST_ROOT="${0%/*}/../.."
 
   commonOneTimeSetUp
-  root="${0%/*}/../.."
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
+
+  . "${SRC:=lib/anvil/phases/init.sh}"
+
   unset __ANVIL_SUDO__
 }
 
@@ -132,9 +126,6 @@ testAcquireSudoCallsGetAndKeepForNonRoot() {
   local arch=""
 
   __ANVIL_SUDO__="sudo"
-
-  # shellcheck source=lib/anvil/sudo.sh
-  . "$root/lib/anvil/sudo.sh"
 
   # Mock out get_sudo and keep_sudo
   _get_sudo_called=""
@@ -310,9 +301,6 @@ testInitStepsIncludesEnsureTools() {
 
   run init_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
 
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "ensure_tools"
 }
@@ -340,6 +328,9 @@ testInitStepsOrderIsCorrect() {
   assertTrue 'detect before acquire' "[ $detect_pos -lt $acquire_pos ]"
   assertTrue 'acquire before ensure' "[ $acquire_pos -lt $ensure_pos ]"
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/../test_helpers.sh"
 
 shell_compat "$0"
 

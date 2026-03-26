@@ -1,37 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/test_helpers.sh
-. "${0%/*}/../test_helpers.sh"
-
 # shellcheck source=tests/_ksh_local.sh
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
-  . "${0%/*}/../../vendor/lib/libsh.full.sh"
-
-  . "${SRC:=lib/anvil/phases/install.sh}"
+  TEST_ROOT="${0%/*}/../.."
 
   commonOneTimeSetUp
-  root="${0%/*}/../.."
+
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
 
-  # shellcheck source=lib/anvil/jq.sh
-  . "lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/config.sh
-  . "lib/anvil/config.sh"
-  # shellcheck source=lib/anvil/tags.sh
-  . "lib/anvil/tags.sh"
-  # shellcheck source=lib/anvil/convergence.sh
-  . "lib/anvil/convergence.sh"
-  # shellcheck source=lib/anvil/discovery.sh
-  . "lib/anvil/discovery.sh"
-
-  HOME="$tmpdir/home"
-  mkdir -p "$HOME"
+  . "${SRC:=lib/anvil/phases/install.sh}"
 }
 
 testInstallStepsNoExtraManagersByDefault() {
@@ -498,7 +482,7 @@ testInstallHomeshickClonesNewCastle() {
   _cloned_castle=""
   # shellcheck disable=SC2329
   homeshick() {
-    case "$1" in
+    case "$2" in
       clone)
         _cloned_castle="$3"
         ;;
@@ -511,6 +495,9 @@ testInstallHomeshickClonesNewCastle() {
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong castle cloned' "fnichol/dotneovim" "$_cloned_castle"
 }
+
+# shellcheck source=tests/test_helpers.sh
+. "${0%/*}/../test_helpers.sh"
 
 shell_compat "$0"
 

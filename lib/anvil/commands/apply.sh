@@ -1,6 +1,15 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/script.sh
+. "$SRC_ROOT/lib/anvil/script.sh"
+# shellcheck source=lib/anvil/logging.sh
+. "$SRC_ROOT/lib/anvil/logging.sh"
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/phases.sh
+. "$SRC_ROOT/lib/anvil/phases.sh"
+
 # Prints usage for the apply command.
 print_apply_usage() {
   local program="$1"
@@ -31,19 +40,9 @@ cmd_apply() {
   program="$1"
   shift
 
-  # shellcheck source=lib/anvil/script.sh
-  . "$root/lib/anvil/facts.sh"
-  # shellcheck source=lib/anvil/facts.sh
-  . "$root/lib/anvil/script.sh"
   ensure_script
 
-  # shellcheck source=lib/anvil/logging.sh
-  . "$root/lib/anvil/logging.sh"
   logging_exec "anvil-apply" "$0" apply "$@"
-
-  . "$root/lib/anvil/jq.sh"
-  . "$root/lib/anvil/config.sh"
-  . "$root/lib/anvil/phases.sh"
 
   local default_config_path
   default_config_path="$(config_path)"
@@ -124,7 +123,7 @@ cmd_apply() {
   # If running in dry run mode, skip all apply phases, but still gather facts
   # and show diff
   if [ -n "$dry_run" ]; then
-    skip_coords="$skip_coords bootstrap:* update:* install:* configure:* finalize:*"
+    skip_coords="$skip_coords init:acquire_sudo bootstrap:* update:* install:* configure:* finalize:*"
     warn "Dry-run mode: no changes will be applied"
   fi
 

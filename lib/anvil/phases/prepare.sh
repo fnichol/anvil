@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/sudo.sh
+. "$SRC_ROOT/lib/anvil/sudo.sh"
+
 prepare_steps() {
   local _root="$1"
   shift
@@ -27,15 +32,6 @@ prepare_step_hostname() {
   shift
   local os="$1"
   shift
-
-  # shellcheck source=lib/anvil/jq.sh
-  . "$root/lib/anvil/jq.sh"
-  # shellcheck source=lib/anvil/sudo.sh
-  . "$root/lib/anvil/sudo.sh"
-  # shellcheck source=lib/anvil/config.sh
-  . "$root/lib/anvil/config.sh"
-  # shellcheck source=lib/anvil/facts.sh
-  . "$root/lib/anvil/facts.sh"
 
   local fqdn
   fqdn="$(config_read_fqdn "$config_path")"

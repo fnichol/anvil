@@ -8,8 +8,9 @@
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
+  TEST_ROOT="${0%/*}/../.."
+
   commonOneTimeSetUp
-  root="${0%/*}/../.."
 }
 
 setUp() {
