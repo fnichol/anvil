@@ -35,7 +35,10 @@ init_step_setup_traps() {
 init_step_validate_commands() {
   need_cmd basename
   need_cmd chmod
+  need_cmd cut
+  need_cmd date
   need_cmd dirname
+  need_cmd getent
   need_cmd grep
   need_cmd gzip
   need_cmd id

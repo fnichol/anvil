@@ -173,6 +173,20 @@ _phases_run_hook_step() {
     __ANVIL_SHELL__="${SHELL:-sh}"
   fi
 
+  local user
+  if [ -n "${USER:-}" ]; then
+    user="$USER"
+  else
+    user="$(getent passwd "$(id -u)" | cut -d: -f1)"
+  fi
+
+  local home
+  if [ -n "${HOME:-}" ]; then
+    home="$HOME"
+  else
+    home="$(getent passwd "$(id -u)" | cut -d: -f6)"
+  fi
+
   # Derive the hook function name: "hook_tailscaled" -> "tailscaled"
   local name="${step#hook_}"
   local func_name="${phase}_hook_${name}"
@@ -182,6 +196,9 @@ _phases_run_hook_step() {
 
   # Run in a subshell so ANVIL_* exports do not leak into the main process
   (
+    export USER="$user"
+    export HOME="$home"
+
     export ANVIL_ROOT="$root"
     export ANVIL_CONFIG_PATH="$config_path"
     export ANVIL_HOSTNAME="$hostname"
@@ -191,9 +208,11 @@ _phases_run_hook_step() {
     export ANVIL_ARCH="$arch"
     export __ANVIL_SUDO__="${__ANVIL_SUDO__:-}"
 
-    "$__ANVIL_SHELL__" -c \
-      ". '$SRC_ROOT/lib/anvil/hook_runner.sh' \
-      && . '$hook_script' \
-      && $func_name"
+    "$__ANVIL_SHELL__" <<-EOF
+	. '$SRC_ROOT/lib/anvil/hook_runner.sh' \
+          && . '$hook_script' \
+          && $func_name
+	EOF
+
   )
 }
