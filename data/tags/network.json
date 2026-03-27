@@ -5,17 +5,31 @@
   "packages": {
     "alpine": {
       "all": {
-        "apk": ["iperf3", "mosh", "openssh", "websocat"]
+        "apk": ["iperf3", "mosh", "openssh", "rsync", "websocat"]
       }
     },
     "arch": {
       "all": {
-        "pacman": ["iperf3", "mosh", "openbsd-netcat", "openssh", "websocat"]
+        "pacman": [
+          "iperf3",
+          "mosh",
+          "openbsd-netcat",
+          "openssh",
+          "rsync",
+          "websocat"
+        ]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["iperf3", "mosh", "openbsd-netcat", "openssh", "websocat"]
+        "pacman": [
+          "iperf3",
+          "mosh",
+          "openbsd-netcat",
+          "openssh",
+          "rsync",
+          "websocat"
+        ]
       }
     },
     "debian": {
@@ -25,13 +39,24 @@
           "mosh",
           "netcat-openbsd",
           "openssh-client",
-          "openssh-server"
+          "openssh-server",
+          "rsync"
         ]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["iperf3", "mosh", "netcat", "rsync", "websocat"]
       }
     },
     "macos": {
       "all": {
-        "homebrew": ["iperf3", "mosh", "netcat", "websocat"]
+        "homebrew": ["iperf3", "mosh", "netcat", "rsync", "websocat"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["iperf3", "mosh", "rsync"]
       }
     },
     "ubuntu": {
@@ -41,7 +66,8 @@
           "mosh",
           "netcat-openbsd",
           "openssh-client",
-          "openssh-server"
+          "openssh-server",
+          "rsync"
         ]
       }
     }
