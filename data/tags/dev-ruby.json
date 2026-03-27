@@ -1,0 +1,94 @@
+{
+  "name": "dev-ruby",
+  "description": "Ruby programming language development",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": [
+          "bash",
+          "build-base",
+          "bzip2",
+          "gcc",
+          "gdbm-dev",
+          "libffi-dev",
+          "ncurses-dev",
+          "openssl-dev",
+          "patch",
+          "perl",
+          "readline-dev",
+          "yaml-dev",
+          "zlib-dev"
+        ],
+        "mise": ["ruby"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": [
+          "base-devel",
+          "libffi",
+          "libyaml",
+          "openssl",
+          "rust",
+          "zlib"
+        ],
+        "mise": ["ruby"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": [
+          "base-devel",
+          "libffi",
+          "libyaml",
+          "openssl",
+          "rust",
+          "zlib"
+        ],
+        "mise": ["ruby"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": [
+          "autoconf",
+          "build-essential",
+          "libffi-dev",
+          "libgmp-dev",
+          "libssl-dev",
+          "libyaml-dev",
+          "rustc",
+          "zlib1g-dev"
+        ],
+        "mise": ["ruby"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["autoconf", "gmp", "libyaml", "openssl@3", "readline"],
+        "mise": ["ruby"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkg": ["ruby"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": [
+          "autoconf",
+          "build-essential",
+          "libffi-dev",
+          "libgmp-dev",
+          "libssl-dev",
+          "libyaml-dev",
+          "rustc",
+          "zlib1g-dev"
+        ],
+        "mise": ["ruby"]
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "dev-rust",
+  "description": "Rust programming language development",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": ["build-base", "openssl"],
+        "mise": ["rust@stable"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["base-devel"],
+        "mise": ["rust@stable"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["base-devel"],
+        "mise": ["rust@stable"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["build-essential", "libssl-dev", "pkg-config"],
+        "mise": ["rust@stable"]
+      }
+    },
+    "macos": {
+      "all": {
+        "mise": ["rust@stable"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkg": [
+          "rust",
+          "rust-analyzer",
+          "rust-clippy",
+          "rust-gdb",
+          "rust-rustfmt",
+          "rust-src"
+        ]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["build-essential", "libssl-dev", "pkg-config"],
+        "mise": ["rust@stable"]
+      }
+    }
+  }
+}

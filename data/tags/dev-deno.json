@@ -1,0 +1,42 @@
+{
+  "name": "dev-deno",
+  "description": "Deno programming language development",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "mise": ["deno"]
+      }
+    },
+    "arch": {
+      "all": {
+        "mise": ["deno"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "mise": ["deno"]
+      }
+    },
+    "debian": {
+      "all": {
+        "mise": ["deno"]
+      }
+    },
+    "macos": {
+      "all": {
+        "mise": ["deno"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkg": ["deno"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "mise": ["deno"]
+      }
+    }
+  }
+}

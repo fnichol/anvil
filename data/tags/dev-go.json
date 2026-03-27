@@ -1,0 +1,42 @@
+{
+  "name": "dev-go",
+  "description": "Go programming language development",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "mise": ["go"]
+      }
+    },
+    "arch": {
+      "all": {
+        "mise": ["go"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "mise": ["go"]
+      }
+    },
+    "debian": {
+      "all": {
+        "mise": ["go"]
+      }
+    },
+    "macos": {
+      "all": {
+        "mise": ["go"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkg": ["go"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "mise": ["go"]
+      }
+    }
+  }
+}
