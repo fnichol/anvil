@@ -329,9 +329,7 @@ testInstallStepPackagesNoOpWhenAlreadyConverged() {
   local package_type="pacman"
 
   # shellcheck disable=SC2329
-  config_read_tags() { echo "base"; }
-  # shellcheck disable=SC2329
-  tags_resolve() { echo "base"; }
+  config_resolve_tags() { echo "base"; }
   # shellcheck disable=SC2329
   desired_packages() { printf 'git\ncurl\n'; }
   # shellcheck disable=SC2329
@@ -357,9 +355,7 @@ testInstallStepPackagesDispatchesDeltaToInstaller() {
   local package_type="pacman"
 
   # shellcheck disable=SC2329
-  config_read_tags() { echo "base"; }
-  # shellcheck disable=SC2329
-  tags_resolve() { echo "base"; }
+  config_resolve_tags() { echo "base"; }
   # shellcheck disable=SC2329
   desired_packages() { printf 'git\ncurl\nvim\n'; }
   # shellcheck disable=SC2329
@@ -387,9 +383,7 @@ testInstallStepPackagesDispatchesToCorrectFunction() {
   local package_type="homebrew"
 
   # shellcheck disable=SC2329
-  config_read_tags() { echo "base"; }
-  # shellcheck disable=SC2329
-  tags_resolve() { echo "base"; }
+  config_resolve_tags() { echo "base"; }
   # shellcheck disable=SC2329
   desired_packages() { printf 'bat\n'; }
   # shellcheck disable=SC2329
@@ -445,9 +439,7 @@ testInstallHomeshickSkipsCastleAlreadyCloned() {
   # shellcheck disable=SC2329
   desired_packages() { printf 'fnichol/dotneovim\n'; }
   # shellcheck disable=SC2329
-  config_read_tags() { echo "neovim"; }
-  # shellcheck disable=SC2329
-  tags_resolve() { echo "neovim"; }
+  config_resolve_tags() { echo "neovim"; }
 
   _homeshick_called=""
   # shellcheck disable=SC2329
@@ -475,9 +467,7 @@ testInstallHomeshickClonesNewCastle() {
   # shellcheck disable=SC2329
   desired_packages() { printf 'fnichol/dotneovim\n'; }
   # shellcheck disable=SC2329
-  config_read_tags() { echo "neovim"; }
-  # shellcheck disable=SC2329
-  tags_resolve() { echo "neovim"; }
+  config_resolve_tags() { echo "neovim"; }
 
   _cloned_castle=""
   # shellcheck disable=SC2329

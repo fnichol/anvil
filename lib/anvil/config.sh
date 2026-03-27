@@ -234,10 +234,10 @@ config_read_custom_remove() {
 # * `@return 0` if successful
 config_resolve_tags() {
   local root="$1"
-  local config_file="${2:-$(config_path)}"
+  local config_path="${2:-$(config_path)}"
 
   # If no config file is found, then no tags are resolved--done
-  if ! config_exists "$config_file"; then
+  if ! config_exists "$config_path"; then
     return 0
   fi
 
@@ -249,7 +249,7 @@ config_resolve_tags() {
 
   # Load all config defined roles
   local config_roles
-  config_roles="$(config_read_roles "$config_file")"
+  config_roles="$(config_read_roles "$config_path")"
 
   if [ -n "$config_roles" ]; then
     # Resolve all roles to a dependencies-first ordering
@@ -269,7 +269,7 @@ config_resolve_tags() {
 
   # Load all config defined tags
   local config_tags
-  config_tags="$(config_read_tags "$config_file")"
+  config_tags="$(config_read_tags "$config_path")"
 
   # Append config tags to role-resolved and derived tags
   if [ -n "$config_tags" ]; then

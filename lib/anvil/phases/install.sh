@@ -195,29 +195,26 @@ install_step_homeshick() {
 
   local package_type="homeshick"
 
-  local tags
-  tags="$(config_read_tags "$config_path")"
+  local resolved_tags
+  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
 
   # No tags are configured, early return
-  if [ -z "$tags" ]; then
+  if [ -z "$resolved_tags" ]; then
     return 0
   fi
 
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
-
-  local desired_castles
-  desired_castles="$(
+  local desired
+  desired="$(
     desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
   )"
 
   # If no castles are found desired, early return
-  if [ -z "$desired_castles" ]; then
+  if [ -z "$desired" ]; then
     return 0
   fi
 
   local castle repo_name
-  for castle in $desired_castles; do
+  for castle in $desired; do
     repo_name="${castle##*/}"
 
     if [ ! -d "$HOME/.homesick/repos/$repo_name" ]; then
@@ -333,16 +330,13 @@ _install_step_packages() {
   need_cmd tr
   need_cmd wc
 
-  local tags
-  tags="$(config_read_tags "$config_path")"
+  local resolved_tags
+  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
 
   # No tags are configured, early return
-  if [ -z "$tags" ]; then
+  if [ -z "$resolved_tags" ]; then
     return 0
   fi
-
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
 
   local desired
   desired="$(

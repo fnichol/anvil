@@ -258,7 +258,7 @@ bootstrap_step_bashrc() {
   shift
 
   # Early return if already installed
-  if [ -f "${HOME}/.bash/bashrc" ]; then
+  if [ -f "$HOME/.bash/bashrc" ]; then
     # Ensure Bash is installed for updating later
     _ensure_bash "$os"
     # Ensure Git is installed for updating later
