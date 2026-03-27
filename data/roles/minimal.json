@@ -1,0 +1,6 @@
+{
+  "name": "minimal",
+  "description": "Extremely minimal setup with no personalization",
+  "depends_on": [],
+  "tags": ["base"]
+}

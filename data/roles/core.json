@@ -1,6 +1,6 @@
 {
   "name": "core",
   "description": "Core packages for minimal virtual machines, containers, systems",
-  "depends_on": [],
-  "tags": ["base", "shell-bash", "network", "tui"]
+  "depends_on": ["minimal"],
+  "tags": ["shell-bash", "network", "tui"]
 }
