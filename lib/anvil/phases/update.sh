@@ -189,7 +189,7 @@ update_step_homeshick() {
     return 0
   fi
 
-  if ! indent homeshick --batch check; then
+  if ! indent homeshick --batch check >/dev/null; then
     info "Pulling castle updates"
     indent homeshick --batch pull
     indent homeshick --batch link
