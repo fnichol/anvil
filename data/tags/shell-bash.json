@@ -1,0 +1,52 @@
+{
+  "name": "shell-bash",
+  "description": "Bash shell support",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "bashrc": ["fnichol/bashrc"]
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": ["bash", "bash-completion", "starship"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["bash", "starship"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["bash", "starship"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["bash", "bash-completion", "starship"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["bash", "starship"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["bash", "bash-completion", "starship"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["bash"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["bash", "bash-completion", "starship"]
+      }
+    }
+  }
+}

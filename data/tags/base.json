@@ -4,9 +4,136 @@
   "depends_on": [],
   "#": ["Base tag provides essential command-line tools for all systems"],
   "packages": {
+    "alpine": {
+      "all": {
+        "apk": [
+          "bat",
+          "curl",
+          "dust",
+          "eza",
+          "fd",
+          "gawk",
+          "grep",
+          "ripgrep",
+          "tar",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": [
+          "bat",
+          "curl",
+          "dust",
+          "eza",
+          "fd",
+          "gawk",
+          "grep",
+          "ripgrep",
+          "tar",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": [
+          "bat",
+          "curl",
+          "dust",
+          "eza",
+          "fd",
+          "gawk",
+          "grep",
+          "ripgrep",
+          "tar",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": [
+          "bat",
+          "curl",
+          "du-dust",
+          "eza",
+          "fd-find",
+          "gawk",
+          "grep",
+          "ripgrep",
+          "tar",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": [
+          "bat",
+          "curl",
+          "dust",
+          "eza",
+          "fd-find",
+          "gawk",
+          "gnugrep",
+          "ripgrep",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
     "macos": {
       "all": {
-        "homebrew": ["git", "deno"]
+        "homebrew": [
+          "bat",
+          "curl",
+          "dust",
+          "eza",
+          "fd",
+          "gawk",
+          "gnu-tar",
+          "grep",
+          "ripgrep",
+          "wget"
+        ]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": [
+          "bat",
+          "curl",
+          "eza",
+          "fd",
+          "gawk",
+          "ggrep",
+          "ripgrep",
+          "unzip",
+          "wget"
+        ]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": [
+          "bat",
+          "curl",
+          "du-dust",
+          "eza",
+          "fd-find",
+          "gawk",
+          "grep",
+          "ripgrep",
+          "tar",
+          "unzip",
+          "wget"
+        ]
       }
     }
   }

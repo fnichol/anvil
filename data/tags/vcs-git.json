@@ -1,0 +1,52 @@
+{
+  "name": "vcs-git",
+  "description": "Git software and configuration",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": ["fnichol/dotfiles"]
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": ["delta", "git"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["git", "git-delta"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["git", "git-delta"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["git", "git-delta"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["git", "git-delta"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["git", "git-delta"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["delta", "git"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["git", "git-delta"]
+      }
+    }
+  }
+}

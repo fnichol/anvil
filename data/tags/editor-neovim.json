@@ -1,0 +1,52 @@
+{
+  "name": "editor-neovim",
+  "description": "NeoVim software and configuration",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": ["fnichol/dotneovim"]
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": ["git", "neovim"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["git", "neovim"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["git", "neovim"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["git", "neovim"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["git", "neovim"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["neovim"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["git", "neovim"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["git", "neovim"]
+      }
+    }
+  }
+}

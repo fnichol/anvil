@@ -1,0 +1,49 @@
+{
+  "name": "network",
+  "description": "Networking utilities and tools",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": ["iperf3", "mosh", "openssh", "websocat"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["iperf3", "mosh", "openbsd-netcat", "openssh", "websocat"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["iperf3", "mosh", "openbsd-netcat", "openssh", "websocat"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": [
+          "iperf3",
+          "mosh",
+          "netcat-openbsd",
+          "openssh-client",
+          "openssh-server"
+        ]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["iperf3", "mosh", "netcat", "websocat"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": [
+          "iperf3",
+          "mosh",
+          "netcat-openbsd",
+          "openssh-client",
+          "openssh-server"
+        ]
+      }
+    }
+  }
+}
