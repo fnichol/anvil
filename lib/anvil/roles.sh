@@ -84,7 +84,7 @@ roles_resolve() {
     to_process="$(echo "$to_process" | awk '{$1=""; print $0}' | sed 's/^ *//')"
 
     # Skip if already resolved
-    if echo "$resolved" | grep -q "\<$role\>"; then
+    if echo "$resolved" | grep -q -E "(^| )$role($| )"; then
       continue
     fi
 
