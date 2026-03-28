@@ -86,17 +86,14 @@ cmd_diff() {
   section "Anvil Diff"
 
   # Gather info
-  local os arch tags
+  local os arch resolved_tags
   os="$(facts_os)"
   arch="$(facts_arch)"
-  tags="$(config_resolve_tags "$config_file")"
+  resolved_tags="$(config_resolve_tags "$root" "$config_file")"
 
-  if [ -z "$tags" ]; then
+  if [ -z "$resolved_tags" ]; then
     die "No tags configured. Run: $program config init"
   fi
-
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
 
   # Calculate diff
   local desired_packages installed_packages packages_to_install

@@ -78,16 +78,13 @@ _steps_extra_package_managers() {
 
   ensure_jq
 
-  local tags
-  tags="$(config_resolve_tags "$root" "$config_path")"
+  local resolved_tags
+  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
 
   # No tags are configured, early return
-  if [ -z "$tags" ]; then
+  if [ -z "$resolved_tags" ]; then
     return 0
   fi
-
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
 
   local all_package_types=""
   for tag in $resolved_tags; do

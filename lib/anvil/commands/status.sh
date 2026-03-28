@@ -107,17 +107,15 @@ cmd_status() {
 
   # Show configured tags
   section "Configuration"
-  local tags
-  tags="$(config_resolve_tags "$config_file")"
+  local resolved_tags
+  resolved_tags="$(config_resolve_tags "$root" "$config_file")"
 
-  if [ -z "$tags" ]; then
+  if [ -z "$resolved_tags" ]; then
     die "No tags configured. Run: $program config init"
   fi
 
-  info "Tags: $tags"
+  info "Tags: $resolved_tags"
 
-  local resolved_tags
-  resolved_tags="$(tags_resolve "$root" "$tags")"
   info "Resolved (with dependencies): $resolved_tags"
   echo ""
 
