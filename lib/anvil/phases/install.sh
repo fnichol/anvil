@@ -342,6 +342,9 @@ _install_step_packages() {
   desired="$(
     desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
   )"
+  desired="$(
+    _normalize_packages "$root" "$os" "$arch" "$package_type" "$desired"
+  )"
 
   # If no packages are found desired, early return
   if [ -z "$desired" ]; then
@@ -555,4 +558,39 @@ _install_packages_openbsd_pkg() {
       indent as_root pkg_add -Iv "$pkg"
     fi
   done
+}
+
+_normalize_packages() {
+  local _root="$1"
+  local _os="$2"
+  local _arch="$3"
+  local package_type="$4"
+  local pkgs="$5"
+
+  case "$package_type" in
+    mise)
+      local normalized_pkgs pkg
+      normalized_pkgs=""
+
+      for pkg in $pkgs; do
+        case "$pkg" in
+          *@*)
+            # do nothing, version already present
+            ;;
+          *)
+            # no version, default normalized form to `@latest`
+            pkg="$pkg@latest"
+            ;;
+        esac
+
+        normalized_pkgs="$normalized_pkgs${normalized_pkgs:+
+}$pkg"
+      done
+
+      echo "$normalized_pkgs"
+      ;;
+    *)
+      echo "$pkgs"
+      ;;
+  esac
 }
