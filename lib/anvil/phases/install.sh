@@ -419,17 +419,14 @@ _install_packages_aur() {
 
   need_cmd paru
 
-  local total current
+  local total
   total="$(echo "$packages" | grep -c . || echo 0)"
-  current=0
 
-  echo "$packages" | while IFS= read -r pkg; do
-    if [ -n "$pkg" ]; then
-      current=$((current + 1))
-      info "[$current/$total] Installing: $pkg"
-      indent paru -S --needed --noconfirm "$pkg"
-    fi
-  done
+  if [ -n "$packages" ]; then
+    info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    indent as_root paru -S --needed --noconfirm $packages
+  fi
 }
 
 # Installs a list of Homebrew formulae.
@@ -505,17 +502,14 @@ _install_packages_pacman() {
 
   need_cmd pacman
 
-  local total current
+  local total
   total="$(echo "$packages" | grep -c . || echo 0)"
-  current=0
 
-  echo "$packages" | while IFS= read -r pkg; do
-    if [ -n "$pkg" ]; then
-      current=$((current + 1))
-      info "[$current/$total] Installing: $pkg"
-      indent as_root pacman -S --needed --noconfirm "$pkg"
-    fi
-  done
+  if [ -n "$packages" ]; then
+    info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    indent as_root pacman -S --needed --noconfirm $packages
+  fi
 }
 
 # Installs a list of FreeBSD Pkg packages.
