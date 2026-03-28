@@ -1,0 +1,97 @@
+{
+  "name": "tui-base",
+  "description": "Terminal utilities and tools",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": ["fnichol/dotfiles"]
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": [
+          "bottom",
+          "broot",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": [
+          "bottom",
+          "broot",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": [
+          "bottom",
+          "broot",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["btm", "broot", "fzf", "htop", "pv", "screen", "tmux", "zoxide"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": [
+          "bottom",
+          "broot",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": [
+          "bottom",
+          "broot",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["broot", "fzf", "htop", "pv", "screen"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["btm", "broot", "fzf", "htop", "pv", "screen", "tmux", "zoxide"]
+      }
+    }
+  }
+}

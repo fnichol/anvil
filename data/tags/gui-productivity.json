@@ -1,0 +1,58 @@
+{
+  "name": "gui-productivity",
+  "description": "Productivity graphical applications and utilities",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": []
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": []
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": [],
+        "aur": ["1password", "obsidian"]
+      }
+    },
+    "bazzite": {
+      "all": {}
+    },
+    "cachyos": {
+      "all": {
+        "pacman": [],
+        "aur": ["1password", "obsidian"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": []
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": []
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": [],
+        "homebrew_cask": ["1password", "obsidian"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": []
+      }
+    }
+  }
+}

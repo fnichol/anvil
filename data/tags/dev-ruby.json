@@ -43,8 +43,7 @@
           "libffi",
           "libyaml",
           "openssl",
-          "rust",
-          "zlib"
+          "rust"
         ],
         "mise": ["ruby"]
       }

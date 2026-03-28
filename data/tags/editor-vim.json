@@ -1,0 +1,52 @@
+{
+  "name": "editor-vim",
+  "description": "Vim software and configuration",
+  "depends_on": [],
+  "packages": {
+    "all": {
+      "all": {
+        "homeshick": []
+      }
+    },
+    "alpine": {
+      "all": {
+        "apk": ["git", "vim"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["git", "vim"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["git", "vim"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["git", "vim"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["git", "vim"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["vim"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": ["git", "vim"]
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["git", "vim"]
+      }
+    }
+  }
+}

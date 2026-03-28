@@ -1,0 +1,6 @@
+{
+  "name": "dev",
+  "description": "Development",
+  "depends_on": [],
+  "tags": ["dev-go", "dev-ruby", "dev-rust"]
+}
