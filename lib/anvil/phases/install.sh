@@ -425,7 +425,7 @@ _install_packages_aur() {
   if [ -n "$packages" ]; then
     info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
     # shellcheck disable=SC2086
-    indent as_root paru -S --needed --noconfirm $packages
+    indent paru -S --needed --noconfirm $packages
   fi
 }
 
