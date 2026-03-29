@@ -1,0 +1,45 @@
+{
+  "name": "dev-c",
+  "description": "C and related programming language development",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": []
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["base-devel", "clang", "cmake", "lld", "make", "mold"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["base-devel", "clang", "cmake", "lld", "make", "mold"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": []
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkg": []
+      }
+    },
+    "macos": {
+      "all": {}
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkg": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": []
+      }
+    }
+  }
+}

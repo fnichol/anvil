@@ -1,6 +1,6 @@
 {
   "name": "workstation",
   "description": "Basic Workstation",
-  "depends_on": ["core", "dev", "graphical-core"],
-  "tags": ["gui-productivity", "gui-work", "sync"]
+  "depends_on": ["core", "graphical-core"],
+  "tags": ["de-aerospace", "de-cosmic", "gui-productivity", "gui-work", "sync"]
 }

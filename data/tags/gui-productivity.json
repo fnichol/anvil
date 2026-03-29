@@ -15,7 +15,18 @@
     },
     "arch": {
       "all": {
-        "pacman": ["obsidian"],
+        "pacman": [
+          "bazaar",
+          "obsidian",
+          {
+            "#": [
+              "Mini zip and unzip based on zlib.",
+              "Needed by Obsidian (although cannot remember why)."
+            ],
+            "name": "minizip"
+          },
+          "mission-center"
+        ],
         "aur": ["1password"]
       }
     },
@@ -24,7 +35,18 @@
     },
     "cachyos": {
       "all": {
-        "pacman": ["obsidian"],
+        "pacman": [
+          "bazaar",
+          "obsidian",
+          {
+            "#": [
+              "Mini zip and unzip based on zlib.",
+              "Needed by Obsidian (although cannot remember why)."
+            ],
+            "name": "minizip"
+          },
+          "mission-center"
+        ],
         "aur": ["1password"]
       }
     },

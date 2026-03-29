@@ -1,0 +1,49 @@
+{
+  "name": "de-cosmic",
+  "description": "COSMIC Desktop Environment",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {}
+    },
+    "arch": {
+      "all": {
+        "pacman": [
+          "cosmic-session",
+          "gnome-keyring",
+          "gvfs",
+          "gvfs-dnssd",
+          "gvfs-nfs",
+          "gvfs-smb",
+          "seahorse"
+        ]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": [
+          "cosmic-session",
+          "gnome-keyring",
+          "gvfs",
+          "gvfs-dnssd",
+          "gvfs-nfs",
+          "gvfs-smb",
+          "seahorse"
+        ]
+      }
+    },
+    "debian": {
+      "all": {}
+    },
+    "ubuntu": {
+      "all": {}
+    }
+  },
+  "hooks": {
+    "configure": {
+      "all": {
+        "all": ["cosmic"]
+      }
+    }
+  }
+}

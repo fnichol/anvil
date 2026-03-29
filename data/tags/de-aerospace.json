@@ -1,0 +1,19 @@
+{
+  "name": "de-aerospace",
+  "description": "AeroSpace: an i3-like tiling window manager for macOS",
+  "depends_on": [],
+  "packages": {
+    "macos": {
+      "all": {
+        "homebrew_cask": []
+      }
+    }
+  },
+  "hooks": {
+    "configure": {
+      "all": {
+        "all": []
+      }
+    }
+  }
+}

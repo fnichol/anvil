@@ -1,36 +1,31 @@
 {
-  "name": "gui-work",
-  "description": "Work/business graphical applications and utilities",
+  "name": "llm-claude",
+  "description": "Claude LLM software and configuration",
   "depends_on": [],
   "packages": {
     "all": {
       "all": {
-        "homeshick": []
+        "homeshick": ["fnichol/dotclaude"]
       }
     },
     "alpine": {
       "all": {
-        "apk": []
+        "mise": ["claude"]
       }
     },
     "arch": {
       "all": {
-        "pacman": ["chromium", "discord"],
-        "aur": ["slack-desktop", "zoom"]
+        "mise": ["claude"]
       }
-    },
-    "bazzite": {
-      "all": {}
     },
     "cachyos": {
       "all": {
-        "pacman": ["chromium", "discord"],
-        "aur": ["slack-desktop", "zoom"]
+        "mise": ["claude"]
       }
     },
     "debian": {
       "all": {
-        "apt": []
+        "mise": ["claude"]
       }
     },
     "freebsd": {
@@ -40,8 +35,7 @@
     },
     "macos": {
       "all": {
-        "homebrew": [],
-        "homebrew_cask": ["discord", "slack", "zoom"]
+        "mise": ["claude"]
       }
     },
     "openbsd": {
@@ -51,7 +45,7 @@
     },
     "ubuntu": {
       "all": {
-        "apt": []
+        "mise": ["claude"]
       }
     }
   }
