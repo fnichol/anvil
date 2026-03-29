@@ -218,6 +218,6 @@ _discover_mise_global_tools() {
 
   ensure_jq
 
-  mise ls --global --json \
+  (cd / && mise ls --global --json) \
     | jq -r 'to_entries[] | "\(.key)@\(.value[0].requested_version)"'
 }

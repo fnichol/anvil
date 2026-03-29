@@ -489,7 +489,9 @@ _install_packages_mise() {
     if [ -n "$pkg" ]; then
       current=$((current + 1))
       info "[$current/$total] Installing: $pkg"
-      indent mise use --global "$pkg"
+      # **NOTE**: Ensure that current directory isn't a project with its own
+      # local Mise configuration.
+      (cd / && indent mise use --global "$pkg")
     fi
   done
 }

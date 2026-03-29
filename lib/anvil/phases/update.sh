@@ -214,7 +214,7 @@ update_step_mise_sync() {
   need_cmd mise
 
   info "Updating Mise"
-  indent mise self-update --yes
+  (cd / && indent mise self-update --yes)
 }
 
 update_step_mise() {
@@ -226,7 +226,7 @@ update_step_mise() {
   # Mise configuration. We want to upgrade the *global* tools, not any local
   # tool that might be activated. Unfortunetly, there doesn't appear to be an
   # option to only select global tools for upgrade.
-  (cd "/" && indent mise upgrade)
+  (cd / && indent mise upgrade)
 }
 
 _run_bashrc() {
