@@ -15,8 +15,8 @@
     },
     "arch": {
       "all": {
-        "pacman": [],
-        "aur": ["1password", "obsidian"]
+        "pacman": ["obsidian"],
+        "aur": ["1password"]
       }
     },
     "bazzite": {
@@ -24,8 +24,8 @@
     },
     "cachyos": {
       "all": {
-        "pacman": [],
-        "aur": ["1password", "obsidian"]
+        "pacman": ["obsidian"],
+        "aur": ["1password"]
       }
     },
     "debian": {
