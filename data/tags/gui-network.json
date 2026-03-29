@@ -1,0 +1,54 @@
+{
+  "name": "gui-networking",
+  "description": "Graphical networking utilities and tools",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": []
+      }
+    },
+    "arch": {
+      "all": {
+        "aur": ["winbox"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "aur": ["winbox"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": []
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": []
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew_cask": ["winbox"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": []
+      }
+    }
+  },
+  "hooks": {
+    "configure": {
+      "all": {
+        "all": []
+      }
+    }
+  }
+}

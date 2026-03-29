@@ -2,5 +2,15 @@
   "name": "dev",
   "description": "Development",
   "depends_on": [],
-  "tags": ["dev-c", "dev-go", "dev-ruby", "dev-rust"]
+  "tags": [
+    "dev-c",
+    "dev-go",
+    "dev-ruby",
+    "dev-rust",
+    "editor-neovim",
+    "editor-vim",
+    "llm-claude",
+    "vcs-git",
+    "vcs-jj"
+  ]
 }

@@ -13,6 +13,7 @@
         "apk": [
           "bottom",
           "broot",
+          "btop",
           "fzf",
           "htop",
           "pv",
@@ -27,6 +28,7 @@
         "pacman": [
           "bottom",
           "broot",
+          "btop",
           "fzf",
           "htop",
           "pv",
@@ -41,6 +43,7 @@
         "pacman": [
           "bottom",
           "broot",
+          "btop",
           "fzf",
           "htop",
           "pv",
@@ -52,7 +55,17 @@
     },
     "debian": {
       "all": {
-        "apt": ["btm", "broot", "fzf", "htop", "pv", "screen", "tmux", "zoxide"]
+        "apt": [
+          "broot",
+          "btm",
+          "btop",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
       }
     },
     "freebsd": {
@@ -60,6 +73,7 @@
         "freebsd_pkd": [
           "bottom",
           "broot",
+          "btop",
           "fzf",
           "htop",
           "pv",
@@ -85,12 +99,22 @@
     },
     "openbsd": {
       "all": {
-        "openbsd_pkd": ["broot", "fzf", "htop", "pv", "screen"]
+        "openbsd_pkd": ["broot", "btop", "fzf", "htop", "pv", "screen"]
       }
     },
     "ubuntu": {
       "all": {
-        "apt": ["btm", "broot", "fzf", "htop", "pv", "screen", "tmux", "zoxide"]
+        "apt": [
+          "broot",
+          "btm",
+          "btop",
+          "fzf",
+          "htop",
+          "pv",
+          "screen",
+          "tmux",
+          "zoxide"
+        ]
       }
     }
   }

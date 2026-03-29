@@ -2,5 +2,5 @@
   "name": "dev-workstation",
   "description": "Workstation for software development",
   "depends_on": ["dev", "workstation"],
-  "tags": ["editor-vim", "editor-neovim", "llm-claude", "vcs-git", "vcs-jj"]
+  "tags": []
 }

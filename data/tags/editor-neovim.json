@@ -10,22 +10,96 @@
     },
     "alpine": {
       "all": {
-        "apk": ["git", "neovim"]
+        "apk": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "npm"
+          }
+        ]
       }
     },
     "arch": {
       "all": {
-        "pacman": ["git", "neovim"]
+        "pacman": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "npm"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "python3"
+          },
+          {
+            "#": ["Used to extract plugins and tools."],
+            "name": "unzip"
+          }
+        ]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["git", "neovim"]
+        "pacman": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "npm"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "python3"
+          },
+          {
+            "#": ["Used to extract plugins and tools."],
+            "name": "unzip"
+          }
+        ]
       }
     },
     "debian": {
       "all": {
-        "apt": ["git", "neovim"]
+        "apt": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "npm"
+          }
+        ]
       }
     },
     "freebsd": {
@@ -35,17 +109,56 @@
     },
     "macos": {
       "all": {
-        "homebrew": ["neovim"]
+        "homebrew": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "node"
+          }
+        ]
       }
     },
     "openbsd": {
       "all": {
-        "openbsd_pkd": ["git", "neovim"]
+        "openbsd_pkd": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "node"
+          }
+        ]
       }
     },
     "ubuntu": {
       "all": {
-        "apt": ["git", "neovim"]
+        "apt": [
+          "neovim",
+          {
+            "#": ["Used by Lazy.nvim for plugins."],
+            "name": "git"
+          },
+          {
+            "#": [
+              "Used by plugins, usually Mason tooling to provide LSPs, ",
+              "linters, formatters, etc."
+            ],
+            "name": "npm"
+          }
+        ]
       }
     }
   }

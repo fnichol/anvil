@@ -1,0 +1,47 @@
+{
+  "name": "security",
+  "description": "Security and cryptography utilities and tools",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": ["b3sum"]
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["b3sum"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["b3sum"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": ["b3sum"]
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": ["b3sum"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": ["b3sum"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": ["b3sum"]
+      }
+    }
+  }
+}
