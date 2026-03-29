@@ -181,6 +181,32 @@ testTagsHooksForReturnsNothingForPhaseWithNoHooks() {
   assertStderrNull
 }
 
+testTagsResolveWithObjectStyleDependsOn() {
+  run tags_resolve "${0%/*}/fixtures" golf
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "alfa bravo charlie golf"
+  assertStderrNull
+}
+
+testTagsPackagesForWithObjectStyleEntry() {
+  run tags_packages_for "${0%/*}/fixtures" golf macos aarch64 homebrew
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "mango"
+  assertStdoutContains "papaya"
+  assertStderrNull
+}
+
+testTagsHooksForWithObjectStyleEntry() {
+  run tags_hooks_for "${0%/*}/fixtures" golf arch x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "fig"
+  assertStdoutContains "guava"
+  assertStderrNull
+}
+
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 

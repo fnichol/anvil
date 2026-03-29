@@ -139,7 +139,12 @@ tags_resolve() {
 
     # Get additional dependencies
     local deps
-    deps="$(jq -r '.depends_on[]? // empty' "$tag_file" | tr '\n' ' ')"
+    deps="$(
+      jq -r \
+        '.depends_on[]? // empty | if type == "string" then . else .name end' \
+        "$tag_file" \
+        | tr '\n' ' '
+    )"
 
     # Add dependencies to process queue (at front)
     if [ -n "$deps" ]; then
@@ -200,7 +205,7 @@ tags_packages_for() {
         (.packages["all"][$arch][$package_type] // []) +
         (.packages[$os].all[$package_type] // []) +
         (.packages[$os][$arch][$package_type] // [])
-     )[]
+     )[] | if type == "string" then . else .name end
     ' "$(tags_path_for "$root" "$name")"
 }
 
@@ -236,6 +241,6 @@ tags_hooks_for() {
         (.hooks[$phase]["all"][$arch] // []) +
         (.hooks[$phase][$os].all      // []) +
         (.hooks[$phase][$os][$arch]   // [])
-     )[]
+     )[] | if type == "string" then . else .name end
     ' "$(tags_path_for "$root" "$name")"
 }

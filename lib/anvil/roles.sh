@@ -98,7 +98,12 @@ roles_resolve() {
 
     # Get role dependencies
     local deps
-    deps="$(jq -r '.depends_on[]? // empty' "$role_file" | tr '\n' ' ')"
+    deps="$(
+      jq -r \
+        '.depends_on[]? // empty | if type == "string" then . else .name end' \
+        "$role_file" \
+        | tr '\n' ' '
+    )"
 
     # Add dependencies to process queue (at front)
     if [ -n "$deps" ]; then
@@ -139,5 +144,8 @@ roles_tags_for() {
 
   need_cmd tr
 
-  jq -r '.tags[]? // empty' "$role_file" | tr '\n' ' '
+  jq -r \
+    '.tags[]? // empty | if type == "string" then . else .name end' \
+    "$role_file" \
+    | tr '\n' ' '
 }

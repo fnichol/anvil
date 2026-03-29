@@ -98,6 +98,23 @@ testRolesTagsForMissingFile() {
   assertStderrNull
 }
 
+testRolesResolveWithObjectStyleDependsOn() {
+  run roles_resolve "${0%/*}/fixtures" echo
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "bravo alfa echo"
+  assertStderrNull
+}
+
+testRolesTagsForWithObjectStyleEntry() {
+  run roles_tags_for "${0%/*}/fixtures" echo
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStderrNull
+}
+
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
