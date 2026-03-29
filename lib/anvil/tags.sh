@@ -203,3 +203,39 @@ tags_packages_for() {
      )[]
     ' "$(tags_path_for "$root" "$name")"
 }
+
+# Extracts hook names for a specific tag, phase, OS, and architecture.
+#
+# This function queries a tag's JSON file to retrieve hooks matching the
+# given criteria. It returns names from both the "all" OS and the specific OS,
+# allowing for OS-independent hooks alongside OS-specific ones.
+#
+# * `@param [String]` root directory path
+# * `@param [String]` tag name
+# * `@param [String]` operating system (e.g. "darwin", "arch")
+# * `@param [String]` architecture (e.g. "x86_64", "aarch64")
+# * `@param [String]` phase name (e.g. "configure", "finalize")
+# * `@stdout` list of hook names, one per line
+# * `@return 0` if successful
+# * `@return 1` if `jq` command is not available
+tags_hooks_for() {
+  local root="$1"
+  local name="$2"
+  local os="$3"
+  local arch="$4"
+  local phase="$5"
+
+  ensure_jq
+
+  jq -r \
+    --arg phase "$phase" \
+    --arg os "$os" \
+    --arg arch "$arch" \
+    '(
+        (.hooks[$phase]["all"].all    // []) +
+        (.hooks[$phase]["all"][$arch] // []) +
+        (.hooks[$phase][$os].all      // []) +
+        (.hooks[$phase][$os][$arch]   // [])
+     )[]
+    ' "$(tags_path_for "$root" "$name")"
+}

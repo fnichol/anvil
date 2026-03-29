@@ -19,7 +19,37 @@ setUp() {
   . "${SRC:=lib/anvil/phases/configure.sh}"
 }
 
-testConfigureStepsEmitsNoHookStepsWhenDirAbsent() {
+# Helper: writes a config with the given tags
+_writeConfigWithTags() {
+  local config_file="$1"
+  local tags_csv="$2"
+
+  cat <<-EOF >"$config_file"
+	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+	EOF
+}
+
+# Helper: writes a tag JSON declaring a configure hook for all os/arch
+_writeTagWithConfigureHook() {
+  local tag_name="$1"
+  local hook_name="$2"
+
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+	{
+	  "name": "${tag_name}",
+	  "depends_on": [],
+	  "hooks": {
+	    "configure": {
+	      "all": { "all": ["${hook_name}"] }
+	    }
+	  }
+	}
+	EOF
+}
+
+testConfigureStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
   run configure_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
@@ -27,26 +57,74 @@ testConfigureStepsEmitsNoHookStepsWhenDirAbsent() {
     "grep -q '^hook_' '$stdout'"
 }
 
-testConfigureStepsEmitsHookStepsWhenHooksExist() {
+testConfigureStepsEmitsHookStepWhenTagDeclaresIt() {
   mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/010-ssh_keys.sh"
+  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
+  _writeTagWithConfigureHook "myconf" "ssh-key"
 
-  run configure_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run configure_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
-  assertStdoutContains "hook_ssh_keys"
+  assertStdoutContains "hook_ssh_key"
+}
+
+testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
+  mkdir -p "$tmpdir/data/hooks/configure"
+  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+	{
+	  "name": "myconf",
+	  "depends_on": [],
+	  "hooks": {
+	    "configure": {
+	      "arch": { "all": ["ssh-key"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run configure_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'no hook steps expected for non-matching os' \
+    "grep -q '^hook_' '$stdout'"
 }
 
 testConfigureStepsEmitsMultipleHooksInNumericOrder() {
   mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/020-gpg_keys.sh"
-  touch "$tmpdir/data/hooks/configure/010-ssh_keys.sh"
+  touch "$tmpdir/data/hooks/configure/020-gpg-key.sh"
+  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
 
-  run configure_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+	{
+	  "name": "myconf",
+	  "depends_on": [],
+	  "hooks": {
+	    "configure": {
+	      "all": { "all": ["ssh-key", "gpg-key"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run configure_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong order' \
-    "$(printf 'hook_ssh_keys\nhook_gpg_keys')" \
+    "$(printf 'hook_ssh_key\nhook_gpg_key')" \
     "$(grep '^hook_' "$stdout")"
 }
 

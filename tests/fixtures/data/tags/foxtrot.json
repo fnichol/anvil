@@ -1,0 +1,14 @@
+{
+  "name": "foxtrot",
+  "depends_on": [],
+  "hooks": {
+    "configure": {
+      "all": { "all": ["eggplant"] }
+    },
+    "finalize": {
+      "arch": { "all": ["apple"] },
+      "cachyos": { "all": ["apple", "banana"] },
+      "all": { "all": ["cranberry"] }
+    }
+  }
+}

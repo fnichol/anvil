@@ -19,6 +19,36 @@ setUp() {
   . "${SRC:=lib/anvil/phases/finalize.sh}"
 }
 
+# Helper: writes a config with the given tags
+_writeConfigWithTags() {
+  local config_file="$1"
+  local tags_csv="$2"
+
+  cat <<-EOF >"$config_file"
+	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+	EOF
+}
+
+# Helper: writes a tag JSON declaring a finalize hook for all os/arch
+_writeTagWithFinalizeHook() {
+  local tag_name="$1"
+  local hook_name="$2"
+
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+	{
+	  "name": "${tag_name}",
+	  "depends_on": [],
+	  "hooks": {
+	    "finalize": {
+	      "all": { "all": ["${hook_name}"] }
+	    }
+	  }
+	}
+	EOF
+}
+
 testFinalizeStepsAlwaysContainsRecordRunAndCleanup() {
   run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
 
@@ -27,15 +57,26 @@ testFinalizeStepsAlwaysContainsRecordRunAndCleanup() {
   assertStdoutContains "cleanup"
 }
 
-testFinalizeStepsHookStepsAppearBeforeRecordRun() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-
+testFinalizeStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
   run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
+  assertFalse 'no hook steps expected' \
+    "grep -q '^hook_' '$stdout'"
+}
 
-  # Capture line numbers for hook and record_run
+testFinalizeStepsHookStepAppearsBeforeRecordRun() {
+  mkdir -p "$tmpdir/data/hooks/finalize"
+  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithFinalizeHook "svc" "tailscaled"
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "svc"
+
+  run finalize_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+
   local hook_line record_run_line
   hook_line="$(grep -n '^hook_tailscaled$' "$stdout" | cut -d: -f1)"
   record_run_line="$(grep -n '^record_run$' "$stdout" | cut -d: -f1)"
@@ -45,30 +86,66 @@ testFinalizeStepsHookStepsAppearBeforeRecordRun() {
     "[ '$hook_line' -lt '$record_run_line' ]"
 }
 
-testFinalizeStepsEmitsNoHookStepsWhenDirAbsent() {
-  run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
-
-  assertTrue 'function failed' "$return_status"
-  assertFalse 'no hook steps expected' \
-    "grep -q '^hook_' '$stdout'"
-}
-
 testFinalizeStepsHookStepsInNumericOrderBeforeRecordRun() {
   mkdir -p "$tmpdir/data/hooks/finalize"
   touch "$tmpdir/data/hooks/finalize/020-syncthing.sh"
   touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
 
-  run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/svc.json"
+	{
+	  "name": "svc",
+	  "depends_on": [],
+	  "hooks": {
+	    "finalize": {
+	      "all": { "all": ["tailscaled", "syncthing"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "svc"
+
+  run finalize_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
 
   local steps
   steps="$(cat "$stdout")"
 
-  # Verify complete order: tailscaled, syncthing, record_run, cleanup
   assertEquals 'wrong step order' \
     "$(printf 'hook_tailscaled\nhook_syncthing\nrecord_run\ncleanup')" \
     "$steps"
+}
+
+testFinalizeStepsDoesNotEmitHookWhenOsDoesNotMatch() {
+  mkdir -p "$tmpdir/data/hooks/finalize"
+  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
+
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/svc.json"
+	{
+	  "name": "svc",
+	  "depends_on": [],
+	  "hooks": {
+	    "finalize": {
+	      "arch": { "all": ["tailscaled"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "svc"
+
+  run finalize_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'no hook steps expected for non-matching os' \
+    "grep -q '^hook_' '$stdout'"
 }
 
 # shellcheck source=tests/test_helpers.sh

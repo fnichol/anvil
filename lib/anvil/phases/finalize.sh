@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/hooks.sh
 . "$SRC_ROOT/lib/anvil/hooks.sh"
 # shellcheck source=lib/anvil/state.sh
@@ -9,19 +11,20 @@
 finalize_steps() {
   local root="$1"
   shift
-  local _config_path="$1"
+  local config_path="$1"
   shift
-  local _os="$1"
+  local os="$1"
   shift
   local _version="$1"
   shift
   local _kernel="$1"
   shift
-  local _arch="$1"
+  local arch="$1"
   shift
 
   # Hook steps run first, before the terminal cleanup operations.
-  hooks_steps_for_phase "$root" "finalize"
+  hooks_steps_for_phase "$root" "$os" "$arch" "finalize" \
+    "$(config_resolve_tags "$root" "$config_path")"
 
   # Terminal steps always run last.
   echo "record_run"

@@ -71,5 +71,12 @@
         ]
       }
     }
+  },
+  "hooks": {
+    "configure": {
+      "all": {
+        "all": ["ssh-key"]
+      }
+    }
   }
 }

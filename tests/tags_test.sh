@@ -118,6 +118,69 @@ testTagsPackagesForAllOsDoesNotPollutePmLookup() {
   assertStderrNull
 }
 
+testTagsHooksForReturnsNothingWhenNoHooksSection() {
+  # delta.json has no hooks key
+  run tags_hooks_for "${0%/*}/fixtures" delta arch x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testTagsHooksForReturnsHooksForMatchingOs() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot arch x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apple"
+  assertStdoutContains "cranberry"
+  assertStderrNull
+}
+
+testTagsHooksForReturnsNothingForNonMatchingOs() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot macos x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  # only "all/all" bucket matches — cranberry
+  assertStdoutContains "cranberry"
+  assertFalse 'apple should not appear' \
+    "grep -q 'apple' '$stdout'"
+  assertStderrNull
+}
+
+testTagsHooksForReturnsAllOsWildcardOnEveryPlatform() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot ubuntu x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "cranberry"
+  assertStderrNull
+}
+
+testTagsHooksForReturnsMultipleHooksForMatchingOs() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot cachyos x86_64 finalize
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "apple"
+  assertStdoutContains "banana"
+  assertStdoutContains "cranberry"
+  assertStderrNull
+}
+
+testTagsHooksForReturnsHooksForConfigurePhase() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot arch x86_64 configure
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "eggplant"
+  assertStderrNull
+}
+
+testTagsHooksForReturnsNothingForPhaseWithNoHooks() {
+  run tags_hooks_for "${0%/*}/fixtures" foxtrot arch x86_64 install
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
