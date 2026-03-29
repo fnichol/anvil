@@ -133,6 +133,6 @@ hooks_script_for_name() {
     fi
   done
 
-  warn "Hook '$name' declared in a tag but script not found in '$hooks_dir'"
+  warn "Hook '$name' declared in a tag but script not found in '$hooks_dir'" >&2
   return 1
 }

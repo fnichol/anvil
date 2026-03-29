@@ -2,5 +2,5 @@
   "name": "workstation",
   "description": "Basic Workstation",
   "depends_on": ["core", "dev", "graphical-core"],
-  "tags": ["gui-productivity", "gui-work"]
+  "tags": ["gui-productivity", "gui-work", "sync"]
 }

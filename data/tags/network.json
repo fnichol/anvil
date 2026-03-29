@@ -5,7 +5,7 @@
   "packages": {
     "alpine": {
       "all": {
-        "apk": ["iperf3", "mosh", "openssh", "rsync", "websocat"]
+        "apk": ["iperf3", "mosh", "openssh", "rsync", "tailscale", "websocat"]
       }
     },
     "arch": {
@@ -16,6 +16,7 @@
           "openbsd-netcat",
           "openssh",
           "rsync",
+          "tailscale",
           "websocat"
         ]
       }
@@ -28,6 +29,7 @@
           "openbsd-netcat",
           "openssh",
           "rsync",
+          "tailscale",
           "websocat"
         ]
       }
@@ -41,12 +43,20 @@
           "openssh-client",
           "openssh-server",
           "rsync"
-        ]
+        ],
+        "homebrew": ["tailscale"]
       }
     },
     "freebsd": {
       "all": {
-        "freebsd_pkd": ["iperf3", "mosh", "netcat", "rsync", "websocat"]
+        "freebsd_pkd": [
+          "iperf3",
+          "mosh",
+          "netcat",
+          "rsync",
+          "tailscale",
+          "websocat"
+        ]
       }
     },
     "macos": {
@@ -68,14 +78,15 @@
           "openssh-client",
           "openssh-server",
           "rsync"
-        ]
+        ],
+        "homebrew": ["tailscale"]
       }
     }
   },
   "hooks": {
     "configure": {
       "all": {
-        "all": ["ssh-key"]
+        "all": ["ssh-key", "tailscale"]
       }
     }
   }
