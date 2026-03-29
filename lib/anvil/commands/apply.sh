@@ -124,7 +124,7 @@ cmd_apply() {
   # If running in dry run mode, skip all apply phases, but still gather facts
   # and show diff
   if [ -n "$dry_run" ]; then
-    skip_coords="$skip_coords init:acquire_sudo bootstrap:* update:* install:* configure:* finalize:*"
+    skip_coords="$skip_coords prepare:acquire_sudo bootstrap:* update:* install:* configure:* finalize:*"
     warn "Dry-run mode: no changes will be applied"
   fi
 

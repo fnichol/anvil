@@ -16,131 +16,6 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/init.sh}"
-
-  unset __ANVIL_SUDO__
-}
-
-testDetectPrivilegeSetsEmptyWhenRoot() {
-  local config_path="$tmpdir/nonexistent.json"
-  # Init phase doesn't have these values yet as it is run *before* facts phase
-  local hostname=""
-  local os=""
-  local version=""
-  local kernel=""
-  local arch=""
-
-  # Stub id to return 0 (root)
-  # shellcheck disable=SC2329
-  id() { echo "0"; }
-
-  run init_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
-
-  assertTrue 'function failed' "$return_status"
-  assertEquals 'ANVIL_SUDO not empty' "" "${__ANVIL_SUDO__:-}"
-}
-
-testDetectPrivilegeSetsDoasOnOpenBSD() {
-  local config_path="$tmpdir/nonexistent.json"
-  # Init phase doesn't have these values yet as it is run *before* facts phase
-  local hostname=""
-  local os=""
-  local version=""
-  local kernel=""
-  local arch=""
-
-  # Stub id to return a non-root user uid
-  # shellcheck disable=SC2329
-  id() { echo "1000"; }
-  # Stub uname for desired kernel
-  # shellcheck disable=SC2329
-  uname() { echo "OpenBSD"; }
-  # Stub need_cmd to succeed without checking real commands
-  # shellcheck disable=SC2329
-  need_cmd() { :; }
-
-  run init_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
-
-  assertTrue 'function failed' "$return_status"
-  assertEquals 'ANVIL_SUDO not doas' "doas" "${__ANVIL_SUDO__:-}"
-}
-
-testDetectPrivilegeSetsSudoOnLinux() {
-  local config_path="$tmpdir/nonexistent.json"
-  # Init phase doesn't have these values yet as it is run *before* facts phase
-  local hostname=""
-  local os=""
-  local version=""
-  local kernel=""
-  local arch=""
-
-  # Stub id to return a non-root user uid
-  # shellcheck disable=SC2329
-  id() { echo "1000"; }
-  # Stub uname for desired kernel
-  # shellcheck disable=SC2329
-  uname() { echo "Linux"; }
-  # Stub need_cmd to succeed without checking real commands
-  # shellcheck disable=SC2329
-  need_cmd() { :; }
-
-  run init_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
-
-  assertTrue 'function failed' "$return_status"
-  assertEquals 'ANVIL_SUDO not sudo' "sudo" "${__ANVIL_SUDO__:-}"
-}
-
-testAcquireSudoFastPathWhenRoot() {
-  local config_path="$tmpdir/nonexistent.json"
-  # Init phase doesn't have these values yet as it is run *before* facts phase
-  local hostname=""
-  local os=""
-  local version=""
-  local kernel=""
-  local arch=""
-
-  # Simulate root user detected
-  __ANVIL_SUDO__=""
-
-  # If get_sudo or keep_sudo are called this will fail the test
-  # shellcheck disable=SC2329
-  get_sudo() { return 1; }
-  # shellcheck disable=SC2329
-  keep_sudo() { return 1; }
-
-  run init_step_acquire_sudo \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
-
-  assertTrue 'should succeed for root' "$return_status"
-}
-
-testAcquireSudoCallsGetAndKeepForNonRoot() {
-  local config_path="$tmpdir/nonexistent.json"
-  # Init phase doesn't have these values yet as it is run *before* facts phase
-  local hostname=""
-  local os=""
-  local version=""
-  local kernel=""
-  local arch=""
-
-  __ANVIL_SUDO__="sudo"
-
-  # Mock out get_sudo and keep_sudo
-  _get_sudo_called=""
-  # shellcheck disable=SC2329
-  get_sudo() { _get_sudo_called="yes"; }
-  _keep_sudo_called=""
-  # shellcheck disable=SC2329
-  keep_sudo() { _keep_sudo_called="yes"; }
-
-  run init_step_acquire_sudo \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
-
-  assertTrue 'function failed' "$return_status"
-  assertEquals 'get_sudo not called' "yes" "$_get_sudo_called"
-  assertEquals 'keep_sudo not called' "yes" "$_keep_sudo_called"
 }
 
 testValidateCommandsSucceedsWhenAllCommandsPresent() {
@@ -318,15 +193,11 @@ testInitStepsOrderIsCorrect() {
 
   local output
   output="$(cat "$stdout")"
-  local validate_pos detect_pos acquire_pos ensure_pos
+  local validate_pos ensure_pos
   validate_pos="$(echo "$output" | grep -n "validate_commands" | cut -d: -f1)"
-  detect_pos="$(echo "$output" | grep -n "detect_privilege" | cut -d: -f1)"
-  acquire_pos="$(echo "$output" | grep -n "acquire_sudo" | cut -d: -f1)"
   ensure_pos="$(echo "$output" | grep -n "ensure_tools" | cut -d: -f1)"
 
-  assertTrue 'validate before detect' "[ $validate_pos -lt $detect_pos ]"
-  assertTrue 'detect before acquire' "[ $detect_pos -lt $acquire_pos ]"
-  assertTrue 'acquire before ensure' "[ $acquire_pos -lt $ensure_pos ]"
+  assertTrue 'validate before ensure' "[ $validate_pos -lt $ensure_pos ]"
 }
 
 # shellcheck source=tests/test_helpers.sh

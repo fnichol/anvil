@@ -16,6 +16,126 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/prepare.sh}"
+
+  unset __ANVIL_SUDO__
+}
+
+testDetectPrivilegeSetsEmptyWhenRoot() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # Stub id to return 0 (root)
+  # shellcheck disable=SC2329
+  id() { echo "0"; }
+
+  run prepare_step_detect_privilege \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ANVIL_SUDO not empty' "" "${__ANVIL_SUDO__:-}"
+}
+
+testDetectPrivilegeSetsDoasOnOpenBSD() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # Stub id to return a non-root user uid
+  # shellcheck disable=SC2329
+  id() { echo "1000"; }
+  # Stub uname for desired kernel
+  # shellcheck disable=SC2329
+  uname() { echo "OpenBSD"; }
+  # Stub need_cmd to succeed without checking real commands
+  # shellcheck disable=SC2329
+  need_cmd() { :; }
+
+  run prepare_step_detect_privilege \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ANVIL_SUDO not doas' "doas" "${__ANVIL_SUDO__:-}"
+}
+
+testDetectPrivilegeSetsSudoOnLinux() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # Stub id to return a non-root user uid
+  # shellcheck disable=SC2329
+  id() { echo "1000"; }
+  # Stub uname for desired kernel
+  # shellcheck disable=SC2329
+  uname() { echo "Linux"; }
+  # Stub need_cmd to succeed without checking real commands
+  # shellcheck disable=SC2329
+  need_cmd() { :; }
+
+  run prepare_step_detect_privilege \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ANVIL_SUDO not sudo' "sudo" "${__ANVIL_SUDO__:-}"
+}
+
+testAcquireSudoFastPathWhenRoot() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  # Simulate root user detected
+  __ANVIL_SUDO__=""
+
+  # If get_sudo or keep_sudo are called this will fail the test
+  # shellcheck disable=SC2329
+  get_sudo() { return 1; }
+  # shellcheck disable=SC2329
+  keep_sudo() { return 1; }
+
+  run prepare_step_acquire_sudo \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'should succeed for root' "$return_status"
+}
+
+testAcquireSudoCallsGetAndKeepForNonRoot() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  __ANVIL_SUDO__="sudo"
+
+  # Mock out get_sudo and keep_sudo
+  _get_sudo_called=""
+  # shellcheck disable=SC2329
+  get_sudo() { _get_sudo_called="yes"; }
+  _keep_sudo_called=""
+  # shellcheck disable=SC2329
+  keep_sudo() { _keep_sudo_called="yes"; }
+
+  run prepare_step_acquire_sudo \
+    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'get_sudo not called' "yes" "$_get_sudo_called"
+  assertEquals 'keep_sudo not called' "yes" "$_keep_sudo_called"
 }
 
 testPrepareStepHostnameNoopWhenNoFqdn() {
@@ -62,6 +182,27 @@ testPrepareStepHostnameNoopWhenFqdnMatchesCurrent() {
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
   assertStderrNull
+}
+
+testPrepareStepsOrderIsCorrect() {
+  local config_path="$tmpdir/nonexistent.json"
+  local hostname="host.local"
+  local os="alpine"
+  local version="3.23.3"
+  local kernel="linux"
+  local arch="x86_64"
+
+  run prepare_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+
+  local output
+  output="$(cat "$stdout")"
+  local detect_pos acquire_pos hostname_pos
+  detect_pos="$(echo "$output" | grep -n "detect_privilege" | cut -d: -f1)"
+  acquire_pos="$(echo "$output" | grep -n "acquire_sudo" | cut -d: -f1)"
+  hostname_pos="$(echo "$output" | grep -n "hostname" | cut -d: -f1)"
+
+  assertTrue 'detect before acquire' "[ $detect_pos -lt $acquire_pos ]"
+  assertTrue 'acquire before hostname' "[ $acquire_pos -lt $hostname_pos ]"
 }
 
 # shellcheck source=tests/test_helpers.sh
