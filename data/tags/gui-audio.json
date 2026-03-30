@@ -1,0 +1,29 @@
+{
+  "name": "gui-audio",
+  "description": "Audio and sound graphical applications",
+  "depends_on": [],
+  "packages": {
+    "arch": {
+      "all": {
+        "pacman": ["cider"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["cider"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": []
+      }
+    }
+  },
+  "hooks": {
+    "bootstrap": {
+      "all": {
+        "all": ["cider-repo"]
+      }
+    }
+  }
+}
