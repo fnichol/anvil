@@ -3,6 +3,10 @@
 
 # shellcheck source=lib/anvil/convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/hooks.sh
+. "$SRC_ROOT/lib/anvil/hooks.sh"
 # shellcheck source=lib/anvil/sudo.sh
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
@@ -55,6 +59,10 @@ bootstrap_steps() {
       fi
       ;;
   esac
+
+  # **Note**: hook steps should follow any built-in steps.
+  hooks_steps_for_phase "$root" "$os" "$arch" "bootstrap" \
+    "$(config_resolve_tags "$root" "$config_path")"
 }
 
 bootstrap_step_aur() {

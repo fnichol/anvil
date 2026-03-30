@@ -10,12 +10,43 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/hooks.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/bootstrap.sh}"
+}
+
+# Helper: writes a config with the given tags
+_writeConfigWithTags() {
+  local config_file="$1"
+  local tags_csv="$2"
+
+  cat <<-EOF >"$config_file"
+	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+	EOF
+}
+
+# Helper: writes a tag JSON declaring a bootsteap hook for all os/arch
+_writeTagWithBootstrapHook() {
+  local tag_name="$1"
+  local hook_name="$2"
+
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+	{
+	  "name": "${tag_name}",
+	  "depends_on": [],
+	  "hooks": {
+	    "bootstrap": {
+	      "all": { "all": ["${hook_name}"] }
+	    }
+	  }
+	}
+	EOF
 }
 
 testBootstrapStepsMacosNoExtraManagersWithoutTags() {
@@ -530,6 +561,77 @@ testBootstrapStepsOmitsMiseOnOpenbsd() {
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
   assertStderrNull
+}
+
+testBoostrapStepsEmitsHookStepWhenTagDeclaresIt() {
+  mkdir -p "$tmpdir/data/hooks/bootstrap"
+  touch "$tmpdir/data/hooks/bootstrap/010-neat-repo.sh"
+  _writeTagWithBootstrapHook "myconf" "neat-repo"
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run bootstrap_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "hook_neat_repo"
+}
+
+testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
+  mkdir -p "$tmpdir/data/hooks/bootstrap"
+  touch "$tmpdir/data/hooks/bootstrap/010-neat-repo.sh"
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+	{
+	  "name": "myconf",
+	  "depends_on": [],
+	  "hooks": {
+	    "bootstrap": {
+	      "arch": { "all": ["neat-repo"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run bootstrap_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertFalse 'no hook steps expected for non-matching os' \
+    "grep -q '^hook_' '$stdout'"
+}
+
+testConfigureStepsEmitsMultipleHooksInNumericOrder() {
+  mkdir -p "$tmpdir/data/hooks/bootstrap"
+  touch "$tmpdir/data/hooks/bootstrap/020-banana-peel.sh"
+  touch "$tmpdir/data/hooks/bootstrap/010-orange-rind.sh"
+
+  mkdir -p "$tmpdir/data/tags"
+
+  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+	{
+	  "name": "myconf",
+	  "depends_on": [],
+	  "hooks": {
+	    "bootstrap": {
+	      "all": { "all": ["orange-rind", "banana-peel"] }
+	    }
+	  }
+	}
+	EOF
+
+  local config_file="$tmpdir/config.json"
+  _writeConfigWithTags "$config_file" "myconf"
+
+  run bootstrap_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'wrong order' \
+    "$(printf 'hook_orange_rind\nhook_banana_peel')" \
+    "$(grep '^hook_' "$stdout")"
 }
 
 testBashrcSkipsIfAlreadyInstalled() {
