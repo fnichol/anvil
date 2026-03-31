@@ -21,7 +21,10 @@
   },
   "hooks": {
     "bootstrap": {
-      "all": {
+      "arch": {
+        "all": ["cider-repo"]
+      },
+      "cachyos": {
         "all": ["cider-repo"]
       }
     }

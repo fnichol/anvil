@@ -1,6 +1,6 @@
 {
-  "name": "gui-networking",
-  "description": "Graphical networking utilities and tools",
+  "name": "container-runtime",
+  "description": "Container runtime",
   "depends_on": [],
   "packages": {
     "alpine": {
@@ -10,14 +10,12 @@
     },
     "arch": {
       "all": {
-        "pacman": ["torbrowser-launcher"],
-        "aur": ["winbox"]
+        "pacman": ["podman", "podman-docker"]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["torbrowser-launcher"],
-        "aur": ["winbox"]
+        "pacman": ["podman", "podman-docker"]
       }
     },
     "debian": {
@@ -25,19 +23,9 @@
         "apt": []
       }
     },
-    "freebsd": {
-      "all": {
-        "freebsd_pkd": []
-      }
-    },
     "macos": {
       "all": {
-        "homebrew_cask": ["tor-browser", "winbox"]
-      }
-    },
-    "openbsd": {
-      "all": {
-        "openbsd_pkd": []
+        "homebrew": []
       }
     },
     "ubuntu": {
