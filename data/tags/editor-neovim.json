@@ -46,7 +46,7 @@
               "Used by plugins, usually Mason tooling to provide LSPs, ",
               "linters, formatters, etc."
             ],
-            "name": "python3"
+            "name": "python"
           },
           {
             "#": ["Used to extract plugins and tools."],
@@ -75,7 +75,7 @@
               "Used by plugins, usually Mason tooling to provide LSPs, ",
               "linters, formatters, etc."
             ],
-            "name": "python3"
+            "name": "python"
           },
           {
             "#": ["Used to extract plugins and tools."],
