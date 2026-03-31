@@ -1,5 +1,5 @@
 {
-  "name": "gui-networking",
+  "name": "gui-network",
   "description": "Graphical networking utilities and tools",
   "depends_on": [],
   "packages": {
@@ -10,13 +10,21 @@
     },
     "arch": {
       "all": {
-        "pacman": ["torbrowser-launcher"],
+        "pacman": [
+          { "#": ["Used by Remmina for VNC support."], "name": "libvncserver" },
+          "remmina",
+          "torbrowser-launcher"
+        ],
         "aur": ["winbox"]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["torbrowser-launcher"],
+        "pacman": [
+          { "#": ["Used by Remmina for VNC support."], "name": "libvncserver" },
+          "remmina",
+          "torbrowser-launcher"
+        ],
         "aur": ["winbox"]
       }
     },
@@ -43,13 +51,6 @@
     "ubuntu": {
       "all": {
         "apt": []
-      }
-    }
-  },
-  "hooks": {
-    "configure": {
-      "all": {
-        "all": []
       }
     }
   }

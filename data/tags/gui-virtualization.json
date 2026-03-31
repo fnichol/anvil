@@ -1,0 +1,47 @@
+{
+  "name": "gui-virtualization",
+  "description": "Graphical Virtualization applications",
+  "depends_on": ["virtualization"],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": []
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["virt-manager"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["virt-manager"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": []
+      }
+    },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": []
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew_cask": []
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": []
+      }
+    }
+  }
+}

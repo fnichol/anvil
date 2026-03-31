@@ -1,6 +1,6 @@
 {
-  "name": "container-runtime",
-  "description": "Container runtime",
+  "name": "virtualization",
+  "description": "Virtualization utilities and tools",
   "depends_on": [],
   "packages": {
     "alpine": {
@@ -10,12 +10,12 @@
     },
     "arch": {
       "all": {
-        "pacman": ["podman", "podman-docker"]
+        "pacman": ["qemu-full", "swtpm"]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["podman", "podman-docker"]
+        "pacman": ["qemu-full", "swtpm"]
       }
     },
     "debian": {
@@ -23,9 +23,19 @@
         "apt": []
       }
     },
+    "freebsd": {
+      "all": {
+        "freebsd_pkd": []
+      }
+    },
     "macos": {
       "all": {
-        "homebrew": []
+        "homebrew_cask": []
+      }
+    },
+    "openbsd": {
+      "all": {
+        "openbsd_pkd": []
       }
     },
     "ubuntu": {
@@ -37,10 +47,10 @@
   "hooks": {
     "configure": {
       "arch": {
-        "all": ["container-runtime"]
+        "all": ["virtualization"]
       },
       "cachyos": {
-        "all": ["container-runtime"]
+        "all": ["virtualization"]
       }
     }
   }
