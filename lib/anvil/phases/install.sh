@@ -585,6 +585,26 @@ _normalize_packages() {
 
       echo "$normalized_pkgs"
       ;;
+    pacman)
+      # Get list of all possible package groups
+      local pkg_groups
+      pkg_groups="$(pacman -Sg)"
+
+      local pkg_set
+      pkg_set="$(mktemp_file)"
+      cleanup_file "$pkg_set"
+
+      for pkg in $pkgs; do
+        if echo "$pkg_groups" | grep -q "^${pkg}$"; then
+          # Expand group into individual package entries
+          pacman -Sg "$pkg" | cut -d ' ' -f 2 >>"$pkg_set"
+        else
+          echo "$pkg" >>"$pkg_set"
+        fi
+      done
+
+      sort -u "$pkg_set"
+      ;;
     *)
       echo "$pkgs"
       ;;
