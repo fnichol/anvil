@@ -16,7 +16,8 @@
           "gvfs-nfs",
           "gvfs-smb",
           "seahorse"
-        ]
+        ],
+        "aur": ["caffeine-applet-git"]
       }
     },
     "cachyos": {
@@ -29,7 +30,8 @@
           "gvfs-nfs",
           "gvfs-smb",
           "seahorse"
-        ]
+        ],
+        "aur": ["caffeine-applet-git"]
       }
     },
     "debian": {

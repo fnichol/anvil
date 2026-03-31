@@ -2,5 +2,5 @@
   "name": "headless",
   "description": "Basic headless environment (i.e. server, container, etc.)",
   "depends_on": ["core"],
-  "tags": ["sync"]
+  "tags": ["multimedia", "sync"]
 }

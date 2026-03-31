@@ -1,0 +1,47 @@
+{
+  "name": "gui-multimedia",
+  "description": "Graphical audio and video processing tools",
+  "depends_on": [],
+  "packages": {
+    "alpine": {
+      "all": {
+        "apk": []
+      }
+    },
+    "arch": {
+      "all": {
+        "pacman": ["vlc"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "pacman": ["vlc"]
+      }
+    },
+    "debian": {
+      "all": {
+        "apt": []
+      }
+    },
+    "freebsd": {
+      "all": {
+        "apt": []
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew_cask": ["vlc"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "apt": []
+      }
+    },
+    "ubuntu": {
+      "all": {
+        "apt": []
+      }
+    }
+  }
+}
