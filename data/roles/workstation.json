@@ -8,6 +8,7 @@
     "gui-audio",
     "gui-network",
     "gui-productivity",
-    "gui-work"
+    "gui-work",
+    "printing"
   ]
 }
