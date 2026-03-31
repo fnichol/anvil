@@ -10,6 +10,7 @@
     "gui-productivity",
     "gui-streamdeck",
     "gui-work",
-    "printing"
+    "printing",
+    "text-to-speech"
   ]
 }
