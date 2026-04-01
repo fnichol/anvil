@@ -1,0 +1,22 @@
+{
+  "name": "gui-sync",
+  "description": "File synchronization",
+  "depends_on": ["sync"],
+  "packages": {
+    "arch": {
+      "all": {
+        "aur": ["syncthingtray-qt6"]
+      }
+    },
+    "cachyos": {
+      "all": {
+        "aur": ["syncthingtray-qt6"]
+      }
+    },
+    "macos": {
+      "all": {
+        "homebrew": []
+      }
+    }
+  }
+}
