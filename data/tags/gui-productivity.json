@@ -25,7 +25,8 @@
             ],
             "name": "minizip"
           },
-          "mission-center"
+          "mission-center",
+          "wl-clipboard"
         ],
         "aur": ["1password"]
       }
@@ -45,7 +46,8 @@
             ],
             "name": "minizip"
           },
-          "mission-center"
+          "mission-center",
+          "wl-clipboard"
         ],
         "aur": ["1password"]
       }
