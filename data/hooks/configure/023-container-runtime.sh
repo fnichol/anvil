@@ -11,6 +11,7 @@ configure_hook_container_runtime() {
 
       if [ ! -f "$conf" ]; then
         info "Disabling Podman warning"
+        as_root mkdir -p "$(dirname "$conf")"
         as_root touch "$conf"
       fi
       ;;
