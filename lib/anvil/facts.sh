@@ -279,14 +279,16 @@ facts_hostname() {
 
   case "$os" in
     arch | cachyos)
-      cat /etc/hostname
-      ;;
-    *)
-      need_cmd hostname
-
-      hostname
+      if [ -f /etc/hostname ]; then
+        cat /etc/hostname
+        return 0
+      fi
       ;;
   esac
+
+  need_cmd hostname
+
+  hostname
 }
 
 # Outputs all system facts as a JSON object.
