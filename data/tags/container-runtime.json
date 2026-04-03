@@ -10,12 +10,12 @@
     },
     "arch": {
       "all": {
-        "pacman": ["podman", "podman-docker"]
+        "pacman": ["podman", "podman-compose", "podman-docker"]
       }
     },
     "cachyos": {
       "all": {
-        "pacman": ["podman", "podman-docker"]
+        "pacman": ["podman", "podman-compose", "podman-docker"]
       }
     },
     "debian": {
