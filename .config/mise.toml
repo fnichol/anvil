@@ -3,3 +3,8 @@
   "bin",
   "support/bin"
 ]
+
+[tools]
+jq = "latest"
+shellcheck = "latest"
+shfmt = "latest"
