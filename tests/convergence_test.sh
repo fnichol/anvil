@@ -48,7 +48,7 @@ testStepsExtraPackageManagersReturnsEmptyWhenNoTags() {
 }
 
 testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "brew-test"; }
@@ -79,7 +79,7 @@ testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
 }
 
 testStepsExtraPackageManagersDetectsAurWhenDeclared() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "aur-test"; }
@@ -109,7 +109,7 @@ testStepsExtraPackageManagersDetectsAurWhenDeclared() {
 }
 
 testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "dotfiles"; }
@@ -139,7 +139,7 @@ testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
 }
 
 testStepsExtraPackageManagersIgnoresNativePackageManagers() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "base"; }
@@ -169,7 +169,7 @@ testStepsExtraPackageManagersIgnoresNativePackageManagers() {
 }
 
 testStepsExtraPackageManagersDeduplicatesAcrossTags() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "tag-a tag-b"; }
@@ -216,7 +216,7 @@ testStepsExtraPackageManagersDeduplicatesAcrossTags() {
 }
 
 testStepsExtraPackageManagersDetectsMise() {
-  writeConfigFile
+  writeConfigFile '{}'
 
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "mise-test"; }

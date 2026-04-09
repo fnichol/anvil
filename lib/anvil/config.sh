@@ -6,6 +6,23 @@
 # shellcheck source=lib/anvil/roles.sh
 . "$SRC_ROOT/lib/anvil/roles.sh"
 
+# Returns the Anvil config home directory.
+#
+# The path is determined using the XDG Base Directory specification, falling
+# back to `~/.config` if not set.
+#
+# * `@stdout` data home path
+# * `@return 0` if successful
+#
+# # Environment Variables
+#
+# * `XDG_CONFIG_HOME` used to determine the configuration directory, defaults
+#   to `$HOME/.config` if not set
+# * `HOME` used as fallback when `XDG_CONFIG_HOME` is not set
+config_home() {
+  echo "${XDG_CONFIG_HOME:-$HOME/.config}/anvil"
+}
+
 # Returns the default configuration file path.
 #
 # The path is determined using the XDG Base Directory specification, falling
@@ -20,9 +37,7 @@
 #   to `$HOME/.config` if not set
 # * `HOME` used as fallback when `XDG_CONFIG_HOME` is not set
 config_path() {
-  local config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/anvil"
-
-  echo "$config_dir/config.json"
+  echo "$(config_home)/config.json"
 }
 
 # Checks if a configuration file exists.
@@ -109,6 +124,7 @@ config_create_json() {
       {tags: $tags_str | split(",") | map(ltrimstr(" ") | rtrimstr(" "))}
      else {} end) +
     {
+      modules: [],
       skip_steps: [],
       custom_packages: {
         add: [],
@@ -164,6 +180,22 @@ config_read_roles() {
     ensure_jq
 
     jq -r '.roles[]? // empty' "$config_file" | tr '\n' ' '
+  fi
+}
+
+# Reads the modules array from a configuration file.
+#
+# * `@param [optional, String]` configuration file path (optional, defaults to
+#    `config_path` output)
+# * `@stdout` module names, one per line, in priority order
+# * `@return 0` if successful
+config_read_modules() {
+  local config_file="${1:-$(config_path)}"
+
+  if config_exists "$config_file"; then
+    ensure_jq
+
+    jq -r '.modules[]?.name // empty' "$config_file"
   fi
 }
 

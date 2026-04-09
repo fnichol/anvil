@@ -395,8 +395,6 @@ testCreateJsonRolesAbsentWhenEmpty() {
   assertJsonFromFile "$config" 'has("roles") | not'
 }
 
-# ---
-
 testResolveTagsWithOnlyTags() {
   cat <<-EOF >"$tmpdir/config.json"
 	{
@@ -482,6 +480,49 @@ testResolveTagsWithNonexistentConfig() {
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
+  assertStderrNull
+}
+
+testCreateJsonIncludesEmptyModulesArray() {
+  local config
+
+  run config_create_json "" "" ""
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+
+  config="$tmpdir/config.json"
+  cp "$stdout" "$config"
+
+  assertJsonFromFile "$config" '.modules | length == 0'
+}
+
+testReadModulesReturnsEmptyWhenNotPresent() {
+  writeConfigFile '{"tags":["base"],"skip_steps":[]}'
+
+  run config_read_modules "$(config_path)"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testReadModulesReturnsNamesInOrder() {
+  writeConfigFile <<-EOF
+	{
+	  "modules":[
+	    {"name":"alpha","url":"https://example.com/a.git"},
+	    {"name":"beta","url":"https://example.com/b.git"}
+	  ],
+	  "tags":[]
+	}
+	EOF
+
+  run config_read_modules "$(config_path)"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains 'alpha'
+  assertStdoutContains 'beta'
   assertStderrNull
 }
 

@@ -49,6 +49,7 @@ commonSetUp() {
   # Ensure any existing XDG config is unset as this may come from a user's
   # shell session and isn't intended to be used in tests
   unset XDG_CONFIG_HOME
+  unset XDG_DATA_HOME
   unset XDG_STATE_HOME
 
   # Override home directory environment variable
@@ -56,12 +57,40 @@ commonSetUp() {
   mkdir -p "$HOME"
 }
 
+# shellcheck disable=SC2120
 writeConfigFile() {
-  local content="${1:-{}}"
-  local location="${2:-$HOME/.config/anvil/config.json}"
+  local content
+  if [ -n "${1:-}" ]; then
+    content="$1"
+  else
+    content="$(cat)"
+  fi
+
+  local location="$HOME/.config/anvil/config.json"
 
   mkdir -p "$(dirname "$location")"
   echo "$content" >"$location"
+}
+
+writeModuleFixture() {
+  local name="$1"
+  local tags_src="${2:-}"
+  local roles_src="${3:-}"
+
+  local mod_dir="${XDG_DATA_HOME:-$HOME/.local/share}/anvil/modules/$name"
+  mkdir -p "$mod_dir/tags" "$mod_dir/roles"
+
+  # Write a minimal module.json
+  printf '{"name":"%s","description":"Test fixture module"}\n' "$name" \
+    >"$mod_dir/module.json"
+
+  if [ -n "$tags_src" ] && [ -d "$tags_src" ]; then
+    cp "$tags_src"/*.json "$mod_dir/tags/" 2>/dev/null || true
+  fi
+
+  if [ -n "$roles_src" ] && [ -d "$roles_src" ]; then
+    cp "$roles_src"/*.json "$mod_dir/roles/" 2>/dev/null || true
+  fi
 }
 
 assertStdoutEquals() {
