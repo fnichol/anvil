@@ -41,6 +41,13 @@ configure_hook_cosmic() {
         echo "password	optional	pam_gnome_keyring.so" \
           | as_root tee -a /etc/pam.d/passwd >/dev/null
       fi
+
+      local svc="gcr-ssh-agent.socket"
+
+      if ! systemctl --user is-enabled "$svc" >/dev/null; then
+        info "Enabling and starting '$svc' service"
+        indent systemctl --user enable --now "$svc"
+      fi
       ;;
   esac
 }
