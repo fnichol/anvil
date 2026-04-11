@@ -10,6 +10,7 @@
       "all": {
         "pacman": [
           "cosmic-session",
+          "gcr-4",
           "gnome-keyring",
           "gvfs",
           "gvfs-dnssd",
@@ -24,6 +25,7 @@
       "all": {
         "pacman": [
           "cosmic-session",
+          "gcr-4",
           "gnome-keyring",
           "gvfs",
           "gvfs-dnssd",
