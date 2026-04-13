@@ -70,31 +70,31 @@ cmd_module() {
 
   case "$subcommand" in
     add)
-      . "$root/lib/anvil/commands/module/add.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/add.sh"
       cmd_module_add "$program" "$@"
       ;;
     check)
-      . "$root/lib/anvil/commands/module/check.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/check.sh"
       cmd_module_check "$program" "$@"
       ;;
     install)
-      . "$root/lib/anvil/commands/module/install.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/install.sh"
       cmd_module_install "$program" "$@"
       ;;
     list)
-      . "$root/lib/anvil/commands/module/list.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/list.sh"
       cmd_module_list "$program" "$@"
       ;;
     remove)
-      . "$root/lib/anvil/commands/module/remove.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/remove.sh"
       cmd_module_remove "$program" "$@"
       ;;
     show)
-      . "$root/lib/anvil/commands/module/show.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/show.sh"
       cmd_module_show "$program" "$@"
       ;;
     update)
-      . "$root/lib/anvil/commands/module/update.sh"
+      . "$SRC_ROOT/lib/anvil/commands/module/update.sh"
       cmd_module_update "$program" "$@"
       ;;
     *)
