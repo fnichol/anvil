@@ -15,6 +15,8 @@
 . "$SRC_ROOT/lib/anvil/discovery.sh"
 # shellcheck source=lib/anvil/convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/phases/install.sh
+. "$SRC_ROOT/lib/anvil/phases/install.sh"
 
 # Prints usage for the status command.
 print_usage_status() {
@@ -127,46 +129,64 @@ cmd_status() {
   info "Resolved (with dependencies): $resolved_tags"
   echo ""
 
-  # Show convergence status
-  section "Convergence Status"
-
-  local desired_packages
-  desired_packages="$(
-    desired_packages \
+  local pkg_managers
+  pkg_managers="$(
+    install_steps \
       "$config_file" \
       "$data_home" \
       "$os" \
-      "$arch" \
-      "homebrew" \
-      "$resolved_tags"
+      "$version" \
+      "$(facts_kernel)" \
+      "$arch"
   )"
-  local desired_count
-  desired_count="$(echo "$desired_packages" | wc -l | tr -d ' ')"
 
-  local installed_packages
-  installed_packages="$(discover_installed_packages "$os" "homebrew")"
-  local installed_count
-  installed_count="$(echo "$installed_packages" | wc -l | tr -d ' ')"
+  local total_pending_count
+  total_pending_count=0
 
-  local packages_to_install
-  packages_to_install="$(
-    convergence_delta "$desired_packages" "$installed_packages"
-  )"
-  local pending_count
-  if [ -n "$packages_to_install" ]; then
-    pending_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
-  else
-    pending_count=0
-  fi
+  local pkg_manager
+  for pkg_manager in $pkg_managers; do
+    # Show convergence status
+    section "Convergence Status ($pkg_manager)"
 
-  info "Desired Packages: $desired_count"
-  info "Installed Packages: $installed_count"
-  info "Pending Installs: $pending_count"
-  echo ""
+    local desired_packages
+    desired_packages="$(
+      desired_packages \
+        "$config_file" \
+        "$data_home" \
+        "$os" \
+        "$arch" \
+        "$pkg_manager" \
+        "$resolved_tags"
+    )"
+    local desired_count
+    desired_count="$(echo "$desired_packages" | wc -l | tr -d ' ')"
+
+    local installed_packages
+    installed_packages="$(discover_installed_packages "$os" "$pkg_manager")"
+    local installed_count
+    installed_count="$(echo "$installed_packages" | wc -l | tr -d ' ')"
+
+    local packages_to_install
+    packages_to_install="$(
+      convergence_delta "$desired_packages" "$installed_packages"
+    )"
+    local pending_count
+    if [ -n "$packages_to_install" ]; then
+      pending_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
+    else
+      pending_count=0
+    fi
+    total_pending_count=$((total_pending_count + pending_count))
+
+    info "Desired Packages: $desired_count"
+    info "Installed Packages: $installed_count"
+    info "Pending Installs: $pending_count"
+    echo ""
+  done
 
   section "Conclusion"
   if [ "$pending_count" -gt 0 ]; then
-    warn "System not converged"
+    warn "System not converged (pending: $total_pending_count)"
     info "Run: $program apply"
   else
     info "✓ System converged"

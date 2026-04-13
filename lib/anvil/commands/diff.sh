@@ -11,6 +11,8 @@
 . "$SRC_ROOT/lib/anvil/discovery.sh"
 # shellcheck source=lib/anvil/convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
+# shellcheck source=lib/anvil/phases/install.sh
+. "$SRC_ROOT/lib/anvil/phases/install.sh"
 
 # Prints usage for the diff command.
 print_usage_diff() {
@@ -103,38 +105,52 @@ cmd_diff() {
     die "No tags configured. Run: $program config init"
   fi
 
-  # Calculate diff
-  local desired_packages installed_packages packages_to_install
-  desired_packages="$(
-    desired_packages \
+  local pkg_managers
+  pkg_managers="$(
+    install_steps \
       "$config_file" \
       "$data_home" \
       "$os" \
-      "$arch" \
-      "homebrew" \
-      "$resolved_tags"
-  )"
-  installed_packages="$(discover_installed_packages "$os" "homebrew")"
-  packages_to_install="$(
-    convergence_delta "$desired_packages" "$installed_packages"
+      "$(facts_version)" \
+      "$(facts_kernel)" \
+      "$arch"
   )"
 
-  # Show what would change
-  local pkg_count
-  if [ -n "$packages_to_install" ]; then
-    pkg_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
-  else
-    pkg_count=0
-  fi
+  local pkg_manager
+  for pkg_manager in $pkg_managers; do
+    # Calculate diff
+    local desired_packages installed_packages packages_to_install
+    desired_packages="$(
+      desired_packages \
+        "$config_file" \
+        "$data_home" \
+        "$os" \
+        "$arch" \
+        "$pkg_manager" \
+        "$resolved_tags"
+    )"
+    installed_packages="$(discover_installed_packages "$os" "$pkg_manager")"
+    packages_to_install="$(
+      convergence_delta "$desired_packages" "$installed_packages"
+    )"
 
-  if [ "$pkg_count" -eq 0 ]; then
-    info "No changes needed - system is converged"
-  else
-    section "Packages to Install ($pkg_count)"
-    echo "$packages_to_install" | while IFS= read -r pkg; do
-      if [ -n "$pkg" ]; then
-        indent echo "+ $pkg"
-      fi
-    done
-  fi
+    # Show what would change
+    local pkg_count
+    if [ -n "$packages_to_install" ]; then
+      pkg_count="$(echo "$packages_to_install" | wc -l | tr -d ' ')"
+    else
+      pkg_count=0
+    fi
+
+    if [ "$pkg_count" -eq 0 ]; then
+      info "No changes needed - system is converged ($pkg_manager)"
+    else
+      section "Packages to Install ($pkg_manager: $pkg_count)"
+      echo "$packages_to_install" | while IFS= read -r pkg; do
+        if [ -n "$pkg" ]; then
+          indent echo "+ $pkg"
+        fi
+      done
+    fi
+  done
 }
