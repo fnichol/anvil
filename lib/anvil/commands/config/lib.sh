@@ -44,7 +44,7 @@ cmd_config() {
             break
             ;;
           *)
-            print_usage "$program" >&2
+            print_config_usage "$program" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac

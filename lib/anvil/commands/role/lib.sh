@@ -43,7 +43,7 @@ cmd_role() {
             break
             ;;
           *)
-            print_role_usage "$program" >&2
+            print_usage_role "$program" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac

@@ -43,7 +43,7 @@ cmd_tag() {
             break
             ;;
           *)
-            print_tag_usage "$program" >&2
+            print_usage_tag "$program" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
