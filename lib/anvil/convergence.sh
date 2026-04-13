@@ -28,19 +28,27 @@ convergence_delta() {
 
 # Builds complete desired package list from tags
 desired_packages() {
-  local root="$1"
-  local os="$2"
-  local arch="$3"
-  local package_type="$4"
-  shift 4
+  local config_file="$1"
+  local data_home="$2"
+  local os="$3"
+  local arch="$4"
+  local package_type="$5"
+  shift 5
   local tags="$*"
 
   local all_pkgs=""
 
   for tag in $tags; do
     local tag_pkgs
+
     tag_pkgs="$(
-      tags_packages_for "$root" "$tag" "$os" "$arch" "$package_type"
+      tags_packages_for \
+        "$config_file" \
+        "$data_home" \
+        "$tag" \
+        "$os" \
+        "$arch" \
+        "$package_type"
     )"
 
     if [ -n "$tag_pkgs" ]; then
@@ -59,8 +67,8 @@ desired_packages() {
 # managers such as Homebrew, AUR, etc. that require installation and setup
 # before they can be used.
 #
-# * `@param [String]` root directory of the codebase
-# * `@param [String]` path to config file
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` operating system (e.g. "cachyos", "macos")
 # * `@param [String]` architecture (e.g. "x86_64", "aarch64")
 # * `@stdout` newline-delimited list of unique/sorted extra package manager
@@ -71,15 +79,15 @@ desired_packages() {
 #
 # * `__ANVIL_EXTRA_PACKAGE_MANAGERS__`: all non-system package managers
 _steps_extra_package_managers() {
-  local root="$1"
-  local config_path="$2"
+  local config_file="$1"
+  local data_home="$2"
   local os="$3"
   local arch="$4"
 
   ensure_jq
 
   local resolved_tags
-  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
+  resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
   # No tags are configured, early return
   if [ -z "$resolved_tags" ]; then
@@ -89,7 +97,7 @@ _steps_extra_package_managers() {
   local all_package_types=""
   for tag in $resolved_tags; do
     local tag_file
-    tag_file="$(tags_path_for "$root" "$tag")"
+    tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
 
     if [ ! -f "$tag_file" ]; then
       continue

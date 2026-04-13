@@ -10,6 +10,8 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/config.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
@@ -17,11 +19,13 @@ setUp() {
 
   . "${SRC:=lib/anvil/phases/prepare.sh}"
 
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+
   unset __ANVIL_SUDO__
 }
 
 testDetectPrivilegeSetsEmptyWhenRoot() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -33,14 +37,13 @@ testDetectPrivilegeSetsEmptyWhenRoot() {
   id() { echo "0"; }
 
   run prepare_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'ANVIL_SUDO not empty' "" "${__ANVIL_SUDO__:-}"
 }
 
 testDetectPrivilegeSetsDoasOnOpenBSD() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -58,14 +61,13 @@ testDetectPrivilegeSetsDoasOnOpenBSD() {
   need_cmd() { :; }
 
   run prepare_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'ANVIL_SUDO not doas' "doas" "${__ANVIL_SUDO__:-}"
 }
 
 testDetectPrivilegeSetsSudoOnLinux() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -83,14 +85,13 @@ testDetectPrivilegeSetsSudoOnLinux() {
   need_cmd() { :; }
 
   run prepare_step_detect_privilege \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'ANVIL_SUDO not sudo' "sudo" "${__ANVIL_SUDO__:-}"
 }
 
 testAcquireSudoFastPathWhenRoot() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -107,13 +108,12 @@ testAcquireSudoFastPathWhenRoot() {
   keep_sudo() { return 1; }
 
   run prepare_step_acquire_sudo \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed for root' "$return_status"
 }
 
 testAcquireSudoCallsGetAndKeepForNonRoot() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -131,7 +131,7 @@ testAcquireSudoCallsGetAndKeepForNonRoot() {
   keep_sudo() { _keep_sudo_called="yes"; }
 
   run prepare_step_acquire_sudo \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'get_sudo not called' "yes" "$_get_sudo_called"
@@ -139,19 +139,16 @@ testAcquireSudoCallsGetAndKeepForNonRoot() {
 }
 
 testPrepareStepHostnameNoopWhenNoFqdn() {
-  local config_path="$tmpdir/config.json"
   local hostname="current-host"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  cat <<-EOF >"$config_path"
-	{}
-	EOF
+  writeConfigFile '{}'
 
   run prepare_step_hostname \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -159,25 +156,20 @@ testPrepareStepHostnameNoopWhenNoFqdn() {
 }
 
 testPrepareStepHostnameNoopWhenFqdnMatchesCurrent() {
-  local config_path="$tmpdir/config.json"
   local hostname="host.local"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  cat <<-EOF >"$config_path"
-	{
-	  "fqdn": "host.local"
-	}
-	EOF
+  writeConfigFile '{"fqdn": "host.local"}'
 
   # Override facts_hostname to return the configured fqdn
   # shellcheck disable=SC2329
   facts_hostname() { echo "host.local"; }
 
   run prepare_step_hostname \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -185,14 +177,14 @@ testPrepareStepHostnameNoopWhenFqdnMatchesCurrent() {
 }
 
 testPrepareStepsOrderIsCorrect() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="host.local"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run prepare_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run prepare_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output
   output="$(cat "$stdout")"

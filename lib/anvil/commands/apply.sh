@@ -5,6 +5,8 @@
 . "$SRC_ROOT/lib/anvil/script.sh"
 # shellcheck source=lib/anvil/logging.sh
 . "$SRC_ROOT/lib/anvil/logging.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/phases.sh
@@ -14,6 +16,7 @@
 print_apply_usage() {
   local program="$1"
   local default_config_path="$2"
+  local default_data_home="$3"
 
   cat <<-EOF
 	Converge system to desired state
@@ -29,14 +32,13 @@ print_apply_usage() {
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_CONFIG_PATH       [default: $default_config_path]
+	    ANVIL_DATA_HOME         [default: $default_data_home]
 	EOF
 }
 
 # Apply command - converge system to desired state
 cmd_apply() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
@@ -44,10 +46,10 @@ cmd_apply() {
 
   logging_exec "anvil-apply" "$0" apply "$@"
 
-  local default_config_path
-  default_config_path="$(config_path)"
-
   local default_config_path config_file
+  default_config_path="$(config_path)"
+  local default_data_home data_home
+  default_data_home="$(modules_data_home)"
 
   local dry_run=""
   local cli_skip_steps=""
@@ -56,7 +58,8 @@ cmd_apply() {
   while getopts "hn-:" arg; do
     case "$arg" in
       h)
-        print_apply_usage "$program" "$default_config_path"
+        print_apply_usage "$program" \
+          "$default_config_path" "$default_data_home"
         return 0
         ;;
       n)
@@ -66,7 +69,8 @@ cmd_apply() {
         long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
           help)
-            print_apply_usage "$program" "$default_config_path"
+            print_apply_usage "$program" \
+              "$default_config_path" "$default_data_home"
             return 0
             ;;
           dry-run)
@@ -76,7 +80,8 @@ cmd_apply() {
             cli_skip_steps="$long_optarg"
             ;;
           skip*)
-            print_apply_usage "$program" "$default_config_path" >&2
+            print_apply_usage "$program" \
+              "$default_config_path" "$default_data_home" >&2
             die "missing required argument for --$OPTARG option"
             ;;
           '')
@@ -84,13 +89,15 @@ cmd_apply() {
             break
             ;;
           *)
-            print_apply_usage "$program" "$default_config_path" >&2
+            print_apply_usage "$program" \
+              "$default_config_path" "$default_data_home" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
         ;;
       \?)
-        print_apply_usage "$program" "$default_config_path" >&2
+        print_apply_usage "$program" \
+          "$default_config_path" "$default_data_home" >&2
         die "invalid argument; arg=-$OPTARG"
         ;;
     esac
@@ -100,8 +107,8 @@ cmd_apply() {
   local start_time
   start_time="$(date +%s)"
 
-  # shellcheck disable=SC2031
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
+  data_home="${ANVIL_DATA_HOME:-$default_data_home}"
 
   if ! config_exists "$config_file"; then
     warn "No config found at: $config_file"
@@ -130,7 +137,7 @@ cmd_apply() {
 
   section "Anvil Apply"
 
-  phases_run "$root" "$config_file" "$skip_coords"
+  phases_run "$config_file" "$data_home" "$skip_coords"
 
   echo
   section "Apply Complete"

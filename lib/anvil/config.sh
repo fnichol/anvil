@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# Import cookie to prevent circular loading
+if [ -n "${__ANVIL_SOURCED_CONFIG__:-}" ]; then
+  return 0
+else
+  __ANVIL_SOURCED_CONFIG__=true
+fi
+
 # shellcheck source=lib/anvil/jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/roles.sh
@@ -42,12 +49,11 @@ config_path() {
 
 # Checks if a configuration file exists.
 #
-# * `@param [String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@return 0` if the configuration file exists
 # * `@return 1` if the configuration file does not exist
 config_exists() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   [ -f "$config_file" ]
 }
@@ -135,12 +141,11 @@ config_create_json() {
 
 # Reads the FQDN field from a configuration file.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` FQDN value if present
 # * `@return 0` if successful
 config_read_fqdn() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -151,12 +156,11 @@ config_read_fqdn() {
 
 # Reads the tags array from a configuration file.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` space-seperated list of tag names
 # * `@return 0` if successful
 config_read_tags() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -169,12 +173,11 @@ config_read_tags() {
 
 # Reads the roles array from a configuration file.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` space-seperated list of role names
 # * `@return 0` if successful
 config_read_roles() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -185,12 +188,11 @@ config_read_roles() {
 
 # Reads the modules array from a configuration file.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#    `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` module names, one per line, in priority order
 # * `@return 0` if successful
 config_read_modules() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -201,12 +203,11 @@ config_read_modules() {
 
 # Reads the skip_steps array from a configuration file.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` list of step names to skip, one per line
 # * `@return 0` if successful
 config_read_skip_steps() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -220,12 +221,11 @@ config_read_skip_steps() {
 # This function extracts the custom_packages.add array which contains
 # additional packages to install beyond those defined in tags.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` list of package names to add, one per line
 # * `@return 0` if successful
 config_read_custom_add() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -239,12 +239,11 @@ config_read_custom_add() {
 # This function extracts the custom_packages.remove array which contains
 # packages to exclude from installation even if defined in tags.
 #
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
 # * `@stdout` list of package names to remove, one per line
 # * `@return 0` if successful
 config_read_custom_remove() {
-  local config_file="${1:-$(config_path)}"
+  local config_file="$1"
 
   if config_exists "$config_file"; then
     ensure_jq
@@ -258,18 +257,17 @@ config_read_custom_remove() {
 # Reads roles (if any), resolves role dependencies in order, collects their
 # tags, then appends any explicit tags from the "tags" array.
 #
-# * `@param [String]` root directory path
-# * `@param [optional, String]` configuration file path (optional, defaults to
-#   `config_path` output)
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@stdout` space-delimited list of tag names (role sourced first, then
 #   extra tags from config)
 # * `@return 0` if successful
 config_resolve_tags() {
-  local root="$1"
-  local config_path="${2:-$(config_path)}"
+  local config_file="$1"
+  local data_home="$2"
 
   # If no config file is found, then no tags are resolved--done
-  if ! config_exists "$config_path"; then
+  if ! config_exists "$config_file"; then
     return 0
   fi
 
@@ -281,17 +279,19 @@ config_resolve_tags() {
 
   # Load all config defined roles
   local config_roles
-  config_roles="$(config_read_roles "$config_path")"
+  config_roles="$(config_read_roles "$config_file")"
 
   if [ -n "$config_roles" ]; then
     # Resolve all roles to a dependencies-first ordering
     local resolved_roles
-    resolved_roles="$(roles_resolve "$root" "$config_roles")"
+    resolved_roles="$(
+      roles_resolve "$config_file" "$data_home" "$config_roles"
+    )"
 
     # Expand roles to the appropriate set of dependencies-first ordered tags
     for role in $resolved_roles; do
       local role_tags
-      role_tags="$(roles_tags_for "$root" "$role")"
+      role_tags="$(roles_tags_for "$config_file" "$data_home" "$role")"
 
       if [ -n "$role_tags" ]; then
         all_tags="${all_tags}${all_tags:+ }${role_tags}"
@@ -301,7 +301,7 @@ config_resolve_tags() {
 
   # Load all config defined tags
   local config_tags
-  config_tags="$(config_read_tags "$config_path")"
+  config_tags="$(config_read_tags "$config_file")"
 
   # Append config tags to role-resolved and derived tags
   if [ -n "$config_tags" ]; then

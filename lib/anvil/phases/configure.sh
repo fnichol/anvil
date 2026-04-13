@@ -7,9 +7,9 @@
 . "$SRC_ROOT/lib/anvil/hooks.sh"
 
 configure_steps() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local os="$1"
   shift
@@ -23,6 +23,11 @@ configure_steps() {
   # Built-in configure steps go here as they are implemented.
   #
   # **Note**: hook steps should follow any built-in steps.
-  hooks_steps_for_phase "$root" "$os" "$arch" "configure" \
-    "$(config_resolve_tags "$root" "$config_path")"
+  hooks_steps_for_phase \
+    "$config_file" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "configure" \
+    "$(config_resolve_tags "$config_file" "$data_home")"
 }

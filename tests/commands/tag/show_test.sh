@@ -12,6 +12,13 @@ oneTimeSetUp() {
 
 setUp() {
   commonSetUp
+
+  writeModuleFixture \
+    "default" \
+    "$root/tests/fixtures/data/tags" \
+    "$root/tests/fixtures/data/roles"
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/default.git"}]}'
 }
 
 runCli() {
@@ -47,10 +54,10 @@ testCmdTagShowNoNameFails() {
 }
 
 testCmdTagShowWithName() {
-  runCli tag show base
+  runCli tag show alfa
 
   assertTrue 'cli command failed' "$return_status"
-  assertStdoutContains 'Tag: base'
+  assertStdoutContains 'Tag: alfa'
   assertStderrNull
 }
 

@@ -25,28 +25,27 @@ print_usage_config_show() {
 }
 
 cmd_config_show() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
   local default_config_path config_file
-
   default_config_path="$(config_path)"
 
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
       h)
-        print_usage_config_show "$program" "$default_config_path"
+        print_usage_config_show "$program" \
+          "$default_config_path"
         return 0
         ;;
       -)
         # long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
           help)
-            print_usage_config_show "$program" "$default_config_path"
+            print_usage_config_show "$program" \
+              "$default_config_path"
             return 0
             ;;
           '')
@@ -54,13 +53,15 @@ cmd_config_show() {
             break
             ;;
           *)
-            print_usage "$program" "$default_config_path" >&2
+            print_usage "$program" \
+              "$default_config_path" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
         ;;
       \?)
-        print_usage_config_show "$program" "$default_config_path" >&2
+        print_usage_config_show "$program" \
+          "$default_config_path" >&2
         die "invalid argument; arg=-$OPTARG"
         ;;
     esac

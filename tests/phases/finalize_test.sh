@@ -11,32 +11,43 @@ oneTimeSetUp() {
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
   . "$SRC_ROOT/lib/anvil/hooks.sh"
+  . "$SRC_ROOT/lib/anvil/config.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/finalize.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+  mod_path="$(module_path_for "$data_home" default)"
 }
 
 # Helper: writes a config with the given tags
 _writeConfigWithTags() {
-  local config_file="$1"
-  local tags_csv="$2"
+  local tags_csv="$1"
 
-  cat <<-EOF >"$config_file"
-	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+  writeConfigFile <<-EOF
+	{
+	  "modules":[
+	    {"name":"default","url":"https://example.com/default.git"}
+	  ],
+	  "tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]
+	}
 	EOF
 }
 
 # Helper: writes a tag JSON declaring a finalize hook for all os/arch
 _writeTagWithFinalizeHook() {
-  local tag_name="$1"
-  local hook_name="$2"
+  local mod_path="$1"
+  local tag_name="$2"
+  local hook_name="$3"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+  cat <<-EOF >"$mod_path/tags/${tag_name}.json"
 	{
 	  "name": "${tag_name}",
 	  "depends_on": [],
@@ -50,15 +61,16 @@ _writeTagWithFinalizeHook() {
 }
 
 testFinalizeStepsAlwaysContainsRecordRunAndCleanup() {
-  run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  run finalize_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "record_run"
-  assertStdoutContains "cleanup"
 }
 
 testFinalizeStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
-  run finalize_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  run finalize_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no hook steps expected' \
@@ -66,14 +78,14 @@ testFinalizeStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
 }
 
 testFinalizeStepsHookStepAppearsBeforeRecordRun() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-  _writeTagWithFinalizeHook "svc" "tailscaled"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithFinalizeHook "$mod_path" "svc" "tailscaled"
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "svc"
+  _writeConfigWithTags "svc"
 
-  run finalize_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run finalize_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
 
@@ -87,13 +99,12 @@ testFinalizeStepsHookStepAppearsBeforeRecordRun() {
 }
 
 testFinalizeStepsHookStepsInNumericOrderBeforeRecordRun() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/020-syncthing.sh"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/020-syncthing.sh"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
 
-  mkdir -p "$tmpdir/data/tags"
-
-  cat <<-EOF >"$tmpdir/data/tags/svc.json"
+  mkdir -p "$mod_path/tags"
+  cat <<-EOF >"$mod_path/tags/svc.json"
 	{
 	  "name": "svc",
 	  "depends_on": [],
@@ -105,10 +116,10 @@ testFinalizeStepsHookStepsInNumericOrderBeforeRecordRun() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "svc"
+  _writeConfigWithTags "svc"
 
-  run finalize_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run finalize_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
 
@@ -116,17 +127,16 @@ testFinalizeStepsHookStepsInNumericOrderBeforeRecordRun() {
   steps="$(cat "$stdout")"
 
   assertEquals 'wrong step order' \
-    "$(printf 'hook_tailscaled\nhook_syncthing\nrecord_run\ncleanup')" \
+    "$(printf 'hook_tailscaled\nhook_syncthing\nrecord_run')" \
     "$steps"
 }
 
 testFinalizeStepsDoesNotEmitHookWhenOsDoesNotMatch() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
 
-  mkdir -p "$tmpdir/data/tags"
-
-  cat <<-EOF >"$tmpdir/data/tags/svc.json"
+  mkdir -p "$mod_path/tags"
+  cat <<-EOF >"$mod_path/tags/svc.json"
 	{
 	  "name": "svc",
 	  "depends_on": [],
@@ -138,10 +148,10 @@ testFinalizeStepsDoesNotEmitHookWhenOsDoesNotMatch() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "svc"
+  _writeConfigWithTags "svc"
 
-  run finalize_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+  run finalize_steps \
+    "$config_file" "$data_home" "macos" "" "darwin" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no hook steps expected for non-matching os' \

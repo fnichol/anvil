@@ -7,9 +7,9 @@
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 prepare_steps() {
-  local _root="$1"
+  local _config_file="$1"
   shift
-  local _config_path="$1"
+  local _data_home="$1"
   shift
   local _os="$1"
   shift
@@ -51,9 +51,9 @@ prepare_step_detect_privilege() {
 }
 
 prepare_step_acquire_sudo() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local hostname="$1"
   shift
@@ -71,9 +71,9 @@ prepare_step_acquire_sudo() {
 }
 
 prepare_step_hostname() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local _data_home="$1"
   shift
   local hostname="$1"
   shift
@@ -81,7 +81,7 @@ prepare_step_hostname() {
   shift
 
   local fqdn
-  fqdn="$(config_read_fqdn "$config_path")"
+  fqdn="$(config_read_fqdn "$config_file")"
 
   # If no FQDN is configured, early return
   if [ -z "$fqdn" ]; then

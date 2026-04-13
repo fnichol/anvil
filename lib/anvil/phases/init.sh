@@ -7,9 +7,9 @@
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 init_steps() {
-  local _root="$1"
+  local _config_file="$1"
   shift
-  local _config_path="$1"
+  local _data_home="$1"
   shift
   local _os="$1"
   shift

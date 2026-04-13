@@ -8,9 +8,9 @@
 
 # Returns platform-specific install steps, one package manager per step.
 install_steps() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local os="$1"
   shift
@@ -23,7 +23,7 @@ install_steps() {
 
   local extra_managers
   extra_managers="$(
-    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+    _steps_extra_package_managers "$config_file" "$data_home" "$os" "$arch"
   )"
 
   # Native system package managers installs are first and unconditional
@@ -314,15 +314,15 @@ install_step_openbsd_pkg() {
 # computes the delta, and dispatches to the appropriate
 # `_install_packages_<type>` function if any packages need installing.
 #
-# * `@param [String]` root directory of the codebase
-# * `@param [String]` path to config file
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` operating system (e.g. "macos", "arch")
 # * `@param [String]` architecture (e.g. "x86_64", "aarch64")
 # * `@param [String]` package type (e.g. "homebrew", "pacman", "apt")
 # * `@return 0` if successful
 _install_step_packages() {
-  local root="$1"
-  local config_path="$2"
+  local config_file="$1"
+  local data_home="$2"
   local os="$3"
   local arch="$4"
   local package_type="$5"
@@ -331,7 +331,7 @@ _install_step_packages() {
   need_cmd wc
 
   local resolved_tags
-  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
+  resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
   # No tags are configured, early return
   if [ -z "$resolved_tags" ]; then

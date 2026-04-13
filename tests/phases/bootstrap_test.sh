@@ -10,33 +10,43 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
-  . "$SRC_ROOT/lib/anvil/hooks.sh"
+  . "$SRC_ROOT/lib/anvil/config.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/bootstrap.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+  mod_path="$(module_path_for "$data_home" default)"
 }
 
 # Helper: writes a config with the given tags
 _writeConfigWithTags() {
-  local config_file="$1"
-  local tags_csv="$2"
+  local tags_csv="$1"
 
-  cat <<-EOF >"$config_file"
-	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+  writeConfigFile <<-EOF
+	{
+	  "modules":[
+	    {"name":"default","url":"https://example.com/default.git"}
+	  ],
+	  "tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]
+	}
 	EOF
 }
 
 # Helper: writes a tag JSON declaring a bootsteap hook for all os/arch
 _writeTagWithBootstrapHook() {
-  local tag_name="$1"
-  local hook_name="$2"
+  local mod_path="$1"
+  local tag_name="$2"
+  local hook_name="$3"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+  cat <<-EOF >"$mod_path/tags/${tag_name}.json"
 	{
 	  "name": "${tag_name}",
 	  "depends_on": [],
@@ -50,7 +60,6 @@ _writeTagWithBootstrapHook() {
 }
 
 testBootstrapStepsMacosNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -59,7 +68,8 @@ testBootstrapStepsMacosNoExtraManagersWithoutTags() {
   # shellcheck disable=SC2329
   _steps_extra_package_managers() { :; }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'bashrc absent without tags' "grep -q '^bashrc$' '$stdout'"
@@ -69,7 +79,6 @@ testBootstrapStepsMacosNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsMacosEmitsHomebrewWhenTagsDeclareIt() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -82,7 +91,8 @@ testBootstrapStepsMacosEmitsHomebrewWhenTagsDeclareIt() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew"
@@ -92,7 +102,6 @@ testBootstrapStepsMacosEmitsHomebrewWhenTagsDeclareIt() {
 }
 
 testBootstrapStepsOrderingHomebrewBeforeBashrcBeforeHomeshick() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -105,7 +114,8 @@ testBootstrapStepsOrderingHomebrewBeforeBashrcBeforeHomeshick() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output homebrew_pos bashrc_pos homeshick_pos
   output="$(cat "$stdout")"
@@ -118,7 +128,6 @@ testBootstrapStepsOrderingHomebrewBeforeBashrcBeforeHomeshick() {
 }
 
 testBootstrapStepsEmitsMiseOnMacosWhenDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -127,7 +136,8 @@ testBootstrapStepsEmitsMiseOnMacosWhenDeclared() {
   # shellcheck disable=SC2329
   _steps_extra_package_managers() { echo "mise"; }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -135,13 +145,13 @@ testBootstrapStepsEmitsMiseOnMacosWhenDeclared() {
 }
 
 testBootstrapStepsArchNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -152,7 +162,6 @@ testBootstrapStepsArchNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsArchContainsAurIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -163,7 +172,8 @@ testBootstrapStepsArchContainsAurIfDeclared() {
     echo "aur"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -174,7 +184,6 @@ testBootstrapStepsArchContainsAurIfDeclared() {
 }
 
 testBootstrapStepsArchContainsAurBeforeBashrc() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -187,7 +196,8 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -204,7 +214,6 @@ testBootstrapStepsArchContainsAurBeforeBashrc() {
 }
 
 testBootstrapStepsArchContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -215,7 +224,8 @@ testBootstrapStepsArchContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -226,13 +236,13 @@ testBootstrapStepsArchContainsMiseIfDeclared() {
 }
 
 testBootstrapStepsCachyosNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -243,7 +253,6 @@ testBootstrapStepsCachyosNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsCachyosContainsAurIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -254,7 +263,8 @@ testBootstrapStepsCachyosContainsAurIfDeclared() {
     echo "aur"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -265,7 +275,6 @@ testBootstrapStepsCachyosContainsAurIfDeclared() {
 }
 
 testBootstrapStepsCachyosContainsAurBeforeBashrc() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -278,7 +287,8 @@ testBootstrapStepsCachyosContainsAurBeforeBashrc() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
@@ -295,7 +305,6 @@ testBootstrapStepsCachyosContainsAurBeforeBashrc() {
 }
 
 testBootstrapStepsCachyosContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -306,7 +315,8 @@ testBootstrapStepsCachyosContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -317,13 +327,13 @@ testBootstrapStepsCachyosContainsMiseIfDeclared() {
 }
 
 testBootstrapStepsUbuntuNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -334,7 +344,6 @@ testBootstrapStepsUbuntuNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsUbuntuHasBashrcAndHomeshickIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
@@ -346,7 +355,8 @@ testBootstrapStepsUbuntuHasBashrcAndHomeshickIfDeclared() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -356,20 +366,19 @@ testBootstrapStepsUbuntuHasBashrcAndHomeshickIfDeclared() {
 }
 
 testBootstrapStepsUbuntuHasNoPackageManagerStep() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no apt step' "grep -q '^apt$' '$stdout'"
 }
 
 testBootstrapStepsUbuntuContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
@@ -380,7 +389,8 @@ testBootstrapStepsUbuntuContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -391,13 +401,13 @@ testBootstrapStepsUbuntuContainsMiseIfDeclared() {
 }
 
 testBootstrapStepsAlpineNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -408,7 +418,6 @@ testBootstrapStepsAlpineNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsAlpineHasBashrcAndHomeshickIfDefined() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
@@ -420,7 +429,8 @@ testBootstrapStepsAlpineHasBashrcAndHomeshickIfDefined() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -430,7 +440,6 @@ testBootstrapStepsAlpineHasBashrcAndHomeshickIfDefined() {
 }
 
 testBootstrapStepsAlpineContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
@@ -441,7 +450,8 @@ testBootstrapStepsAlpineContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -452,13 +462,13 @@ testBootstrapStepsAlpineContainsMiseIfDeclared() {
 }
 
 testBootstrapStepsFreebsdNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -469,7 +479,6 @@ testBootstrapStepsFreebsdNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsFreebsdHasBashrcAndHomeshickIfDefined() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
@@ -481,7 +490,8 @@ testBootstrapStepsFreebsdHasBashrcAndHomeshickIfDefined() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -491,7 +501,6 @@ testBootstrapStepsFreebsdHasBashrcAndHomeshickIfDefined() {
 }
 
 testBootstrapStepsOmitsMiseOnFreebsd() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="14.0"
   local kernel="freebsd"
@@ -500,7 +509,8 @@ testBootstrapStepsOmitsMiseOnFreebsd() {
   # shellcheck disable=SC2329
   _steps_extra_package_managers() { echo "mise"; }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise absent on freebsd' "grep -q '^mise$' '$stdout'"
@@ -508,13 +518,13 @@ testBootstrapStepsOmitsMiseOnFreebsd() {
 }
 
 testBootstrapStepsOpenbsdNoExtraManagersWithoutTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'aur absent without tags' "grep -q '^aur$' '$stdout'"
@@ -525,7 +535,6 @@ testBootstrapStepsOpenbsdNoExtraManagersWithoutTags() {
 }
 
 testBootstrapStepsOpenbsdHasBashrcAndHomeshickIfDefined() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
@@ -537,7 +546,8 @@ testBootstrapStepsOpenbsdHasBashrcAndHomeshickIfDefined() {
     echo "homeshick"
   }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "bashrc"
@@ -547,7 +557,6 @@ testBootstrapStepsOpenbsdHasBashrcAndHomeshickIfDefined() {
 }
 
 testBootstrapStepsOmitsMiseOnOpenbsd() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.4"
   local kernel="openbsd"
@@ -556,7 +565,8 @@ testBootstrapStepsOmitsMiseOnOpenbsd() {
   # shellcheck disable=SC2329
   _steps_extra_package_managers() { echo "mise"; }
 
-  run bootstrap_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
@@ -564,25 +574,25 @@ testBootstrapStepsOmitsMiseOnOpenbsd() {
 }
 
 testBoostrapStepsEmitsHookStepWhenTagDeclaresIt() {
-  mkdir -p "$tmpdir/data/hooks/bootstrap"
-  touch "$tmpdir/data/hooks/bootstrap/010-neat-repo.sh"
-  _writeTagWithBootstrapHook "myconf" "neat-repo"
+  mkdir -p "$mod_path/hooks/bootstrap"
+  touch "$mod_path/hooks/bootstrap/010-neat-repo.sh"
+  _writeTagWithBootstrapHook "$mod_path" "myconf" "neat-repo"
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
+  _writeConfigWithTags "myconf"
 
-  run bootstrap_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "hook_neat_repo"
 }
 
 testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
-  mkdir -p "$tmpdir/data/hooks/bootstrap"
-  touch "$tmpdir/data/hooks/bootstrap/010-neat-repo.sh"
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/hooks/bootstrap"
+  touch "$mod_path/hooks/bootstrap/010-neat-repo.sh"
 
-  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+  mkdir -p "$mod_path/tags"
+  cat <<-EOF >"$mod_path/tags/myconf.json"
 	{
 	  "name": "myconf",
 	  "depends_on": [],
@@ -594,10 +604,10 @@ testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
+  _writeConfigWithTags "myconf"
 
-  run bootstrap_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "macos" "" "darwin" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no hook steps expected for non-matching os' \
@@ -605,13 +615,12 @@ testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
 }
 
 testConfigureStepsEmitsMultipleHooksInNumericOrder() {
-  mkdir -p "$tmpdir/data/hooks/bootstrap"
-  touch "$tmpdir/data/hooks/bootstrap/020-banana-peel.sh"
-  touch "$tmpdir/data/hooks/bootstrap/010-orange-rind.sh"
+  mkdir -p "$mod_path/hooks/bootstrap"
+  touch "$mod_path/hooks/bootstrap/020-banana-peel.sh"
+  touch "$mod_path/hooks/bootstrap/010-orange-rind.sh"
 
-  mkdir -p "$tmpdir/data/tags"
-
-  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+  mkdir -p "$mod_path/tags"
+  cat <<-EOF >"$mod_path/tags/myconf.json"
 	{
 	  "name": "myconf",
 	  "depends_on": [],
@@ -623,10 +632,10 @@ testConfigureStepsEmitsMultipleHooksInNumericOrder() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
+  _writeConfigWithTags "myconf"
 
-  run bootstrap_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run bootstrap_steps \
+    "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong order' \
@@ -635,7 +644,6 @@ testConfigureStepsEmitsMultipleHooksInNumericOrder() {
 }
 
 testBashrcSkipsIfAlreadyInstalled() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -657,13 +665,12 @@ testBashrcSkipsIfAlreadyInstalled() {
   }
 
   run bootstrap_step_bashrc \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed (idempotent)' "$return_status"
 }
 
 testBashrcDownloadsAndInvokesInstallerWhenNotPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -695,7 +702,7 @@ testBashrcDownloadsAndInvokesInstallerWhenNotPresent() {
   }
 
   run bootstrap_step_bashrc \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertTrue 'curl URL contains bashrc' \
@@ -705,7 +712,6 @@ testBashrcDownloadsAndInvokesInstallerWhenNotPresent() {
 }
 
 testHomeshickSkipsIfAlreadyInstalled() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -732,14 +738,13 @@ testHomeshickSkipsIfAlreadyInstalled() {
   }
 
   run bootstrap_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed (idempotent)' "$return_status"
   assertTrue 'failed to source file' "[ -f '$file_sourced_cookie' ]"
 }
 
 testHomeshickClonesRepo() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -778,7 +783,7 @@ testHomeshickClonesRepo() {
   }
 
   run bootstrap_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'git clone not called' "yes" "$_git_cloned"
@@ -786,7 +791,7 @@ testHomeshickClonesRepo() {
 }
 
 testHomeshickWritesDropinWhenBashDExists() {
-  local config_path="$tmpdir/nonexistent.json"
+  local config_file="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -812,7 +817,7 @@ testHomeshickWritesDropinWhenBashDExists() {
   check_cmd() { return 0; }
 
   run bootstrap_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertTrue 'dropin file created' "[ -f '$HOME/.bash.d/homeshick.bash' ]"
@@ -821,7 +826,6 @@ testHomeshickWritesDropinWhenBashDExists() {
 }
 
 testHomeshickAppendsToBashrcWhenNoBashD() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -849,7 +853,7 @@ testHomeshickAppendsToBashrcWhenNoBashD() {
   check_cmd() { return 0; }
 
   run bootstrap_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertTrue '.bashrc contains source line' \
@@ -857,7 +861,6 @@ testHomeshickAppendsToBashrcWhenNoBashD() {
 }
 
 testHomeshickDropinIsIdempotent() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -875,7 +878,7 @@ testHomeshickDropinIsIdempotent() {
   touch "$HOME/.homesick/repos/homeshick/homeshick.sh"
 
   run bootstrap_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals \
@@ -885,7 +888,6 @@ testHomeshickDropinIsIdempotent() {
 }
 
 testHomebrewSkipsIfAlreadyInstalled() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="macos"
   local version="26.2"
@@ -920,13 +922,12 @@ testHomebrewSkipsIfAlreadyInstalled() {
   download() { return 1; }
 
   run bootstrap_step_homebrew \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed (idempotent)' "$return_status"
 }
 
 testHomebrewSetsNoninteractiveWhenInstalling() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="macos"
   local version="26.2"
@@ -984,14 +985,13 @@ testHomebrewSetsNoninteractiveWhenInstalling() {
   }
 
   run bootstrap_step_homebrew \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed' "$return_status"
   assertStdoutContains 'noninteractive_set'
 }
 
 testBootstrapStepHomebrewEarlyReturnIfBrewPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="cachyos"
   local version=""
@@ -1016,14 +1016,13 @@ testBootstrapStepHomebrewEarlyReturnIfBrewPresent() {
   _ensure_git() { _ensure_git_called="yes"; }
 
   run bootstrap_step_homebrew \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed' "$return_status"
   assertEquals 'should call _ensure_git' "yes" "$_ensure_git_called"
 }
 
 testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="cachyos"
   local version=""
@@ -1068,7 +1067,7 @@ testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
   indent() { "$@" 2>/dev/null || true; }
 
   run bootstrap_step_homebrew \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   # The function should attempt download of the install script
   assertTrue 'should attempt download' \
@@ -1076,7 +1075,6 @@ testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
 }
 
 testAurSkipsIfParuAlreadyInstalled() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -1095,13 +1093,12 @@ testAurSkipsIfParuAlreadyInstalled() {
   git() { return 1; }
 
   run bootstrap_step_aur \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed (idempotent)' "$return_status"
 }
 
 testAurOnArchInstallsGitIfMissing() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -1139,14 +1136,13 @@ testAurOnArchInstallsGitIfMissing() {
   sudo() { :; }
 
   run bootstrap_step_aur \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'pacman git install was called' \
     "echo '$_pacman_args' | grep -q 'git'"
 }
 
 testAurOnArchClonesParu() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -1175,14 +1171,13 @@ testAurOnArchClonesParu() {
   makepkg() { :; }
 
   run bootstrap_step_aur \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'paru URL used' \
     "echo '$_git_url' | grep -q 'paru'"
 }
 
 testAurOnCachyOsInstallsParuBin() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="cachyos"
   local version=""
@@ -1218,14 +1213,13 @@ testAurOnCachyOsInstallsParuBin() {
   makepkg() { return 1; }
 
   run bootstrap_step_aur \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'pacman paru-bin install was called' \
     "echo '$_pacman_args' | grep -q 'paru-bin'"
 }
 
 testBootstrapStepBashrcInstallsFramework() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -1256,7 +1250,7 @@ testBootstrapStepBashrcInstallsFramework() {
   indent() { :; }
 
   run bootstrap_step_bashrc \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function succeeded' "$return_status"
   assertTrue 'downloaded install script' \
@@ -1264,7 +1258,6 @@ testBootstrapStepBashrcInstallsFramework() {
 }
 
 testBootstrapStepBashrcSkipsIfAlreadyInstalled() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -1285,7 +1278,7 @@ testBootstrapStepBashrcSkipsIfAlreadyInstalled() {
   download() { _install_called="yes"; }
 
   run bootstrap_step_bashrc \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function succeeded' "$return_status"
   assertEquals 'should not re-download' "" "$_install_called"

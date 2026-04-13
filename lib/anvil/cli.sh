@@ -102,35 +102,35 @@ anvil_cli() {
   case "$command" in
     apply)
       . "$root/lib/anvil/commands/apply.sh"
-      cmd_apply "$root" "$program" "$@"
+      cmd_apply "$program" "$@"
       ;;
     config)
       . "$root/lib/anvil/commands/config/lib.sh"
-      cmd_config "$root" "$program" "$@"
+      cmd_config "$program" "$@"
       ;;
     diff)
       . "$root/lib/anvil/commands/diff.sh"
-      cmd_diff "$root" "$program" "$@"
+      cmd_diff "$program" "$@"
       ;;
     doctor)
       . "$root/lib/anvil/commands/doctor.sh"
-      cmd_doctor "$root" "$program" "$@"
+      cmd_doctor "$program" "$@"
       ;;
     facts)
       . "$root/lib/anvil/commands/facts.sh"
-      cmd_facts "$root" "$program" "$@"
+      cmd_facts "$program" "$@"
       ;;
     role)
       . "$root/lib/anvil/commands/role/lib.sh"
-      cmd_role "$root" "$program" "$@"
+      cmd_role "$program" "$@"
       ;;
     tag)
       . "$root/lib/anvil/commands/tag/lib.sh"
-      cmd_tag "$root" "$program" "$@"
+      cmd_tag "$program" "$@"
       ;;
     status)
       . "$root/lib/anvil/commands/status.sh"
-      cmd_status "$root" "$program" "$@"
+      cmd_status "$program" "$@"
       ;;
     *)
       print_usage "$program" "$version" "$author" >&2

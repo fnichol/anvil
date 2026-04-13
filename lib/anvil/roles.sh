@@ -1,9 +1,22 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# Import cookie to prevent circular loading
+if [ -n "${__ANVIL_SOURCED_ROLES__:-}" ]; then
+  return 0
+else
+  __ANVIL_SOURCED_ROLES__=true
+fi
+
 # shellcheck source=lib/anvil/jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
 
+# **DEPRECATED**: use `modules_list_content` instead.
+#
+# FIXME: Remove
+#
 # Returns the path to the roles directory.
 #
 # * `@param [String]` root directory path
@@ -17,15 +30,17 @@ roles_path() {
 
 # Returns the path to a specific role file.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` role name
 # * `@stdout` role file path
 # * `@return 0` if successful
 roles_path_for() {
-  local root="$1"
-  local name="$2"
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
 
-  echo "$(roles_path "$root")/$name.json"
+  modules_resolve_content "$config_file" "$data_home" "roles" "$name.json"
 }
 
 # Lists all available role names from a roles directory.
@@ -53,9 +68,27 @@ roles_list() {
   } | sort
 }
 
+# Lists all available role names across all installed modules, deduplicated.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@stdout` sorted list of role names, one per line
+# * `@return 0` if successful
+roles_list_all() {
+  local config_file="$1"
+  local data_home="$2"
+
+  modules_list_content "$config_file" "$data_home" "roles" \
+    | while IFS= read -r file; do
+      jq -r '.name' <"$file"
+    done \
+    | sort
+}
+
 # Resolves role dependencies and returns roles in dependency order.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String...]` one or more requested role names
 # * `@stdout` space-separated list of roles in dependency order
 # * `@return 0` if successful
@@ -67,7 +100,9 @@ roles_list() {
 # `tags_resolve`. That is, dependencies come before the roles that depend on
 # them.
 roles_resolve() {
-  local root="$1"
+  local config_file="$1"
+  shift
+  local data_home="$1"
   shift
   local requested_roles="$*"
 
@@ -89,7 +124,7 @@ roles_resolve() {
     fi
 
     local role_file
-    role_file="$(roles_path_for "$root" "$role")"
+    role_file="$(roles_path_for "$config_file" "$data_home" "$role")"
 
     if [ ! -f "$role_file" ]; then
       warn "Role file not found: $role_file"
@@ -123,19 +158,21 @@ roles_resolve() {
 
 # Returns the tags declared directly by a single role with no resolution.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` role name
 # * `@stdout` space-delimited list of tag names
 # * `@return 0` if successful
 # * `@return 1` if role file not found
 roles_tags_for() {
-  local root="$1"
-  local name="$2"
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
 
   ensure_jq
 
   local role_file
-  role_file="$(roles_path_for "$root" "$name")"
+  role_file="$(roles_path_for "$config_file" "$data_home" "$name")"
 
   if [ ! -f "$role_file" ]; then
     warn "Role file not found: $role_file"

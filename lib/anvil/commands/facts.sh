@@ -19,9 +19,7 @@ print_usage_facts() {
 }
 
 cmd_facts() {
-  local _root program
-  _root="$1"
-  shift
+  local program
   program="$1"
   shift
 

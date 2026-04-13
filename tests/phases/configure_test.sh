@@ -11,32 +11,42 @@ oneTimeSetUp() {
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
   . "$SRC_ROOT/lib/anvil/hooks.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/configure.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+  mod_path="$(module_path_for "$data_home" default)"
 }
 
 # Helper: writes a config with the given tags
 _writeConfigWithTags() {
-  local config_file="$1"
-  local tags_csv="$2"
+  local tags_csv="$1"
 
-  cat <<-EOF >"$config_file"
-	{"tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]}
+  writeConfigFile <<-EOF
+	{
+	  "modules":[
+	    {"name":"default","url":"https://example.com/default.git"}
+	  ],
+	  "tags": [$(echo "$tags_csv" | sed 's/,/","/g;s/^/"/;s/$/"/')]
+	}
 	EOF
 }
 
 # Helper: writes a tag JSON declaring a configure hook for all os/arch
 _writeTagWithConfigureHook() {
-  local tag_name="$1"
-  local hook_name="$2"
+  local mod_path="$1"
+  local tag_name="$2"
+  local hook_name="$3"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+  cat <<-EOF >"$mod_path/tags/${tag_name}.json"
 	{
 	  "name": "${tag_name}",
 	  "depends_on": [],
@@ -50,7 +60,9 @@ _writeTagWithConfigureHook() {
 }
 
 testConfigureStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
-  run configure_steps "$tmpdir" "/dev/null" "arch" "" "linux" "x86_64"
+  writeConfigFile '{}'
+
+  run configure_steps "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no hook steps expected' \
@@ -58,25 +70,24 @@ testConfigureStepsEmitsNoHookStepsWhenNoTagsDeclareHooks() {
 }
 
 testConfigureStepsEmitsHookStepWhenTagDeclaresIt() {
-  mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
-  _writeTagWithConfigureHook "myconf" "ssh-key"
+  mkdir -p "$mod_path/hooks/configure"
+  touch "$mod_path/hooks/configure/010-ssh-key.sh"
+  _writeTagWithConfigureHook "$mod_path" "myconf" "ssh-key"
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
+  _writeConfigWithTags "myconf"
 
-  run configure_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run configure_steps "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "hook_ssh_key"
 }
 
 testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
-  mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/hooks/configure"
+  touch "$mod_path/hooks/configure/010-ssh-key.sh"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+  cat <<-EOF >"$mod_path/tags/myconf.json"
 	{
 	  "name": "myconf",
 	  "depends_on": [],
@@ -88,10 +99,9 @@ testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
+  _writeConfigWithTags "myconf"
 
-  run configure_steps "$tmpdir" "$config_file" "macos" "" "darwin" "x86_64"
+  run configure_steps "$config_file" "$data_home" "macos" "" "darwin" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'no hook steps expected for non-matching os' \
@@ -99,13 +109,20 @@ testConfigureStepsDoesNotEmitHookWhenOsDoesNotMatch() {
 }
 
 testConfigureStepsEmitsMultipleHooksInNumericOrder() {
-  mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/020-gpg-key.sh"
-  touch "$tmpdir/data/hooks/configure/010-ssh-key.sh"
+  _writeConfigWithTags "myconf"
+  writeModuleFixture "default"
 
-  mkdir -p "$tmpdir/data/tags"
+  local configure_hooks_path
+  configure_hooks_path="$mod_path/hooks/configure"
+  mkdir -p "$configure_hooks_path"
+  touch "$configure_hooks_path/020-gpg-key.sh"
+  touch "$configure_hooks_path/010-ssh-key.sh"
 
-  cat <<-EOF >"$tmpdir/data/tags/myconf.json"
+  local tags_path
+  tags_path="$mod_path/tags"
+  mkdir -p "$tags_path"
+
+  cat <<-EOF >"$tags_path/myconf.json"
 	{
 	  "name": "myconf",
 	  "depends_on": [],
@@ -117,10 +134,7 @@ testConfigureStepsEmitsMultipleHooksInNumericOrder() {
 	}
 	EOF
 
-  local config_file="$tmpdir/config.json"
-  _writeConfigWithTags "$config_file" "myconf"
-
-  run configure_steps "$tmpdir" "$config_file" "arch" "" "linux" "x86_64"
+  run configure_steps "$config_file" "$data_home" "arch" "" "linux" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong order' \

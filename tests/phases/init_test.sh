@@ -10,16 +10,20 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/config.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/init.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
 }
 
 testValidateCommandsSucceedsWhenAllCommandsPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -35,14 +39,13 @@ testValidateCommandsSucceedsWhenAllCommandsPresent() {
   need_cmd() { :; }
 
   run init_step_validate_commands \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 }
 
 testValidateCommandsFailsWhenNeitherCurlNorWget() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -59,13 +62,12 @@ testValidateCommandsFailsWhenNeitherCurlNorWget() {
   need_cmd() { :; }
 
   run init_step_validate_commands \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertFalse 'should have failed without curl/wget' "$return_status"
 }
 
 testValidateCommandsAcceptsWgetWhenNoCurl() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -87,13 +89,12 @@ testValidateCommandsAcceptsWgetWhenNoCurl() {
   need_cmd() { :; }
 
   run init_step_validate_commands \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed with wget' "$return_status"
 }
 
 testValidateCommandsAcceptsForOpenBSDWhenNeitherCurlNorWgetButFtp() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -116,13 +117,12 @@ testValidateCommandsAcceptsForOpenBSDWhenNeitherCurlNorWgetButFtp() {
   need_cmd() { :; }
 
   run init_step_validate_commands \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should suceed with ftp' "$return_status"
 }
 
 testValidateCommandsFailsForOpenBSDWhenNeitherCurlWgetNorFtp() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -139,13 +139,12 @@ testValidateCommandsFailsForOpenBSDWhenNeitherCurlWgetNorFtp() {
   need_cmd() { :; }
 
   run init_step_validate_commands \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertFalse 'should have failed without curl/wget/ftp' "$return_status"
 }
 
 testEnsureToolsCallsEnsureJq() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -158,7 +157,7 @@ testEnsureToolsCallsEnsureJq() {
   ensure_jq() { _ensure_jq_called="yes"; }
 
   run init_step_ensure_tools \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'ensure_jq was not called' "yes" "$_ensure_jq_called"
@@ -166,7 +165,6 @@ testEnsureToolsCallsEnsureJq() {
 }
 
 testInitStepsIncludesEnsureTools() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -174,14 +172,14 @@ testInitStepsIncludesEnsureTools() {
   local kernel=""
   local arch=""
 
-  run init_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run init_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "ensure_tools"
 }
 
 testInitStepsOrderIsCorrect() {
-  local config_path="$tmpdir/nonexistent.json"
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
   local os=""
@@ -189,7 +187,8 @@ testInitStepsOrderIsCorrect() {
   local kernel=""
   local arch=""
 
-  run init_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run init_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output
   output="$(cat "$stdout")"

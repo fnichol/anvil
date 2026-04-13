@@ -3,11 +3,17 @@
 
 # shellcheck source=lib/anvil/jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/config.sh
+. "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
 # shellcheck source=lib/anvil/tags.sh
 . "$SRC_ROOT/lib/anvil/tags.sh"
 
 print_usage_tag_list() {
   local program="$1"
+  local default_config_path="$2"
+  local default_data_home="$3"
 
   cat <<-EOF
 	List all available tags
@@ -17,28 +23,37 @@ print_usage_tag_list() {
 	
 	FLAGS:
 	    -h, --help              Prints help information
+
+	ENVIRONMENT VARIABLES:
+	    ANVIL_CONFIG_PATH       [default: $default_config_path]
+	    ANVIL_DATA_HOME         [default: $default_data_home]
 	EOF
 }
 
 cmd_tag_list() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
+
+  local default_config_path config_file
+  default_config_path="$(config_path)"
+  local default_data_home data_home
+  default_data_home="$(modules_data_home)"
 
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
       h)
-        print_usage_tag_list "$program"
+        print_usage_tag_list "$program" \
+          "$default_config_path" "$default_data_home"
         return 0
         ;;
       -)
         # long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
           help)
-            print_usage_tag_list "$program"
+            print_usage_tag_list "$program" \
+              "$default_config_path" "$default_data_home"
             return 0
             ;;
           '')
@@ -46,29 +61,31 @@ cmd_tag_list() {
             break
             ;;
           *)
-            print_usage_tag_list "$program" >&2
+            print_usage_tag_list "$program" \
+              "$default_config_path" "$default_data_home" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
         ;;
       \?)
-        print_usage_tag_list "$program" >&2
+        print_usage_tag_list "$program" \
+          "$default_config_path" "$default_data_home" >&2
         die "invalid argument; arg=-$OPTARG"
         ;;
     esac
   done
   shift "$((OPTIND - 1))"
 
+  config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
+  data_home="${ANVIL_DATA_HOME:-$default_data_home}"
+
   ensure_jq
 
   section "Available Tags"
 
-  local tags_dir
-  tags_dir="$(tags_path "$root")"
-
-  tags_list "$tags_dir" | while IFS= read -r tag; do
+  tags_list_all "$config_file" "$data_home" | while IFS= read -r tag; do
     local tag_file
-    tag_file="$(tags_path_for "$root" "$tag")"
+    tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
 
     local desc
     desc="$(jq -r '.description // "No description"' "$tag_file")"

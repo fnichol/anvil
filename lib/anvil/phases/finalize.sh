@@ -9,9 +9,9 @@
 . "$SRC_ROOT/lib/anvil/state.sh"
 
 finalize_steps() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local os="$1"
   shift
@@ -23,18 +23,22 @@ finalize_steps() {
   shift
 
   # Hook steps run first, before the terminal cleanup operations.
-  hooks_steps_for_phase "$root" "$os" "$arch" "finalize" \
-    "$(config_resolve_tags "$root" "$config_path")"
+  hooks_steps_for_phase \
+    "$config_file" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "finalize" \
+    "$(config_resolve_tags "$config_file" "$data_home")"
 
   # Terminal steps always run last.
   echo "record_run"
-  echo "cleanup"
 }
 
 finalize_step_record_run() {
-  local root="$1"
+  local _config_file="$1"
   shift
-  local _config_path="$1"
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -48,10 +52,4 @@ finalize_step_record_run() {
   shift
 
   state_write_last_run
-}
-
-finalize_step_cleanup() {
-  # TODO: implement
-
-  info "finalize:cleanup - stub"
 }

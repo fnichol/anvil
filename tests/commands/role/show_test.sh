@@ -12,6 +12,13 @@ oneTimeSetUp() {
 
 setUp() {
   commonSetUp
+
+  writeModuleFixture \
+    "default" \
+    "$root/tests/fixtures/data/tags" \
+    "$root/tests/fixtures/data/roles"
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/default.git"}]}'
 }
 
 runCli() {
@@ -44,6 +51,14 @@ testCmdRoleShowNoNameFails() {
   assertStderrContains 'USAGE:'
   assertStderrContains 'role show'
   assertStderrContains 'required argument: NAME'
+}
+
+testCmdTagShowWithName() {
+  runCli role show alfa
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'Role: alfa'
+  assertStderrNull
 }
 
 # shellcheck source=tests/test_helpers.sh

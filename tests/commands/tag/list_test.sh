@@ -12,6 +12,13 @@ oneTimeSetUp() {
 
 setUp() {
   commonSetUp
+
+  writeModuleFixture \
+    "default" \
+    "$root/tests/fixtures/data/tags" \
+    "$root/tests/fixtures/data/roles"
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/default.git"}]}'
 }
 
 runCli() {
@@ -41,7 +48,7 @@ testCmdRoleListPrintsTags() {
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'Available Tags'
-  assertStdoutContains 'base'
+  assertStdoutContains 'alfa'
   assertStderrNull
 }
 

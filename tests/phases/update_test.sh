@@ -10,22 +10,27 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/hooks.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/update.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
 }
 
 testUpdateStepsMacosContainsNoExtraManagersByDefault() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
   local arch="aarch64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   # No extra managers and no native package manager to sync
@@ -34,7 +39,6 @@ testUpdateStepsMacosContainsNoExtraManagersByDefault() {
 }
 
 testUpdateStepsMacosContainsExpectedHomebrewStepsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -45,7 +49,8 @@ testUpdateStepsMacosContainsExpectedHomebrewStepsIfDeclared() {
     echo "homebrew"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew_sync"
@@ -57,7 +62,6 @@ testUpdateStepsMacosContainsExpectedHomebrewStepsIfDeclared() {
 }
 
 testUpdateStepsMacosOrdering() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -68,7 +72,8 @@ testUpdateStepsMacosOrdering() {
     echo "homebrew"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos brew_pos cask_pos
   output="$(cat "$stdout")"
@@ -81,7 +86,6 @@ testUpdateStepsMacosOrdering() {
 }
 
 testUpdateStepsEmitsMiseSyncAndMiseOnMacosWhenDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -92,7 +96,8 @@ testUpdateStepsEmitsMiseSyncAndMiseOnMacosWhenDeclared() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise_sync"
@@ -101,13 +106,13 @@ testUpdateStepsEmitsMiseSyncAndMiseOnMacosWhenDeclared() {
 }
 
 testUpdateStepsArchNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -122,7 +127,6 @@ testUpdateStepsArchNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsArchContainsExpectedStepsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -134,7 +138,8 @@ testUpdateStepsArchContainsExpectedStepsIfDeclared() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -148,7 +153,6 @@ testUpdateStepsArchContainsExpectedStepsIfDeclared() {
 }
 
 testUpdateStepsArchOrdering() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -159,7 +163,8 @@ testUpdateStepsArchOrdering() {
     echo "aur"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos pacman_pos aur_pos
   output="$(cat "$stdout")"
@@ -172,7 +177,6 @@ testUpdateStepsArchOrdering() {
 }
 
 testUpdateStepsArchContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
@@ -183,7 +187,8 @@ testUpdateStepsArchContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise_sync"
@@ -192,7 +197,6 @@ testUpdateStepsArchContainsMiseIfDeclared() {
 }
 
 testUpdateStepsMiseSyncAppearsBeforeMise() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version="6.1"
   local kernel="linux"
@@ -203,7 +207,8 @@ testUpdateStepsMiseSyncAppearsBeforeMise() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertTrue 'mise_sync before mise' \
@@ -213,13 +218,13 @@ testUpdateStepsMiseSyncAppearsBeforeMise() {
 }
 
 testUpdateStepsCachyosNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -234,7 +239,6 @@ testUpdateStepsCachyosNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsCachyosContainsExpectedStepsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -246,7 +250,8 @@ testUpdateStepsCachyosContainsExpectedStepsIfDeclared() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman_sync"
@@ -260,7 +265,6 @@ testUpdateStepsCachyosContainsExpectedStepsIfDeclared() {
 }
 
 testUpdateStepsCachyosOrdering() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -271,7 +275,8 @@ testUpdateStepsCachyosOrdering() {
     echo "aur"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos pacman_pos aur_pos
   output="$(cat "$stdout")"
@@ -284,7 +289,6 @@ testUpdateStepsCachyosOrdering() {
 }
 
 testUpdateStepsCachyosContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
@@ -295,7 +299,8 @@ testUpdateStepsCachyosContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise_sync"
@@ -304,13 +309,13 @@ testUpdateStepsCachyosContainsMiseIfDeclared() {
 }
 
 testUpdateStepsUbuntuNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apt_sync"
@@ -326,7 +331,6 @@ testUpdateStepsUbuntuNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsUbuntuContainsExpectedStepsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
@@ -337,7 +341,8 @@ testUpdateStepsUbuntuContainsExpectedStepsIfDeclared() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apt_sync"
@@ -347,13 +352,13 @@ testUpdateStepsUbuntuContainsExpectedStepsIfDeclared() {
 }
 
 testUpdateStepsUbuntuOrdering() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   local output sync_pos apt_pos
   output="$(cat "$stdout")"
@@ -364,7 +369,6 @@ testUpdateStepsUbuntuOrdering() {
 }
 
 testUpdateStepsUbuntuContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
@@ -375,7 +379,8 @@ testUpdateStepsUbuntuContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise_sync"
@@ -384,13 +389,13 @@ testUpdateStepsUbuntuContainsMiseIfDeclared() {
 }
 
 testUpdateStepsAlpineNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apk_sync"
@@ -406,7 +411,6 @@ testUpdateStepsAlpineNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsAlpineContainsExpectedStepsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
@@ -417,7 +421,8 @@ testUpdateStepsAlpineContainsExpectedStepsIfDeclared() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apk_sync"
@@ -427,7 +432,6 @@ testUpdateStepsAlpineContainsExpectedStepsIfDeclared() {
 }
 
 testUpdateStepsAlpineContainsMiseIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
@@ -438,7 +442,8 @@ testUpdateStepsAlpineContainsMiseIfDeclared() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise_sync"
@@ -447,13 +452,13 @@ testUpdateStepsAlpineContainsMiseIfDeclared() {
 }
 
 testUpdateStepsFreebsdNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg_sync"
@@ -469,7 +474,6 @@ testUpdateStepsFreebsdNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsFreebsdContainsExpectedSteps() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
@@ -480,7 +484,8 @@ testUpdateStepsFreebsdContainsExpectedSteps() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg_sync"
@@ -490,7 +495,6 @@ testUpdateStepsFreebsdContainsExpectedSteps() {
 }
 
 testUpdateStepsFreebsdOmitsMise() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="14.0"
   local kernel="freebsd"
@@ -501,7 +505,8 @@ testUpdateStepsFreebsdOmitsMise() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise_sync absent on freebsd' "grep -q '^mise_sync$' '$stdout'"
@@ -510,13 +515,13 @@ testUpdateStepsFreebsdOmitsMise() {
 }
 
 testUpdateStepsOpenbsdNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
@@ -532,7 +537,6 @@ testUpdateStepsOpenbsdNativePackageManagersAlwaysPresent() {
 }
 
 testUpdateStepsOpenbsdContainsExpectedSteps() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
@@ -543,7 +547,8 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
     echo "homeshick"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
@@ -555,7 +560,6 @@ testUpdateStepsOpenbsdContainsExpectedSteps() {
 }
 
 testUpdateStepsOpenbsdOmitsMise() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.4"
   local kernel="openbsd"
@@ -566,7 +570,8 @@ testUpdateStepsOpenbsdOmitsMise() {
     echo "mise"
   }
 
-  run update_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run update_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise_sync absent on openbsd' "grep -q '^mise_sync$' '$stdout'"
@@ -575,15 +580,13 @@ testUpdateStepsOpenbsdOmitsMise() {
 }
 
 testUpdateStepsHomeshickPresentOnAllPlatformsIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "homeshick"
   }
 
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
-    run update_steps "$root" "$config_path" "$os" "" "" ""
+    run update_steps "$config_file" "$data_home" "$os" "" "" ""
 
     assertTrue "homeshick missing for $os" \
       "grep -q '^homeshick$' '$stdout'"

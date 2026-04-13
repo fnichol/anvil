@@ -16,9 +16,9 @@
 # emitted. Pre-installed system package managers such as apt, apk, pacman,
 # pkg_add, pkg are omitted as no installation is required.
 bootstrap_steps() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local os="$1"
   shift
@@ -31,7 +31,7 @@ bootstrap_steps() {
 
   local extra_managers
   extra_managers="$(
-    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+    _steps_extra_package_managers "$config_file" "$data_home" "$os" "$arch"
   )"
 
   # Only extra (installable) package managers are emitted as native package
@@ -61,14 +61,14 @@ bootstrap_steps() {
   esac
 
   # **Note**: hook steps should follow any built-in steps.
-  hooks_steps_for_phase "$root" "$os" "$arch" "bootstrap" \
-    "$(config_resolve_tags "$root" "$config_path")"
+  hooks_steps_for_phase "$config_file" "$data_home" "$os" "$arch" "bootstrap" \
+    "$(config_resolve_tags "$config_file" "$data_home")"
 }
 
 bootstrap_step_aur() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -134,9 +134,9 @@ bootstrap_step_aur() {
 }
 
 bootstrap_step_homebrew() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -206,9 +206,9 @@ bootstrap_step_homebrew() {
 }
 
 bootstrap_step_homeshick() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -256,9 +256,9 @@ bootstrap_step_homeshick() {
 }
 
 bootstrap_step_bashrc() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -291,9 +291,9 @@ bootstrap_step_bashrc() {
 }
 
 bootstrap_step_mise() {
-  local _root="$1"
-  shift
   local _config_file="$1"
+  shift
+  local _data_home="$1"
   shift
   local _hostname="$1"
   shift

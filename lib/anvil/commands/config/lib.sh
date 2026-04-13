@@ -21,9 +21,7 @@ print_config_usage() {
 }
 
 cmd_config() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
@@ -70,17 +68,17 @@ cmd_config() {
     edit)
       # shellcheck source=lib/anvil/commands/config/edit.sh
       . "$SRC_ROOT/lib/anvil/commands/config/edit.sh"
-      cmd_config_edit "$root" "$program" "$@"
+      cmd_config_edit "$program" "$@"
       ;;
     init)
       # shellcheck source=lib/anvil/commands/config/init.sh
       . "$SRC_ROOT/lib/anvil/commands/config/init.sh"
-      cmd_config_init "$root" "$program" "$@"
+      cmd_config_init "$program" "$@"
       ;;
     show)
       # shellcheck source=lib/anvil/commands/config/show.sh
       . "$SRC_ROOT/lib/anvil/commands/config/show.sh"
-      cmd_config_show "$root" "$program" "$@"
+      cmd_config_show "$program" "$@"
       ;;
     *)
       die "unknown config subcommand: $subcommand"

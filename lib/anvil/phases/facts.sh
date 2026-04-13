@@ -1,10 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 facts_steps() {
-  local _root="$1"
+  local _config_file="$1"
   shift
-  local _config_path="$1"
+  local _data_home="$1"
   shift
   local _os="$1"
   shift
@@ -19,11 +22,6 @@ facts_steps() {
 }
 
 facts_step_gather() {
-  local root="$1"
-
-  # shellcheck source=lib/anvil/facts.sh
-  . "$root/lib/anvil/facts.sh"
-
   __ANVIL_HOSTNAME="$(facts_hostname)"
   __ANVIL_OS="$(facts_os)"
   __ANVIL_VERSION="$(facts_version)"

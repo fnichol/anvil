@@ -20,9 +20,7 @@ print_usage_tag() {
 }
 
 cmd_tag() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
@@ -69,12 +67,12 @@ cmd_tag() {
     list)
       # shellcheck source=lib/anvil/commands/tag/list.sh
       . "$SRC_ROOT/lib/anvil/commands/tag/list.sh"
-      cmd_tag_list "$root" "$program" "$@"
+      cmd_tag_list "$program" "$@"
       ;;
     show)
       # shellcheck source=lib/anvil/commands/tag/show.sh
       . "$SRC_ROOT/lib/anvil/commands/tag/show.sh"
-      cmd_tag_show "$root" "$program" "$@"
+      cmd_tag_show "$program" "$@"
       ;;
     *)
       die "unknown tag subcommand: $subcommand"

@@ -29,24 +29,23 @@ print_usage_config_init() {
 }
 
 cmd_config_init() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
-  local default_config_path config_file
   local roles=""
   local tags=""
   local fqdn=""
 
+  local default_config_path config_file
   default_config_path="$(config_path)"
 
   OPTIND=1
   while getopts "hf:r:t:-:" arg; do
     case "$arg" in
       h)
-        print_usage_config_init "$program" "$default_config_path"
+        print_usage_config_init "$program" \
+          "$default_config_path"
         return 0
         ;;
       f)
@@ -62,28 +61,32 @@ cmd_config_init() {
         long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
           help)
-            print_usage_config_init "$program" "$default_config_path"
+            print_usage_config_init "$program" \
+              "$default_config_path"
             return 0
             ;;
           fqdn=?*)
             fqdn="$long_optarg"
             ;;
           fqdn*)
-            print_usage_config_init "$program" "$default_config_path" >&2
+            print_usage_config_init "$program" \
+              "$default_config_path" >&2
             die "missing required argument for --$OPTARG option"
             ;;
           roles=?*)
             roles="$long_optarg"
             ;;
           roles*)
-            print_usage_config_init "$program" "$default_config_path" >&2
+            print_usage_config_init "$program" \
+              "$default_config_path" >&2
             die "missing required argument for --$OPTARG option"
             ;;
           tags=?*)
             tags="$long_optarg"
             ;;
           tags*)
-            print_usage_config_init "$program" "$default_config_path" >&2
+            print_usage_config_init "$program" \
+              "$default_config_path" >&2
             die "missing required argument for --$OPTARG option"
             ;;
           '')
@@ -91,13 +94,15 @@ cmd_config_init() {
             break
             ;;
           *)
-            print_usage "$program" "$default_config_path" >&2
+            print_usage "$program" \
+              "$default_config_path" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
         ;;
       \?)
-        print_usage_config_init "$program" "$default_config_path" >&2
+        print_usage_config_init "$program" \
+          "$default_config_path" >&2
         die "invalid argument; arg=-$OPTARG"
         ;;
     esac
@@ -116,7 +121,8 @@ cmd_config_init() {
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 
-  config_create "$config_file" "$tags" "$roles" "$fqdn" || die "Failed to init config"
+  config_create "$config_file" "$tags" "$roles" "$fqdn" \
+    || die "Failed to init config"
 
   section "Created config file: $config_file"
 }

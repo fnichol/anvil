@@ -10,19 +10,22 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/hooks.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases/install.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
 }
 
 testInstallStepsNoExtraManagersByDefault() {
-  local config_path="$tmpdir/nonexistent.json"
-
   for os in alpine arch cachyos debian freebsd macos openbsd ubuntu; do
-    run install_steps "$root" "$config_path" "$os" "" "" ""
+    run install_steps "$config_file" "$data_home" "$os" "" "" ""
 
     assertFalse "homeshick absent without tags ($os)" \
       "grep -q '^homeshick$' '$stdout'"
@@ -32,7 +35,6 @@ testInstallStepsNoExtraManagersByDefault() {
 }
 
 testInstallStepsEmitsHomeshickIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local version="26.2"
   local kernel="darwin"
@@ -43,50 +45,47 @@ testInstallStepsEmitsHomeshickIfDeclared() {
     echo "homeshick"
   }
 
-  run install_steps "$root" "$config_path" "arch" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "arch" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homeshick"
 }
 
 testInstallStepsEmitsHomebrewOnLinuxIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "homebrew"
   }
 
-  run install_steps "$root" "$config_path" "cachyos" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "cachyos" "" "" ""
 
   assertStdoutContains "homebrew"
   assertFalse 'no cask on linux' "grep -q '^homebrew_cask$' '$stdout'"
 }
 
 testInstallStepsEmitsHomebrewCaskOnMacosIfDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "homebrew"
   }
 
-  run install_steps "$root" "$config_path" "macos" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "macos" "" "" ""
 
   assertStdoutContains "homebrew"
   assertStdoutContains "homebrew_cask"
 }
 
 testInstallStepsEmitsHomeshickOnAllPlatformsIfDefined() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "homeshick"
   }
 
   for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
-    run install_steps "$root" "$config_path" "$os" "" "" ""
+    run install_steps "$config_file" "$data_home" "$os" "" "" ""
 
     assertTrue "homeshick missing for $os" \
       "grep -q 'homeshick' '$stdout'"
@@ -94,14 +93,13 @@ testInstallStepsEmitsHomeshickOnAllPlatformsIfDefined() {
 }
 
 testInstallStepsEmitsMiseOnLinuxWhenDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "mise"
   }
 
-  run install_steps "$root" "$config_path" "arch" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "arch" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -109,14 +107,13 @@ testInstallStepsEmitsMiseOnLinuxWhenDeclared() {
 }
 
 testInstallStepsEmitsMiseOnMacosWhenDeclared() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "mise"
   }
 
-  run install_steps "$root" "$config_path" "macos" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "macos" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"
@@ -124,14 +121,13 @@ testInstallStepsEmitsMiseOnMacosWhenDeclared() {
 }
 
 testInstallStepsOmitsMiseOnFreebsd() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "mise"
   }
 
-  run install_steps "$root" "$config_path" "freebsd" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "freebsd" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise absent on freebsd' "grep -q '^mise$' '$stdout'"
@@ -139,27 +135,27 @@ testInstallStepsOmitsMiseOnFreebsd() {
 }
 
 testInstallStepsOmitsMiseOnOpenbsd() {
-  local config_path="$tmpdir/nonexistent.json"
-
   # shellcheck disable=SC2329
   _steps_extra_package_managers() {
     echo "mise"
   }
 
-  run install_steps "$root" "$config_path" "openbsd" "" "" ""
+  run install_steps \
+    "$config_file" "$data_home" "openbsd" "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertFalse 'mise absent on openbsd' "grep -q '^mise$' '$stdout'"
   assertStderrNull
 }
+
 testInstallStepsEmitsAlpineNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="alpine"
   local version="3.23.3"
   local kernel="linux"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apk"
@@ -174,13 +170,13 @@ testInstallStepsEmitsAlpineNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsArchNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman"
@@ -195,13 +191,13 @@ testInstallStepsEmitsArchNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsCachyosNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="cachyos"
   local version=""
   local kernel="linux"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "pacman"
@@ -216,13 +212,13 @@ testInstallStepsEmitsCachyosNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsDebianNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="debian"
   local version="12.13"
   local kernel="linux"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apt"
@@ -237,13 +233,13 @@ testInstallStepsEmitsDebianNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsFreebsdNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="freebsd"
   local version="15.0"
   local kernel="freebsd"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "freebsd_pkg"
@@ -258,13 +254,13 @@ testInstallStepsEmitsFreebsdNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsOpenbsdNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="openbsd"
   local version="7.7"
   local kernel="openbsd"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "openbsd_pkg"
@@ -279,13 +275,13 @@ testInstallStepsEmitsOpenbsdNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepsEmitsUbuntuNativePackageManagersAlwaysPresent() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="ubuntu"
   local version="25.10"
   local kernel="linux"
   local arch="x86_64"
 
-  run install_steps "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
+  run install_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apt"
@@ -300,7 +296,6 @@ testInstallStepsEmitsUbuntuNativePackageManagersAlwaysPresent() {
 }
 
 testInstallStepPackagesNoOpWhenNoTags() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local arch="x86_64"
 
@@ -315,14 +310,13 @@ testInstallStepPackagesNoOpWhenNoTags() {
   _install_packages_pacman() { _dispatched="yes"; }
 
   run _install_step_packages \
-    "$root" "$config_path" "$os" "$arch" "$package_type"
+    "$config_file" "$data_home" "$os" "$arch" "$package_type"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'should not dispatch when no tags' "" "${_dispatched:-}"
 }
 
 testInstallStepPackagesNoOpWhenAlreadyConverged() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local arch="x86_64"
 
@@ -340,7 +334,7 @@ testInstallStepPackagesNoOpWhenAlreadyConverged() {
   _install_packages_pacman() { _dispatched="yes"; }
 
   run _install_step_packages \
-    "$root" "$config_path" "$os" "$arch" "$package_type"
+    "$config_file" "$data_home" "$os" "$arch" "$package_type"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'should not dispatch when converged' "" "${_dispatched:-}"
@@ -348,7 +342,6 @@ testInstallStepPackagesNoOpWhenAlreadyConverged() {
 }
 
 testInstallStepPackagesDispatchesDeltaToInstaller() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="arch"
   local arch="x86_64"
 
@@ -366,7 +359,7 @@ testInstallStepPackagesDispatchesDeltaToInstaller() {
   _install_packages_pacman() { _dispatched_packages="$1"; }
 
   run _install_step_packages \
-    "$root" "$config_path" "$os" "$arch" "$package_type"
+    "$config_file" "$data_home" "$os" "$arch" "$package_type"
 
   assertTrue 'function failed' "$return_status"
   assertTrue 'should dispatch vim' \
@@ -376,7 +369,6 @@ testInstallStepPackagesDispatchesDeltaToInstaller() {
 }
 
 testInstallStepPackagesDispatchesToCorrectFunction() {
-  local config_path="$tmpdir/nonexistent.json"
   local os="macos"
   local arch="aarch64"
 
@@ -397,7 +389,7 @@ testInstallStepPackagesDispatchesToCorrectFunction() {
   _install_packages_pacman() { _pacman_called="yes"; }
 
   run _install_step_packages \
-    "$root" "$config_path" "$os" "$arch" "$package_type"
+    "$config_file" "$data_home" "$os" "$arch" "$package_type"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'homebrew should be called' "yes" "${_brew_called:-}"
@@ -405,7 +397,6 @@ testInstallStepPackagesDispatchesToCorrectFunction() {
 }
 
 testInstallHomeshickNoOpWhenNoDesiredCastles() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -420,13 +411,12 @@ testInstallHomeshickNoOpWhenNoDesiredCastles() {
   homeshick() { return 1; }
 
   run install_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed with no castles' "$return_status"
 }
 
 testInstallHomeshickSkipsCastleAlreadyCloned() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -446,7 +436,7 @@ testInstallHomeshickSkipsCastleAlreadyCloned() {
   homeshick() { _homeshick_called="yes"; }
 
   run install_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertNotEquals 'homeshick clone was called for already-present castle' \
@@ -454,7 +444,6 @@ testInstallHomeshickSkipsCastleAlreadyCloned() {
 }
 
 testInstallHomeshickClonesNewCastle() {
-  local config_path="$tmpdir/nonexistent.json"
   local hostname="myhost.local"
   local os="arch"
   local version=""
@@ -480,7 +469,7 @@ testInstallHomeshickClonesNewCastle() {
   }
 
   run install_step_homeshick \
-    "$root" "$config_path" "$hostname" "$os" "$version" "$kernel" "$arch"
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong castle cloned' "fnichol/dotneovim" "$_cloned_castle"

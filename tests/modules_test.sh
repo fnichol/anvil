@@ -14,6 +14,8 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/modules.sh}"
+
+  data_home="$(modules_data_home)"
 }
 
 testModulesDataHomeDefaultsToXdgDataHome() {
@@ -34,7 +36,7 @@ testModulesDataHomeRespectsXdgDataHomeEnvVar() {
 }
 
 testModulesPathReturnsModulesSubdir() {
-  run modules_path
+  run modules_path "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains '.local/share/anvil/modules'
@@ -42,7 +44,7 @@ testModulesPathReturnsModulesSubdir() {
 }
 
 testModulesPathForReturnsNamedDir() {
-  run module_path_for "mypkg"
+  run module_path_for "$data_home" "mypkg"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains '.local/share/anvil/modules/mypkg'
@@ -58,7 +60,7 @@ testModulesLockPathDefaultsToXdgConfigHome() {
 }
 
 testModulesIsInstalledReturnsFalseWhenMissing() {
-  run module_is_installed "nonexistent"
+  run module_is_installed "$data_home" "nonexistent"
 
   assertFalse 'should return false for missing module' "$return_status"
   assertStdoutNull
@@ -67,10 +69,10 @@ testModulesIsInstalledReturnsFalseWhenMissing() {
 
 testModulesIsInstalledReturnsTrueWhenPresent() {
   local mod_dir
-  mod_dir="$(module_path_for "present")"
+  mod_dir="$(module_path_for "$data_home" "present")"
   mkdir -p "$mod_dir"
 
-  run module_is_installed "present"
+  run module_is_installed "$data_home" "present"
 
   assertTrue 'should return true for present module' "$return_status"
   assertStdoutNull
@@ -78,7 +80,7 @@ testModulesIsInstalledReturnsTrueWhenPresent() {
 }
 
 testModulesInstalledNamesReturnsEmptyWhenNoLockFile() {
-  run modules_installed_names
+  run modules_installed_names "$(config_path)" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -96,11 +98,11 @@ testModulesInstalledNamesReturnsNamesInOrder() {
 	EOF
 
   local alpha_dir beta_dir
-  alpha_dir="$(module_path_for "alpha")"
-  beta_dir="$(module_path_for "beta")"
+  alpha_dir="$(module_path_for "$data_home" "alpha")"
+  beta_dir="$(module_path_for "$data_home" "beta")"
   mkdir -p "$alpha_dir" "$beta_dir"
 
-  run modules_installed_names
+  run modules_installed_names "$(config_path)" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains 'alpha'
@@ -119,13 +121,13 @@ testModulesResolveContentFindsFirstMatch() {
 	EOF
 
   local first_tags second_tags
-  first_tags="$(module_path_for "first")/tags"
-  second_tags="$(module_path_for "second")/tags"
+  first_tags="$(module_path_for "$data_home" "first")/tags"
+  second_tags="$(module_path_for "$data_home" "second")/tags"
   mkdir -p "$first_tags" "$second_tags"
   echo '{"name":"base"}' >"$first_tags/base.json"
   echo '{"name":"base"}' >"$second_tags/base.json"
 
-  run modules_resolve_content "tags" "base.json"
+  run modules_resolve_content "$(config_path)" "$data_home" "tags" "base.json"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains 'first'
@@ -142,9 +144,13 @@ testModulesResolveContentReturnsFailureWhenMissing() {
 	}
 	EOF
 
-  mkdir -p "$(module_path_for "alpha")/tags"
+  mkdir -p "$(module_path_for "$data_home" "alpha")/tags"
 
-  run modules_resolve_content "tags" "nonexistent.json"
+  run modules_resolve_content \
+    "$(config_path)" \
+    "$data_home" \
+    "tags" \
+    "nonexistent.json"
 
   assertFalse 'should fail when not found' "$return_status"
   assertStdoutNull

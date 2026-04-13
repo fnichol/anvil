@@ -14,6 +14,15 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/config.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+
+  # Copy over fixtures with an `default` module by default for tests
+  writeModuleFixture \
+    "default" \
+    "$root/tests/fixtures/data/tags" \
+    "$root/tests/fixtures/data/roles"
 }
 
 testConfigFilePath() {
@@ -41,60 +50,51 @@ testConfigExistsCheckExisting() {
 }
 
 testCreateJson() {
-  local config
-
   run config_create_json "one,two,three" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.tags | length == 3'
-  assertJsonFromFile "$config" '.tags | contains(["one"])'
-  assertJsonFromFile "$config" '.tags | contains(["two"])'
-  assertJsonFromFile "$config" '.tags | contains(["three"])'
-  assertJsonFromFile "$config" '.skip_steps | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+  assertJsonFromFile "$config_file" '.tags | length == 3'
+  assertJsonFromFile "$config_file" '.tags | contains(["one"])'
+  assertJsonFromFile "$config_file" '.tags | contains(["two"])'
+  assertJsonFromFile "$config_file" '.tags | contains(["three"])'
+  assertJsonFromFile "$config_file" '.skip_steps | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.remove | length == 0'
 }
 
 testCreateJsonNoTags() {
-  local config
-
   run config_create_json "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.tags | length == 0'
-  assertJsonFromFile "$config" '.skip_steps | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+  assertJsonFromFile "$config_file" '.tags | length == 0'
+  assertJsonFromFile "$config_file" '.skip_steps | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.remove | length == 0'
 }
 
 testCreateJsonStripsWhitespaceFromTags() {
-  local config
-
   run config_create_json "  one,  two,   three    " "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.tags | length == 3'
-  assertJsonFromFile "$config" '.tags | contains(["one"])'
-  assertJsonFromFile "$config" '.tags | contains(["two"])'
-  assertJsonFromFile "$config" '.tags | contains(["three"])'
-  assertJsonFromFile "$config" '.skip_steps | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.add | length == 0'
-  assertJsonFromFile "$config" '.custom_packages.remove | length == 0'
+  assertJsonFromFile "$config_file" '.tags | length == 3'
+  assertJsonFromFile "$config_file" '.tags | contains(["one"])'
+  assertJsonFromFile "$config_file" '.tags | contains(["two"])'
+  assertJsonFromFile "$config_file" '.tags | contains(["three"])'
+  assertJsonFromFile "$config_file" '.skip_steps | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.add | length == 0'
+  assertJsonFromFile "$config_file" '.custom_packages.remove | length == 0'
 }
 
 testCreateFile() {
@@ -120,9 +120,8 @@ testCreateFile() {
 }
 
 testCreateFileAlreadyExists() {
-  local config_file="$tmpdir/config.json"
-
-  touch "$tmpdir/config.json"
+  mkdir -p "$(dirname "$config_file")"
+  touch "$config_file"
 
   run config_create "$config_file" ""
 
@@ -132,47 +131,38 @@ testCreateFileAlreadyExists() {
 }
 
 testCreateJsonWithFqdn() {
-  local config
-
   run config_create_json "one,two" "" "host.example.com"
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.fqdn == "host.example.com"'
-  assertJsonFromFile "$config" '.tags | length == 2'
+  assertJsonFromFile "$config_file" '.fqdn == "host.example.com"'
+  assertJsonFromFile "$config_file" '.tags | length == 2'
 }
 
 testCreateJsonWithoutFqdn() {
-  local config
-
   run config_create_json "one,two" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.fqdn == null'
-  assertJsonFromFile "$config" '.tags | length == 2'
+  assertJsonFromFile "$config_file" '.fqdn == null'
+  assertJsonFromFile "$config_file" '.tags | length == 2'
 }
 
 testCreateJsonFqdnAbsentWhenEmpty() {
-  local config
-
   run config_create_json "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" 'has("fqdn") | not'
+  assertJsonFromFile "$config_file" 'has("fqdn") | not'
 }
 
 testReadFqdnSimple() {
@@ -184,13 +174,13 @@ testReadFqdnSimple() {
 }
 
 testReadFqdnWithFqdnKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "fqdn": "myhost.local"
 	}
 	EOF
 
-  run config_read_fqdn "$tmpdir/config.json"
+  run config_read_fqdn "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutEquals "myhost.local"
@@ -198,11 +188,11 @@ testReadFqdnWithFqdnKey() {
 }
 
 testReadFqdnWithNoFqdnKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_fqdn "$tmpdir/config.json"
+  run config_read_fqdn "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -210,13 +200,13 @@ testReadFqdnWithNoFqdnKey() {
 }
 
 testReadFqdnWithNullFqdnKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "fqdn": null
 	}
 	EOF
 
-  run config_read_fqdn "$tmpdir/config.json"
+  run config_read_fqdn "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -241,13 +231,13 @@ testReadTagsSimple() {
 }
 
 testReadTagsWithTagsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "tags": ["one", "two", "three"]
 	}
 	EOF
 
-  run config_read_tags "$tmpdir/config.json"
+  run config_read_tags "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "one"
@@ -257,11 +247,11 @@ testReadTagsWithTagsKey() {
 }
 
 testReadTagsWithNoTagsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_tags "$tmpdir/config.json"
+  run config_read_tags "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -269,13 +259,13 @@ testReadTagsWithNoTagsKey() {
 }
 
 testReadTagsWithNullTagsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "tags": null
 	}
 	EOF
 
-  run config_read_tags "$tmpdir/config.json"
+  run config_read_tags "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -299,13 +289,13 @@ testReadRolesSimple() {
 }
 
 testReadRolesWithRolesKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "roles": ["server", "headless"]
 	}
 	EOF
 
-  run config_read_roles "$tmpdir/config.json"
+  run config_read_roles "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "server"
@@ -314,11 +304,11 @@ testReadRolesWithRolesKey() {
 }
 
 testReadRolesWithNoRolesKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_roles "$tmpdir/config.json"
+  run config_read_roles "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -326,13 +316,13 @@ testReadRolesWithNoRolesKey() {
 }
 
 testReadRolesWithNullRolesKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "roles": null
 	}
 	EOF
 
-  run config_read_roles "$tmpdir/config.json"
+  run config_read_roles "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -348,61 +338,52 @@ testReadRolesWithNonexistentConfig() {
 }
 
 testCreateJsonWithRoles() {
-  local config
-
   run config_create_json "" "server,headless" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.roles | length == 2'
-  assertJsonFromFile "$config" '.roles | contains(["server"])'
-  assertJsonFromFile "$config" '.roles | contains(["headless"])'
-  assertJsonFromFile "$config" 'has("tags") | not'
+  assertJsonFromFile "$config_file" '.roles | length == 2'
+  assertJsonFromFile "$config_file" '.roles | contains(["server"])'
+  assertJsonFromFile "$config_file" '.roles | contains(["headless"])'
+  assertJsonFromFile "$config_file" 'has("tags") | not'
 }
 
 testCreateJsonWithRolesAndTags() {
-  local config
-
   run config_create_json "extra-tag" "workstation" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.roles | length == 1'
-  assertJsonFromFile "$config" '.roles | contains(["workstation"])'
-  assertJsonFromFile "$config" '.tags | length == 1'
-  assertJsonFromFile "$config" '.tags | contains(["extra-tag"])'
+  assertJsonFromFile "$config_file" '.roles | length == 1'
+  assertJsonFromFile "$config_file" '.roles | contains(["workstation"])'
+  assertJsonFromFile "$config_file" '.tags | length == 1'
+  assertJsonFromFile "$config_file" '.tags | contains(["extra-tag"])'
 }
 
 testCreateJsonRolesAbsentWhenEmpty() {
-  local config
-
   run config_create_json "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" 'has("roles") | not'
+  assertJsonFromFile "$config_file" 'has("roles") | not'
 }
 
 testResolveTagsWithOnlyTags() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "tags": ["alfa", "bravo"]
 	}
 	EOF
 
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+  run config_resolve_tags "$config_file" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"
@@ -411,14 +392,15 @@ testResolveTagsWithOnlyTags() {
 }
 
 testResolveTagsWithOnlyRoles() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
-	  "roles": ["alfa"]
+	  "roles": ["alfa"],
+	  "modules":[{"name":"default","url":"https://example.com/a.git"}]
 	}
 	EOF
 
   # alfa role has tags: alfa, bravo
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+  run config_resolve_tags "$config_file" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"
@@ -427,15 +409,16 @@ testResolveTagsWithOnlyRoles() {
 }
 
 testResolveTagsWithRolesAndTags() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "roles": ["alfa"],
-	  "tags": ["charlie"]
+	  "tags": ["charlie"],
+	  "modules":[{"name":"default","url":"https://example.com/a.git"}]
 	}
 	EOF
 
   # alfa role has tags: alfa, bravo; plus explicit tag: charlie
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+  run config_resolve_tags "$config_file" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"
@@ -445,15 +428,16 @@ testResolveTagsWithRolesAndTags() {
 }
 
 testResolveTagsWithNestedRoleDeps() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
-	  "roles": ["charlie"]
+	  "roles": ["charlie"],
+	  "modules":[{"name":"default","url":"https://example.com/a.git"}]
 	}
 	EOF
 
   # charlie depends on bravo depends on alfa
   # alfa tags: alfa bravo; bravo tags: charlie; charlie tags: delta
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+  run config_resolve_tags "$config_file" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"
@@ -464,11 +448,11 @@ testResolveTagsWithNestedRoleDeps() {
 }
 
 testResolveTagsWithNoRolesOrTags() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/config.json"
+  run config_resolve_tags "$config_file" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -476,7 +460,7 @@ testResolveTagsWithNoRolesOrTags() {
 }
 
 testResolveTagsWithNonexistentConfig() {
-  run config_resolve_tags "${0%/*}/fixtures" "$tmpdir/nonexistent.json"
+  run config_resolve_tags "$tmpdir/nonexistent.json" "$data_home"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -484,17 +468,14 @@ testResolveTagsWithNonexistentConfig() {
 }
 
 testCreateJsonIncludesEmptyModulesArray() {
-  local config
-
   run config_create_json "" "" ""
 
   assertTrue 'function failed' "$return_status"
   assertStderrNull
 
-  config="$tmpdir/config.json"
-  cp "$stdout" "$config"
+  cat "$stdout" | writeConfigFile
 
-  assertJsonFromFile "$config" '.modules | length == 0'
+  assertJsonFromFile "$config_file" '.modules | length == 0'
 }
 
 testReadModulesReturnsEmptyWhenNotPresent() {
@@ -518,7 +499,7 @@ testReadModulesReturnsNamesInOrder() {
 	}
 	EOF
 
-  run config_read_modules "$(config_path)"
+  run config_read_modules "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains 'alpha'
@@ -535,13 +516,13 @@ testReadSkipStepsSimple() {
 }
 
 testReadSkipStepsWithSkipStepsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "skip_steps": ["baking", "mowing"]
 	}
 	EOF
 
-  run config_read_skip_steps "$tmpdir/config.json"
+  run config_read_skip_steps "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "baking"
@@ -550,11 +531,11 @@ testReadSkipStepsWithSkipStepsKey() {
 }
 
 testReadSkipStepsWithNoSkipStepsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_skip_steps "$tmpdir/config.json"
+  run config_read_skip_steps "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -562,13 +543,13 @@ testReadSkipStepsWithNoSkipStepsKey() {
 }
 
 testReadSkipStepsWithNullSkipStepsKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "skip_steps": null
 	}
 	EOF
 
-  run config_read_skip_steps "$tmpdir/config.json"
+  run config_read_skip_steps "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -592,7 +573,7 @@ testReadCustomAddSimple() {
 }
 
 testReadCustomAddWithCustomAddKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {
 	    "add": ["apple", "pie"]
@@ -600,7 +581,7 @@ testReadCustomAddWithCustomAddKey() {
 	}
 	EOF
 
-  run config_read_custom_add "$tmpdir/config.json"
+  run config_read_custom_add "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "apple"
@@ -609,13 +590,13 @@ testReadCustomAddWithCustomAddKey() {
 }
 
 testReadCustomAddWithNoAddKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {}
 	}
 	EOF
 
-  run config_read_custom_add "$tmpdir/config.json"
+  run config_read_custom_add "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -623,11 +604,11 @@ testReadCustomAddWithNoAddKey() {
 }
 
 testReadCustomAddWithNoCustomKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_custom_add "$tmpdir/config.json"
+  run config_read_custom_add "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -635,7 +616,7 @@ testReadCustomAddWithNoCustomKey() {
 }
 
 testReadCustomAddWithNullAddKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {
 	    "add": null
@@ -643,7 +624,7 @@ testReadCustomAddWithNullAddKey() {
 	}
 	EOF
 
-  run config_read_custom_add "$tmpdir/config.json"
+  run config_read_custom_add "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -651,13 +632,13 @@ testReadCustomAddWithNullAddKey() {
 }
 
 testReadCustomAddWithNullCustomKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": null
 	}
 	EOF
 
-  run config_read_custom_add "$tmpdir/config.json"
+  run config_read_custom_add "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -681,7 +662,7 @@ testReadCustomRemoveSimple() {
 }
 
 testReadCustomRemoveWithCustomRemoveKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {
 	    "remove": ["chores", "toil"]
@@ -689,7 +670,7 @@ testReadCustomRemoveWithCustomRemoveKey() {
 	}
 	EOF
 
-  run config_read_custom_remove "$tmpdir/config.json"
+  run config_read_custom_remove "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "chores"
@@ -698,13 +679,13 @@ testReadCustomRemoveWithCustomRemoveKey() {
 }
 
 testReadCustomRemoveWithNoRemoveKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {}
 	}
 	EOF
 
-  run config_read_custom_remove "$tmpdir/config.json"
+  run config_read_custom_remove "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -712,11 +693,11 @@ testReadCustomRemoveWithNoRemoveKey() {
 }
 
 testReadCustomRemoveWithNoCustomKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{}
 	EOF
 
-  run config_read_custom_remove "$tmpdir/config.json"
+  run config_read_custom_remove "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -724,7 +705,7 @@ testReadCustomRemoveWithNoCustomKey() {
 }
 
 testReadCustomRemoveWithNullRemoveKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": {
 	    "remove": null
@@ -732,7 +713,7 @@ testReadCustomRemoveWithNullRemoveKey() {
 	}
 	EOF
 
-  run config_read_custom_remove "$tmpdir/config.json"
+  run config_read_custom_remove "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
@@ -740,13 +721,13 @@ testReadCustomRemoveWithNullRemoveKey() {
 }
 
 testReadCustomRemoveWithNullCustomKey() {
-  cat <<-EOF >"$tmpdir/config.json"
+  writeConfigFile <<-EOF
 	{
 	  "custom_packages": null
 	}
 	EOF
 
-  run config_read_custom_remove "$tmpdir/config.json"
+  run config_read_custom_remove "$config_file"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull

@@ -13,9 +13,9 @@
 # **NOTE**: OpenBSD uses `pkg_add -u` which folds sync and upgrade, so no
 # separate sync step is needed there.
 update_steps() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local os="$1"
   shift
@@ -28,7 +28,7 @@ update_steps() {
 
   local extra_managers
   extra_managers="$(
-    _steps_extra_package_managers "$root" "$config_path" "$os" "$arch"
+    _steps_extra_package_managers "$config_file" "$data_home" "$os" "$arch"
   )"
 
   # Native system package managers sync + upgrade are first and unconditional

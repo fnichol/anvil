@@ -1,10 +1,15 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-if [ -z "${__ANVIL_SOURCED_JQ__:-}" ]; then
-  # shellcheck source=lib/anvil/jq.sh
-  . "$SRC_ROOT/lib/anvil/jq.sh"
+# Import cookie to prevent circular loading
+if [ -n "${__ANVIL_SOURCED_FACTS__:-}" ]; then
+  return 0
+else
+  __ANVIL_SOURCED_FACTS__=true
 fi
+
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
 
 # Determines the system kernel.
 #

@@ -20,9 +20,7 @@ print_usage_role() {
 }
 
 cmd_role() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
@@ -69,12 +67,12 @@ cmd_role() {
     list)
       # shellcheck source=lib/anvil/commands/role/list.sh
       . "$SRC_ROOT/lib/anvil/commands/role/list.sh"
-      cmd_role_list "$root" "$program" "$@"
+      cmd_role_list "$program" "$@"
       ;;
     show)
       # shellcheck source=lib/anvil/commands/role/show.sh
       . "$SRC_ROOT/lib/anvil/commands/role/show.sh"
-      cmd_role_show "$root" "$program" "$@"
+      cmd_role_show "$program" "$@"
       ;;
     *)
       die "unknown role subcommand: $subcommand"

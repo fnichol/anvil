@@ -1,9 +1,22 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# Import cookie to prevent circular loading
+if [ -n "${__ANVIL_SOURCED_TAGS__:-}" ]; then
+  return 0
+else
+  __ANVIL_SOURCED_TAGS__=true
+fi
+
 # shellcheck source=lib/anvil/jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
 
+# **DEPRECATED**: use `modules_list_content` instead.
+#
+# FIXME: Remove
+#
 # Returns the path to the tags directory.
 #
 # * `@param [String]` root directory path
@@ -25,23 +38,17 @@ tags_path() {
 
 # Returns the path to a specific tag file.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` tag name
 # * `@stdout` tag file path
 # * `@return 0` if successful
-#
-# # Examples
-#
-# Basic usage:
-#
-# ```sh
-# tag_file="$(tags_path_for /path/to/anvil base)"
-# ```
 tags_path_for() {
-  local root="$1"
-  local name="$2"
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
 
-  echo "$(tags_path "$root")/$name.json"
+  modules_resolve_content "$config_file" "$data_home" "tags" "$name.json"
 }
 
 # Lists all available tag names from a tags directory.
@@ -77,13 +84,32 @@ tags_list() {
   } | sort
 }
 
+# Lists all available tag names across all installed modules, deduplicated
+# (first-match wins for conflicts).
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@stdout` sorted list of tag names, one per line
+# * `@return 0` if successful
+tags_list_all() {
+  local config_file="$1"
+  local data_home="$2"
+
+  modules_list_content "$config_file" "$data_home" "tags" \
+    | while IFS= read -r file; do
+      jq -r '.name' <"$file"
+    done \
+    | sort
+}
+
 # Resolves tag dependencies and returns tags in dependency order.
 #
 # This function takes a list of requested tags and recursively resolves their
 # dependencies, returning all tags in an order such that dependencies come
 # before the tags that depend on them.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String...]` one or more requested tag names
 # * `@stdout` space-separated list of tags in dependency order
 # * `@return 0` if successful
@@ -97,16 +123,10 @@ tags_list() {
 # the front of the processing queue. Tags already in the resolved list are
 # skipped to avoid duplicates. The final output is reversed so dependencies
 # appear before dependent tags.
-#
-# # Examples
-#
-# Basic usage:
-#
-# ```sh
-# resolved_tags="$(tags_resolve /path/to/anvil base-gui)"
-# ```
 tags_resolve() {
-  local root="$1"
+  local config_file="$1"
+  shift
+  local data_home="$1"
   shift
   local requested_tags="$*"
 
@@ -130,7 +150,7 @@ tags_resolve() {
     fi
 
     local tag_file
-    tag_file="$(tags_path_for "$root" "$tag")"
+    tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
 
     if [ ! -f "$tag_file" ]; then
       warn "Tag file not found: $tag_file"
@@ -169,7 +189,8 @@ tags_resolve() {
 # specific architecture, allowing for architecture-independent packages to be
 # included alongside architecture-specific ones.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` tag name
 # * `@param [String]` operating system (e.g., "darwin", "arch")
 # * `@param [String]` architecture (e.g., "x86_64", "arm64")
@@ -177,20 +198,13 @@ tags_resolve() {
 # * `@stdout` list of package names, one per line
 # * `@return 0` if successful
 # * `@return 1` if `jq` command is not available
-#
-# # Examples
-#
-# Basic usage:
-#
-# ```sh
-# tags_packages_for "/path/to/anvil" "base" "darwin" "arm64" "brew"
-# ```
 tags_packages_for() {
-  local root="$1"
-  local name="$2"
-  local os="$3"
-  local arch="$4"
-  local package_type="$5"
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
+  local os="$4"
+  local arch="$5"
+  local package_type="$6"
 
   ensure_jq
 
@@ -206,7 +220,7 @@ tags_packages_for() {
         (.packages[$os].all[$package_type] // []) +
         (.packages[$os][$arch][$package_type] // [])
      )[] | if type == "string" then . else .name end
-    ' "$(tags_path_for "$root" "$name")"
+    ' "$(tags_path_for "$config_file" "$data_home" "$name")"
 }
 
 # Extracts hook names for a specific tag, phase, OS, and architecture.
@@ -215,7 +229,8 @@ tags_packages_for() {
 # given criteria. It returns names from both the "all" OS and the specific OS,
 # allowing for OS-independent hooks alongside OS-specific ones.
 #
-# * `@param [String]` root directory path
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` tag name
 # * `@param [String]` operating system (e.g. "darwin", "arch")
 # * `@param [String]` architecture (e.g. "x86_64", "aarch64")
@@ -224,11 +239,12 @@ tags_packages_for() {
 # * `@return 0` if successful
 # * `@return 1` if `jq` command is not available
 tags_hooks_for() {
-  local root="$1"
-  local name="$2"
-  local os="$3"
-  local arch="$4"
-  local phase="$5"
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
+  local os="$4"
+  local arch="$5"
+  local phase="$6"
 
   ensure_jq
 
@@ -242,5 +258,5 @@ tags_hooks_for() {
         (.hooks[$phase][$os].all      // []) +
         (.hooks[$phase][$os][$arch]   // [])
      )[] | if type == "string" then . else .name end
-    ' "$(tags_path_for "$root" "$name")"
+    ' "$(tags_path_for "$config_file" "$data_home" "$name")"
 }

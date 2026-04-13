@@ -9,16 +9,16 @@ __ANVIL_PHASES__="init facts prepare bootstrap update install configure finalize
 
 # Runs all phases in order, executing each step unless the step is skipped.
 #
-# * `@param [String]` root directory of the codebase
-# * `@param [String]` path to config file
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` space-delimited skip set of `phase:step` coordinate tokens
 #
 # # Global Variables
 #
 # * `__ANVIL_PHASES__`: the ordered list of phases to iterate through
 phases_run() {
-  local root="$1"
-  local config_path="$2"
+  local config_file="$1"
+  local data_home="$2"
   local skip_coords="$3"
 
   local hostname os version kernel arch
@@ -36,8 +36,13 @@ phases_run() {
     section "Phase: $phase"
 
     for step in $(
-      "${phase}_steps" "$root" "$config_path" "$os" "$version" "$kernel" "$arch"
-
+      "${phase}_steps" \
+        "$config_file" \
+        "$data_home" \
+        "$os" \
+        "$version" \
+        "$kernel" \
+        "$arch"
     ); do
       if _should_skip_phase_step "$phase" "$step" "$skip_coords"; then
         info "Skipping $phase:$step"
@@ -49,8 +54,8 @@ phases_run() {
         _phases_run_hook_step \
           "$phase" \
           "$step" \
-          "$root" \
-          "$config_path" \
+          "$config_file" \
+          "$data_home" \
           "$hostname" \
           "$os" \
           "$version" \
@@ -58,8 +63,8 @@ phases_run() {
           "$arch"
       else
         "${phase}_step_${step}" \
-          "$root" \
-          "$config_path" \
+          "$config_file" \
+          "$data_home" \
           "$hostname" \
           "$os" \
           "$version" \
@@ -146,8 +151,8 @@ _should_skip_phase_step() {
 #
 # * `@param [String]` phase name
 # * `@param [String]` step name (e.g. "hook_tailscaled")
-# * `@param [String]` root directory of the codebase
-# * `@param [String]` path to config file
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
 # * `@param [String]` system hostname
 # * `@param [String]` operating system
 # * `@param [String]` OS version
@@ -158,8 +163,8 @@ _should_skip_phase_step() {
 _phases_run_hook_step() {
   local phase="$1"
   local step="$2"
-  local root="$3"
-  local config_path="$4"
+  local config_file="$3"
+  local data_home="$4"
   local hostname="$5"
   local os="$6"
   local version="$7"
@@ -192,7 +197,9 @@ _phases_run_hook_step() {
   local func_name="${phase}_hook_${name}"
 
   local hook_script
-  hook_script="$(hooks_script_for_step "$root" "$phase" "$name")"
+  hook_script="$(
+    hooks_script_for_step "$config_file" "$data_home" "$phase" "$name"
+  )"
 
   # Run in a subshell so ANVIL_* exports do not leak into the main process
   (
@@ -200,7 +207,7 @@ _phases_run_hook_step() {
     export HOME="$home"
 
     export ANVIL_ROOT="$root"
-    export ANVIL_CONFIG_PATH="$config_path"
+    export ANVIL_CONFIG_FILE="$config_file"
     export ANVIL_HOSTNAME="$hostname"
     export ANVIL_OS="$os"
     export ANVIL_VERSION="$version"

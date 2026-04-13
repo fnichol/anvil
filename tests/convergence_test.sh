@@ -8,12 +8,21 @@ oneTimeSetUp() {
   commonOneTimeSetUp
 
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  . "$SRC_ROOT/lib/anvil/config.sh"
+  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/convergence.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+  mod_path="$(module_path_for "$data_home" default)"
+
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/default.git"}]}'
 }
 
 testCalculatePackagesToInstall() {
@@ -41,21 +50,20 @@ curl"
 }
 
 testStepsExtraPackageManagersReturnsEmptyWhenNoTags() {
-  run _steps_extra_package_managers "$root" "" "cachyos" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
 }
 
 testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "brew-test"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "brew-test"; }
 
-  local tag_file="$tmpdir/data/tags/brew-test.json"
+  local tag_file="$mod_path/tags/brew-test.json"
   mkdir -p "$(dirname "$tag_file")"
   jq -n '
     {
@@ -71,7 +79,8 @@ testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
     }
   ' >"$tag_file"
 
-  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homebrew"
@@ -79,15 +88,13 @@ testStepsExtraPackageManagersDetectsHomebrewOnLinux() {
 }
 
 testStepsExtraPackageManagersDetectsAurWhenDeclared() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "aur-test"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "aur-test"; }
 
-  local tag_file="$tmpdir/data/tags/aur-test.json"
-  mkdir -p "$tmpdir/data/tags"
+  local tag_file="$mod_path/tags/aur-test.json"
+  mkdir -p "$(dirname "$tag_file")"
   jq -n '
     {
       name: "aur-test",
@@ -102,22 +109,21 @@ testStepsExtraPackageManagersDetectsAurWhenDeclared() {
     }
   ' >"$tag_file"
 
-  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "aur"
 }
 
 testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "dotfiles"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "dotfiles"; }
 
-  local tag_file="$tmpdir/data/tags/dotfiles.json"
-  mkdir -p "$tmpdir/data/tags"
+  local tag_file="$mod_path/tags/dotfiles.json"
+  mkdir -p "$(dirname "$tag_file")"
   jq -n '
     {
       name: "dotfiles",
@@ -132,22 +138,21 @@ testStepsExtraPackageManagersDetectsHomeshickFromAllOs() {
     }
   ' >"$tag_file"
 
-  run _steps_extra_package_managers "$tmpdir" "" "ubuntu" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "ubuntu" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "homeshick"
 }
 
 testStepsExtraPackageManagersIgnoresNativePackageManagers() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "base"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "base"; }
 
-  local tag_file="$tmpdir/data/tags/base.json"
-  mkdir -p "$tmpdir/data/tags"
+  local tag_file="$mod_path/tags/base.json"
+  mkdir -p "$(dirname "$tag_file")"
   jq -n '
     {
       name: "base",
@@ -162,24 +167,23 @@ testStepsExtraPackageManagersIgnoresNativePackageManagers() {
     }
   ' >"$tag_file"
 
-  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
 }
 
 testStepsExtraPackageManagersDeduplicatesAcrossTags() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "tag-a tag-b"; }
   # shellcheck disable=SC2329
   tags_resolve() { echo "tag-a tag-b"; }
 
-  local tag_a_file="$tmpdir/data/tags/tag-a.json"
-  local tag_b_file="$tmpdir/data/tags/tag-b.json"
+  local tag_a_file="$mod_path/tags/tag-a.json"
+  local tag_b_file="$mod_path/tags/tag-b.json"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
   jq -n '
     {
       name: "tag-a",
@@ -207,7 +211,8 @@ testStepsExtraPackageManagersDeduplicatesAcrossTags() {
     }
   ' >"$tag_b_file"
 
-  run _steps_extra_package_managers "$tmpdir" "" "cachyos" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "cachyos" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   # homebrew should appear exactly once
@@ -216,8 +221,6 @@ testStepsExtraPackageManagersDeduplicatesAcrossTags() {
 }
 
 testStepsExtraPackageManagersDetectsMise() {
-  writeConfigFile '{}'
-
   # shellcheck disable=SC2329
   config_resolve_tags() { echo "mise-test"; }
   # shellcheck disable=SC2329
@@ -236,7 +239,8 @@ testStepsExtraPackageManagersDetectsMise() {
 	}
 	EOF
 
-  run _steps_extra_package_managers "$root" "" "arch" "x86_64"
+  run _steps_extra_package_managers \
+    "$config_file" "$data_home" "arch" "x86_64"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "mise"

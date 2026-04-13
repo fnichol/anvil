@@ -14,14 +14,15 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/roles.sh}"
-}
 
-testRolesPathFor() {
-  run roles_path_for "something/here" "coolbeans"
+  data_home="$(modules_data_home)"
 
-  assertTrue 'function failed' "$return_status"
-  assertStdoutEquals "something/here/data/roles/coolbeans.json"
-  assertStderrNull
+  # Copy over fixtures with an `apple` module by default for tests
+  writeModuleFixture "apple" \
+    "$root/tests/fixtures/data/tags" \
+    "$root/tests/fixtures/data/roles"
+  writeConfigFile \
+    '{"modules":[{"name":"apple","url":"https://example.com/a.git"}]}'
 }
 
 testRolesListAvailableRolesFixtures() {
@@ -49,7 +50,7 @@ testRolesListMissingDir() {
 }
 
 testRolesResolveNoDeps() {
-  run roles_resolve "${0%/*}/fixtures" alfa
+  run roles_resolve "$(config_path)" "$data_home" alfa
 
   assertTrue 'function failed' "$return_status"
   assertStdoutEquals "alfa"
@@ -57,7 +58,7 @@ testRolesResolveNoDeps() {
 }
 
 testRolesResolveWithDeps() {
-  run roles_resolve "${0%/*}/fixtures" charlie
+  run roles_resolve "$(config_path)" "$data_home" charlie
 
   assertTrue 'function failed' "$return_status"
   # Dependencies come first: alfa, then bravo, then charlie
@@ -66,7 +67,7 @@ testRolesResolveWithDeps() {
 }
 
 testRolesResolveMultipleRoots() {
-  run roles_resolve "${0%/*}/fixtures" charlie delta alfa bravo
+  run roles_resolve "$(config_path)" "$data_home" charlie delta alfa bravo
 
   assertTrue 'function failed' "$return_status"
   # delta first (no depends), then alfa next, bravo depends on alpha, and
@@ -76,14 +77,14 @@ testRolesResolveMultipleRoots() {
 }
 
 testRolesResolveMissingFile() {
-  run roles_resolve "${0%/*}/fixtures" nonexistent
+  run roles_resolve "$(config_path)" "$data_home" nonexistent
 
   assertFalse 'should fail for missing role' "$return_status"
   assertStderrNull
 }
 
 testRolesTagsFor() {
-  run roles_tags_for "${0%/*}/fixtures" alfa
+  run roles_tags_for "$(config_path)" "$data_home" alfa
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"
@@ -92,14 +93,14 @@ testRolesTagsFor() {
 }
 
 testRolesTagsForMissingFile() {
-  run roles_tags_for "${0%/*}/fixtures" nonexistent
+  run roles_tags_for "$(config_path)" "$data_home" nonexistent
 
   assertFalse 'should fail for missing role' "$return_status"
   assertStderrNull
 }
 
 testRolesResolveWithObjectStyleDependsOn() {
-  run roles_resolve "${0%/*}/fixtures" echo
+  run roles_resolve "$(config_path)" "$data_home" echo
 
   assertTrue 'function failed' "$return_status"
   assertStdoutEquals "bravo alfa echo"
@@ -107,7 +108,7 @@ testRolesResolveWithObjectStyleDependsOn() {
 }
 
 testRolesTagsForWithObjectStyleEntry() {
-  run roles_tags_for "${0%/*}/fixtures" echo
+  run roles_tags_for "$(config_path)" "$data_home" echo
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "alfa"

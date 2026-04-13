@@ -14,6 +14,13 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/phases.sh}"
+
+  config_file="$(config_path)"
+  data_home="$(modules_data_home)"
+  mod_path="$(module_path_for "$data_home" default)"
+
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/default.git"}]}'
 }
 
 testSkipedWithExactMatch() {
@@ -74,34 +81,29 @@ testNotSkippedWithMultipleNonMatchingTokens() {
 }
 
 testPhasesRunHookStepExecutesHookScriptAsSubprocess() {
-  local hooks_dir="$tmpdir/data/hooks/finalize"
+  local hooks_dir="$mod_path/hooks/finalize"
   mkdir -p "$hooks_dir"
-
-  mkdir -p "$tmpdir/tmp"
 
   cat <<-'EOF' >"$hooks_dir/010-marker.sh"
 	finalize_hook_marker() {
-	  echo "hook_ran" >"$ANVIL_ROOT/tmp/hook_marker"
+	  echo "hook_ran" >"$HOME/hook_marker"
 	}
 	EOF
-
-  ANVIL_ROOT="$tmpdir"
-  export ANVIL_ROOT
 
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
     "finalize" "hook_marker" \
-    "$tmpdir" "/dev/null" \
+    "$config_file" "$data_home" \
     "myhost" "arch" "rolling" "linux" "x86_64"
 
   assertTrue 'hook step failed' "$return_status"
   assertTrue 'hook output file not created' \
-    "[ -f '$tmpdir/tmp/hook_marker' ]"
+    "[ -f '$HOME/hook_marker' ]"
 }
 
 testPhasesRunHookStepFailsOnNonZeroHookExit() {
-  local hooks_dir="$tmpdir/data/hooks/finalize"
+  local hooks_dir="$mod_path/hooks/finalize"
   mkdir -p "$hooks_dir"
 
   cat <<-'EOF' >"$hooks_dir/010-failing.sh"
@@ -110,48 +112,40 @@ testPhasesRunHookStepFailsOnNonZeroHookExit() {
 	}
 	EOF
 
-  ANVIL_ROOT="$tmpdir"
-  export ANVIL_ROOT
-
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
     "finalize" "hook_failing" \
-    "$tmpdir" "/dev/null" \
+    "$config_file" "$data_home" \
     "myhost" "arch" "rolling" "linux" "x86_64"
 
   assertFalse 'hook step should have failed' "$return_status"
 }
 
 testPhasesRunHookStepExportsAnvilEnvVars() {
-  local hooks_dir="$tmpdir/data/hooks/configure"
+  local hooks_dir="$mod_path/hooks/configure"
   mkdir -p "$hooks_dir"
-
-  mkdir -p "$tmpdir/tmp"
 
   cat <<-'EOF' >"$hooks_dir/010-envcheck.sh"
 	configure_hook_envcheck() {
-	  printf '%s\n' "$ANVIL_OS" "$ANVIL_ARCH" >"$ANVIL_ROOT/tmp/envcheck"
+	  printf '%s\n' "$ANVIL_OS" "$ANVIL_ARCH" >"$HOME/envcheck"
 	}
 	EOF
-
-  ANVIL_ROOT="$tmpdir"
-  export ANVIL_ROOT
 
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
     "configure" "hook_envcheck" \
-    "$tmpdir" "/dev/null" \
+    "$config_file" "$data_home" \
     "myhost" "testarch_os" "1.0" "linux" "testarch_arch"
 
   assertTrue 'hook step failed' "$return_status"
   assertTrue 'env check file missing' \
-    "[ -f '$tmpdir/tmp/envcheck' ]"
+    "[ -f '$HOME/envcheck' ]"
   assertTrue 'ANVIL_OS not set in hook' \
-    "grep -q 'testarch_os' '$tmpdir/tmp/envcheck'"
+    "grep -q 'testarch_os' '$HOME/envcheck'"
   assertTrue 'ANVIL_ARCH not set in hook' \
-    "grep -q 'testarch_arch' '$tmpdir/tmp/envcheck'"
+    "grep -q 'testarch_arch' '$HOME/envcheck'"
 }
 
 # shellcheck source=tests/test_helpers.sh

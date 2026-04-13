@@ -3,6 +3,8 @@
 
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
 # shellcheck source=lib/anvil/facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
 # shellcheck source=lib/anvil/discovery.sh
@@ -14,6 +16,7 @@
 print_usage_diff() {
   local program="$1"
   local default_config_path="$2"
+  local default_data_home="$3"
 
   cat <<-EOF
 	Show what would change if apply was run
@@ -26,32 +29,34 @@ print_usage_diff() {
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_CONFIG_PATH       [default: $default_config_path]
+	    ANVIL_DATA_HOME         [default: $default_data_home]
 	EOF
 }
 
 # Diff command - show what would change
 cmd_diff() {
-  local root program
-  root="$1"
-  shift
+  local program
   program="$1"
   shift
 
   local default_config_path config_file
-
   default_config_path="$(config_path)"
+  local default_data_home data_home
+  default_data_home="$(modules_data_home)"
 
   OPTIND=1
   while getopts "h-:" arg; do
     case "$arg" in
       h)
-        print_usage_diff "$program" "$default_config_path"
+        print_usage_diff "$program" \
+          "$default_config_path" "$default_data_home"
         return 0
         ;;
       -)
         case "$OPTARG" in
           help)
-            print_usage_diff "$program" "$default_config_path"
+            print_usage_diff "$program" \
+              "$default_config_path" "$default_data_home"
             return 0
             ;;
           '')
@@ -59,13 +64,15 @@ cmd_diff() {
             break
             ;;
           *)
-            print_usage_diff "$program" "$default_config_path" >&2
+            print_usage_diff "$program" \
+              "$default_config_path" "$default_data_home" >&2
             die "invalid argument --$OPTARG"
             ;;
         esac
         ;;
       \?)
-        print_usage_diff "$program" "$default_config_path" >&2
+        print_usage_diff "$program" \
+          "$default_config_path" "$default_data_home" >&2
         die "invalid argument; arg=-$OPTARG"
         ;;
     esac
@@ -73,6 +80,7 @@ cmd_diff() {
   shift "$((OPTIND - 1))"
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
+  data_home="${ANVIL_DATA_HOME:-$default_data_home}"
 
   if ! config_exists "$config_file"; then
     warn "No config found at: $config_file"
@@ -89,7 +97,7 @@ cmd_diff() {
   local os arch resolved_tags
   os="$(facts_os)"
   arch="$(facts_arch)"
-  resolved_tags="$(config_resolve_tags "$root" "$config_file")"
+  resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
   if [ -z "$resolved_tags" ]; then
     die "No tags configured. Run: $program config init"
@@ -98,7 +106,13 @@ cmd_diff() {
   # Calculate diff
   local desired_packages installed_packages packages_to_install
   desired_packages="$(
-    desired_packages "$root" "$os" "$arch" "homebrew" "$resolved_tags"
+    desired_packages \
+      "$config_file" \
+      "$data_home" \
+      "$os" \
+      "$arch" \
+      "homebrew" \
+      "$resolved_tags"
   )"
   installed_packages="$(discover_installed_packages "$os" "homebrew")"
   packages_to_install="$(

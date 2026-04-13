@@ -16,16 +16,25 @@ setUp() {
   commonSetUp
 
   . "${SRC:=lib/anvil/hooks.sh}"
+
+  data_home="$(modules_data_home)"
+
+  writeModuleFixture "default"
+  writeConfigFile \
+    '{"modules":[{"name":"default","url":"https://example.com/a.git"}]}'
+
+  mod_path="$(module_path_for "$data_home" default)"
 }
 
 # Helper: writes a minimal tag JSON declaring a finalize hook
 _writeTagWithFinalizeHook() {
-  local tag_name="$1"
-  local hook_name="$2"
+  local mod_path="$1"
+  local tag_name="$2"
+  local hook_name="$3"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+  cat <<-EOF >"$mod_path/tags/${tag_name}.json"
 	{
 	  "name": "${tag_name}",
 	  "depends_on": [],
@@ -39,13 +48,14 @@ _writeTagWithFinalizeHook() {
 }
 
 _writeTagWithAllOsHook() {
-  local tag_name="$1"
-  local phase="$2"
-  local hook_name="$3"
+  local mod_path="$1"
+  local tag_name="$2"
+  local phase="$3"
+  local hook_name="$4"
 
-  mkdir -p "$tmpdir/data/tags"
+  mkdir -p "$mod_path/tags"
 
-  cat <<-EOF >"$tmpdir/data/tags/${tag_name}.json"
+  cat <<-EOF >"$mod_path/tags/${tag_name}.json"
 	{
 	  "name": "${tag_name}",
 	  "depends_on": [],
@@ -59,117 +69,185 @@ _writeTagWithAllOsHook() {
 }
 
 testHooksScriptForStepReturnsPathForMatchingName() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
+  local hook_file
+  hook_file="$mod_path/hooks/finalize/010-tailscaled.sh"
 
-  run hooks_script_for_step "$tmpdir" "finalize" "tailscaled"
+  mkdir -p "$(dirname "$hook_file")"
+  touch "$hook_file"
+
+  run hooks_script_for_step \
+    "$(config_path)" \
+    "$data_home" \
+    "finalize" \
+    "tailscaled"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "010-tailscaled.sh"
 }
 
 testHooksScriptForStepFailsWhenNameNotFound() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
+  local hook_path
+  hook_path="$mod_path/hooks/finalize"
+  mkdir -p "$hook_path"
 
-  run hooks_script_for_step "$tmpdir" "finalize" "nonexistent"
+  run hooks_script_for_step \
+    "$(config_path)" \
+    "$data_home" \
+    "finalize" \
+    "nonexistent"
 
   assertFalse 'function should have failed' "$return_status"
 }
 
 testHooksScriptForStepMatchesHyphenatedFilenameByUnderscoredName() {
-  mkdir -p "$tmpdir/data/hooks/configure"
-  touch "$tmpdir/data/hooks/configure/010-ssh-keys.sh"
+  local hook_file
+  hook_file="$mod_path/hooks/configure/010-ssh-keys.sh"
 
-  run hooks_script_for_step "$tmpdir" "configure" "ssh_keys"
+  mkdir -p "$(dirname "$hook_file")"
+  touch "$hook_file"
+
+  run hooks_script_for_step \
+    "$(config_path)" \
+    "$data_home" \
+    "configure" \
+    "ssh_keys"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "010-ssh-keys.sh"
 }
 
 testHooksScriptForNameReturnsPathForMatchingName() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled-service.sh"
+  local hook_file
+  hook_file="$mod_path/hooks/finalize/010-tailscaled-service.sh"
 
-  run hooks_script_for_name "$tmpdir" "finalize" "tailscaled-service"
+  mkdir -p "$(dirname "$hook_file")"
+  touch "$hook_file"
+
+  run hooks_script_for_name \
+    "$(config_path)" \
+    "$data_home" \
+    "finalize" \
+    "tailscaled-service"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "010-tailscaled-service.sh"
 }
 
 testHooksScriptForNameFailsWhenNameNotFound() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
+  local hook_path
+  hook_path="$mod_path/hooks/finalize"
+  mkdir -p "$hook_path"
 
-  run hooks_script_for_name "$tmpdir" "finalize" "nonexistent"
+  run hooks_script_for_name \
+    "$(config_path)" \
+    "$data_home" \
+    "finalize" \
+    "nonexistent"
 
   assertFalse 'function should have failed' "$return_status"
 }
 
 testHooksScriptForNameFailsWhenDirAbsent() {
-  run hooks_script_for_name "$tmpdir/no-such-root" "finalize" "anything"
+  run hooks_script_for_name \
+    "$(config_path)" \
+    "$tmpdir/no-such-root" \
+    "finalize" \
+    "anything"
 
   assertFalse 'function should have failed' "$return_status"
 }
 
 testHooksScriptForNameMatchesAmongMultipleFiles() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled-service.sh"
-  touch "$tmpdir/data/hooks/finalize/020-syncthing.sh"
+  local hook_path
+  hook_path="$mod_path/hooks/finalize"
 
-  run hooks_script_for_name "$tmpdir" "finalize" "syncthing"
+  mkdir -p "$hook_path"
+  touch "$hook_path/010-tailscaled-service.sh"
+  touch "$hook_path/020-syncthing.sh"
+
+  run hooks_script_for_name \
+    "$(config_path)" \
+    "$data_home" \
+    "finalize" \
+    "syncthing"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "020-syncthing.sh"
 }
 
 testHooksStepsForPhaseEmitsNothingWithEmptyTags() {
-  run hooks_steps_for_phase "$tmpdir" "arch" "x86_64" "finalize" ""
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "arch" \
+    "x86_64" \
+    "finalize" \
+    ""
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
 }
 
 testHooksStepsForPhaseEmitsStepForDeclaredHook() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-  _writeTagWithFinalizeHook "svc" "tailscaled"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithFinalizeHook "$mod_path" "svc" "tailscaled"
 
-  run hooks_steps_for_phase "$tmpdir" "arch" "x86_64" "finalize" "svc"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "arch" \
+    "x86_64" \
+    "finalize" \
+    "svc"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "hook_tailscaled"
 }
 
 testHooksStepsForPhaseSkipsHookNotMatchingOs() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-  _writeTagWithFinalizeHook "svc" "tailscaled"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithFinalizeHook "$mod_path" "svc" "tailscaled"
 
   # macos does not match arch-only declaration
-  run hooks_steps_for_phase "$tmpdir" "macos" "x86_64" "finalize" "svc"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "macos" \
+    "x86_64" \
+    "finalize" \
+    "svc"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutNull
 }
 
 testHooksStepsForPhaseRunsAllOsHookOnAnyPlatform() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-common.sh"
-  _writeTagWithAllOsHook "base" "finalize" "common"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-common.sh"
+  _writeTagWithAllOsHook "$mod_path" "base" "finalize" "common"
 
-  run hooks_steps_for_phase "$tmpdir" "macos" "x86_64" "finalize" "base"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "macos" \
+    "x86_64" \
+    "finalize" \
+    "base"
 
   assertTrue 'function failed' "$return_status"
   assertStdoutContains "hook_common"
 }
 
 testHooksStepsForPhaseSortsHooksByNumericPrefix() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/020-syncthing.sh"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-  _writeTagWithFinalizeHook "svc" "tailscaled"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/020-syncthing.sh"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithFinalizeHook "$mod_path" "svc" "tailscaled"
 
   # Add syncthing to same tag
-  cat <<-EOF >"$tmpdir/data/tags/svc.json"
+  cat <<-EOF >"$mod_path/tags/svc.json"
 	{
 	  "name": "svc",
 	  "depends_on": [],
@@ -181,7 +259,13 @@ testHooksStepsForPhaseSortsHooksByNumericPrefix() {
 	}
 	EOF
 
-  run hooks_steps_for_phase "$tmpdir" "arch" "x86_64" "finalize" "svc"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "arch" \
+    "x86_64" \
+    "finalize" \
+    "svc"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'wrong order' \
@@ -190,12 +274,18 @@ testHooksStepsForPhaseSortsHooksByNumericPrefix() {
 }
 
 testHooksStepsForPhaseDeduplicatesAcrossTags() {
-  mkdir -p "$tmpdir/data/hooks/finalize"
-  touch "$tmpdir/data/hooks/finalize/010-tailscaled.sh"
-  _writeTagWithAllOsHook "tag-a" "finalize" "tailscaled"
-  _writeTagWithAllOsHook "tag-b" "finalize" "tailscaled"
+  mkdir -p "$mod_path/hooks/finalize"
+  touch "$mod_path/hooks/finalize/010-tailscaled.sh"
+  _writeTagWithAllOsHook "$mod_path" "tag-a" "finalize" "tailscaled"
+  _writeTagWithAllOsHook "$mod_path" "tag-b" "finalize" "tailscaled"
 
-  run hooks_steps_for_phase "$tmpdir" "arch" "x86_64" "finalize" "tag-a tag-b"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "arch" \
+    "x86_64" \
+    "finalize" \
+    "tag-a tag-b"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'expected exactly one step' \
@@ -204,9 +294,15 @@ testHooksStepsForPhaseDeduplicatesAcrossTags() {
 }
 
 testHooksStepsForPhaseDiesWhenDeclaredHookFileMissing() {
-  _writeTagWithFinalizeHook "svc" "nonexistent"
+  _writeTagWithFinalizeHook "$mod_path" "svc" "nonexistent"
 
-  run hooks_steps_for_phase "$tmpdir" "arch" "x86_64" "finalize" "svc"
+  run hooks_steps_for_phase \
+    "$(config_path)" \
+    "$data_home" \
+    "arch" \
+    "x86_64" \
+    "finalize" \
+    "svc"
 
   assertFalse 'function should have failed' "$return_status"
 }
