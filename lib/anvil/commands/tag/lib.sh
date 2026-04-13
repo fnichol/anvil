@@ -75,7 +75,8 @@ cmd_tag() {
       cmd_tag_show "$program" "$@"
       ;;
     *)
-      die "unknown tag subcommand: $subcommand"
+      print_usage_tag "$program" >&2
+      die "unknown subcommand: $subcommand"
       ;;
   esac
 }

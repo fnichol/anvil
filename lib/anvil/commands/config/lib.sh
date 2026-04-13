@@ -81,7 +81,8 @@ cmd_config() {
       cmd_config_show "$program" "$@"
       ;;
     *)
-      die "unknown config subcommand: $subcommand"
+      print_config_usage "$program" >&2
+      die "unknown subcommand: $subcommand"
       ;;
   esac
 }

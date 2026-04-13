@@ -75,7 +75,8 @@ cmd_role() {
       cmd_role_show "$program" "$@"
       ;;
     *)
-      die "unknown role subcommand: $subcommand"
+      print_usage_role "$program" >&2
+      die "unknown subcommand: $subcommand"
       ;;
   esac
 }
