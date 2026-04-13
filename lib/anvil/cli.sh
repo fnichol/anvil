@@ -27,6 +27,7 @@ print_usage() {
 	    diff            Show what would change
 	    doctor          Verify system health
 	    facts           Show discovered system info
+	    module          Manage modules
 	    role            Manage roles
 	    tag             Manage tags
 	    status          Show current vs desired state
@@ -92,14 +93,14 @@ anvil_cli() {
   done
   shift "$((OPTIND - 1))"
 
-  local command="${1:-}"
-  if [ -z "$command" ]; then
+  local subcommand="${1:-}"
+  if [ -z "$subcommand" ]; then
     print_usage "$program" "$version" "$author"
     return 0
   fi
   shift
 
-  case "$command" in
+  case "$subcommand" in
     apply)
       . "$root/lib/anvil/commands/apply.sh"
       cmd_apply "$program" "$@"
@@ -120,6 +121,10 @@ anvil_cli() {
       . "$root/lib/anvil/commands/facts.sh"
       cmd_facts "$program" "$@"
       ;;
+    module)
+      . "$root/lib/anvil/commands/module/lib.sh"
+      cmd_module "$program" "$@"
+      ;;
     role)
       . "$root/lib/anvil/commands/role/lib.sh"
       cmd_role "$program" "$@"
@@ -134,7 +139,7 @@ anvil_cli() {
       ;;
     *)
       print_usage "$program" "$version" "$author" >&2
-      die "unknown command: $command"
+      die "unknown subcommand: $subcommand"
       ;;
   esac
 }
