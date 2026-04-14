@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
