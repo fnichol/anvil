@@ -21,6 +21,7 @@ init_steps() {
   shift
 
   echo "setup_traps"
+  echo "sanitize_environment"
   echo "validate_commands"
   echo "ensure_tools"
 }
@@ -28,6 +29,18 @@ init_steps() {
 init_step_setup_traps() {
   setup_cleanups
   setup_traps trap_cleanups
+}
+
+init_step_sanitize_environment() {
+  # If Mise is installed and activated, deactivate it to remove Mise-managed
+  # tools from PATH.
+  #
+  # We want to ensure that any source-built packages (such as Arch Linux AUR
+  # packages) are built with system package dependencies to minimize surprises.
+  if [ -x "$HOME/.local/bin/mise" ] && [ -n "${__MISE_EXE:-}" ]; then
+    info "Deactivating mise for remainder of command session"
+    { eval "$("$HOME/.local/bin/mise" deactivate)"; } >/dev/null 2>&1
+  fi
 }
 
 init_step_validate_commands() {

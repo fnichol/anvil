@@ -179,6 +179,21 @@ testInitStepsIncludesEnsureTools() {
   assertStdoutContains "ensure_tools"
 }
 
+testInitStepsIncludesSanitizeEnvironment() {
+  # Init phase doesn't have these values yet as it is run *before* facts phase
+  local hostname=""
+  local os=""
+  local version=""
+  local kernel=""
+  local arch=""
+
+  run init_steps \
+    "$config_file" "$data_home" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "sanitize_environment"
+}
+
 testInitStepsOrderIsCorrect() {
   # Init phase doesn't have these values yet as it is run *before* facts phase
   local hostname=""
@@ -192,10 +207,14 @@ testInitStepsOrderIsCorrect() {
 
   local output
   output="$(cat "$stdout")"
-  local validate_pos ensure_pos
+  local sanitize_pos validate_pos ensure_pos
+  sanitize_pos="$(
+    echo "$output" | grep -n "sanitize_environment" | cut -d: -f1
+  )"
   validate_pos="$(echo "$output" | grep -n "validate_commands" | cut -d: -f1)"
   ensure_pos="$(echo "$output" | grep -n "ensure_tools" | cut -d: -f1)"
 
+  assertTrue 'sanitize before validate' "[ $sanitize_pos -lt $validate_pos ]"
   assertTrue 'validate before ensure' "[ $validate_pos -lt $ensure_pos ]"
 }
 
