@@ -331,6 +331,32 @@ bootstrap_step_mise() {
     export PATH="$HOME/.local/bin:$PATH"
     _write_mise_activate_to_profile
   fi
+
+  # If bashrc is installed then `activate_aggressive` should be enabled. This
+  # is to fix a situation where bashrc puts `~/.cargo/bin` on PATH *before*
+  # Mise is activated and then Mise moves this entry to the end of PATH when
+  # the `mise hook-env` is called during a `cd`.
+  #
+  # Trust me, a day of misconfiguration hell that involved a Rust live coding
+  # session gone pretty wrong.
+  #
+  # See: https://mise.jdx.dev/configuration/settings.html#activate_aggressive
+  if [ -f "$HOME/.bash/bashrc" ]; then
+    # Set `settings.activate_aggressive` to true if not already set
+    if ! (
+      cd / && mise config get settings.activate_aggressive
+    ) >/dev/null 2>&1; then
+      local config_toml="$HOME/.config/mise/config.toml"
+      if [ ! -f "$config_toml" ]; then
+        info "Creating empty $config_toml"
+        mkdir -p "$(dirname "$config_toml")"
+        touch "$config_toml"
+      fi
+
+      info "Setting activate_aggressive = true to work with bashrc"
+      (cd / && indent mise config set settings.activate_aggressive true)
+    fi
+  fi
 }
 
 _ensure_bash() {
