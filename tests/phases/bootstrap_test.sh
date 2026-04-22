@@ -1011,15 +1011,15 @@ testBootstrapStepHomebrewEarlyReturnIfBrewPresent() {
     echo "$isolated_path/brew"
   }
 
-  _ensure_git_called=""
+  ensure_git_called=""
   # shellcheck disable=SC2329
-  _ensure_git() { _ensure_git_called="yes"; }
+  ensure_git() { ensure_git_called="yes"; }
 
   run bootstrap_step_homebrew \
     "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed' "$return_status"
-  assertEquals 'should call _ensure_git' "yes" "$_ensure_git_called"
+  assertEquals 'should call ensure_git' "yes" "$ensure_git_called"
 }
 
 testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
@@ -1039,7 +1039,7 @@ testBootstrapStepHomebrewLinuxInstallsLinuxbrewPath() {
 
   _git_ensured=""
   # shellcheck disable=SC2329
-  _ensure_git() {
+  ensure_git() {
     _git_ensured="yes"
   }
   # shellcheck disable=SC2329
@@ -1241,7 +1241,7 @@ testBootstrapStepBashrcInstallsFramework() {
   # shellcheck disable=SC2329
   _ensure_bash() { :; }
   # shellcheck disable=SC2329
-  _ensure_git() { :; }
+  ensure_git() { :; }
   # shellcheck disable=SC2329
   mktemp_file() { mktemp; }
   # shellcheck disable=SC2329
@@ -1271,7 +1271,7 @@ testBootstrapStepBashrcSkipsIfAlreadyInstalled() {
   # shellcheck disable=SC2329
   _ensure_bash() { _ensure_bash_called="yes"; }
   # shellcheck disable=SC2329
-  _ensure_git() { :; }
+  ensure_git() { :; }
 
   _install_called=""
   # shellcheck disable=SC2329

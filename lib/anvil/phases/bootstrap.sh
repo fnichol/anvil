@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/git.sh
+. "$SRC_ROOT/lib/anvil/git.sh"
 # shellcheck source=lib/anvil/convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
 # shellcheck source=lib/anvil/config.sh
@@ -86,7 +88,7 @@ bootstrap_step_aur() {
     return 0
   fi
 
-  _ensure_git "$os"
+  ensure_git "$os"
 
   case "$os" in
     cachyos)
@@ -155,12 +157,12 @@ bootstrap_step_homebrew() {
     eval "$("$brew_path" shellenv)"
 
     # Ensure Git is installed for updating later
-    _ensure_git "$os"
+    ensure_git "$os"
 
     return 0
   fi
 
-  _ensure_git "$os"
+  ensure_git "$os"
   _ensure_system_bash "$os"
 
   # Install any missing build dependencies before running the installer on
@@ -220,7 +222,7 @@ bootstrap_step_homeshick() {
   # Early return if already installed
   if [ -f "$homeshick_path/homeshick.sh" ]; then
     # Ensure Git is installed for updating later
-    _ensure_git "$os"
+    ensure_git "$os"
 
     # Load homeshick so subcommands are available in this shell
     # shellcheck source=/dev/null
@@ -229,7 +231,7 @@ bootstrap_step_homeshick() {
     return 0
   fi
 
-  _ensure_git "$os"
+  ensure_git "$os"
 
   info "Installing homeshick"
   indent git clone https://github.com/andsens/homeshick.git "$homeshick_path"
@@ -270,13 +272,13 @@ bootstrap_step_bashrc() {
     # Ensure Bash is installed for updating later
     _ensure_bash "$os"
     # Ensure Git is installed for updating later
-    _ensure_git "$os"
+    ensure_git "$os"
 
     return 0
   fi
 
   _ensure_bash "$os"
-  _ensure_git "$os"
+  ensure_git "$os"
 
   local install_local_sh
   install_local_sh="$(mktemp_file)"
@@ -392,41 +394,6 @@ _ensure_bash() {
       openbsd)
         info "Installing bash"
         indent as_root pkg_add bash
-        ;;
-    esac
-  fi
-}
-
-_ensure_git() {
-  local os="$1"
-
-  # Ensure Git is available and install via system package manager if not
-  if ! check_cmd git; then
-    case "$os" in
-      alpine)
-        info "Installing git"
-        indent as_root apk add --no-cache git
-        ;;
-      arch)
-        info "Installing git"
-        indent as_root pacman -Sy --noconfirm
-        indent as_root pacman -S --noconfirm git
-        ;;
-      bazzite | cachyos | macos | truenas)
-        # Note: on macOS, Homebrew step ensures Xcode CLT
-        need_cmd git
-        ;;
-      debian | ubuntu)
-        info "Installing git"
-        indent as_root apt-get install --no-install-recommends -y git
-        ;;
-      freebsd)
-        info "Installing git"
-        indent as_root pkg install -y git
-        ;;
-      openbsd)
-        info "Installing git"
-        indent as_root pkg_add git
         ;;
     esac
   fi
