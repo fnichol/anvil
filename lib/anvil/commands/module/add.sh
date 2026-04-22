@@ -5,8 +5,6 @@
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
-# shellcheck source=lib/anvil/jq.sh
-. "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/git.sh
 . "$SRC_ROOT/lib/anvil/git.sh"
 
@@ -17,7 +15,7 @@ print_usage_module_add() {
   local default_modules_lock_path="$4"
 
   cat <<-EOF
-	Show details of a module
+	Add a module
 
 	USAGE:
 	    $program module add [FLAGS] <URL>
@@ -209,34 +207,13 @@ cmd_module_add() {
     module_install "$mod_path" "$url"
   fi
 
-  ensure_jq
-
-  info "Updating config"
-  local tmp_config
-  tmp_config="$(mktemp_file)"
-
-  local config_jq_str
-  config_jq_str='.modules += [{name: $name, url: $url}]'
-  if [ -n "$branch" ]; then
-    config_jq_str='.modules += [{name: $name, url: $url, branch: $branch}]'
-  fi
-  if [ -n "$commit" ]; then
-    config_jq_str='.modules += [{name: $name, url: $url, commit: $commit}]'
-  fi
-  if [ -n "$tag" ]; then
-    config_jq_str='.modules += [{name: $name, url: $url, tag: $tag}]'
-  fi
-
-  jq \
-    --arg name "$name" \
-    --arg url "$url" \
-    --arg branch "$branch" \
-    --arg commit "$commit" \
-    --arg tag "$tag" \
-    "$config_jq_str" \
+  module_config_add \
     "$config_file" \
-    >"$tmp_config"
-  mv "$tmp_config" "$config_file"
+    "$name" \
+    "$url" \
+    "$branch" \
+    "$commit" \
+    "$tag"
 
   local current_sha
   current_sha="$(git_current_sha "$mod_path")"

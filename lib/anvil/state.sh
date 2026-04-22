@@ -49,6 +49,7 @@ state_write_last_run() {
 
   if [ -f "$state_file" ]; then
     tmp_state="$(mktemp_file)"
+    cleanup_file "$tmp_state"
 
     jq \
       --arg timestamp "$timestamp" \
@@ -56,7 +57,7 @@ state_write_last_run() {
       "$state_file" \
       >"$tmp_state"
 
-    mv "$tmp_state" "$state_file"
+    cat "$tmp_state" >"$state_file"
   else
     jq -n --arg timestamp "$timestamp" \
       '{last_run: $timestamp}' \

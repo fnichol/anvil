@@ -221,6 +221,110 @@ testModuleConfigJsonForMatchingEntry() {
   assertStderrNull
 }
 
+testModuleConfigRemoveForMissingConfigFile() {
+  local config_file
+  config_file="$(config_path)"
+
+  run module_config_remove_for "$config_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleConfigRemoveForMissingEntry() {
+  local config_file
+  config_file="$(config_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_config_remove_for "$config_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+}
+
+testModuleConfigRemoveForMatchingEntry() {
+  local config_file
+  config_file="$(config_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://foo.example.com"},
+	    {"name":"bar","url":"https://bar.example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_config_remove_for "$config_file" "foo"
+
+  assertTrue 'function failed' "$return_status"
+  assertJsonFromFile "$config_file" '.modules | length == 1'
+  assertJsonFromFile "$config_file" '.modules[0].name == "bar"'
+  assertStderrNull
+}
+
+testModuleLockRemoveForMissingLockFile() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  run module_lock_remove_for "$lock_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleLockRemoveForMissingEntry() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_lock_remove_for "$lock_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStderrNull
+}
+
+testModuleLockRemoveForMatchingEntry() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://foo.example.com"},
+	    {"name":"bar","url":"https://bar.example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_lock_remove_for "$lock_file" "foo"
+
+  assertTrue 'function failed' "$return_status"
+  assertJsonFromFile "$lock_file" '.modules | length == 1'
+  assertJsonFromFile "$lock_file" '.modules[0].name == "bar"'
+  assertStderrNull
+}
+
 testModuleLockUpdateForNoConfigFile() {
   local config_file
   config_file="$(config_path)"
@@ -377,7 +481,7 @@ testModuleInstallFromLockNoUrl() {
   local lock_file
   lock_file="$(modules_lock_path)"
 
-	    # {"name":"foo","url":"https://example.com","commit":"abc123"}
+  # {"name":"foo","url":"https://example.com","commit":"abc123"}
   mkdir -p "$(dirname "$lock_file")"
   cat <<-EOF >"$lock_file"
 	{

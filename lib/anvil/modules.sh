@@ -134,6 +134,116 @@ module_config_json_for() {
   fi
 }
 
+# Adds a named module to the config file.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` module name
+# * `@param [String]` module url
+# * `@param [String]` module branch (empty string for not set)
+# * `@param [String]` module commit (empty string for not set)
+# * `@param [String]` module tag (empty string for not set)
+module_config_add() {
+  local config_file="$1"
+  local name="$2"
+  local url="$3"
+  local branch="$4"
+  local commit="$5"
+  local tag="$6"
+
+  local tmp_config
+  tmp_config="$(mktemp_file)"
+  cleanup_file "$tmp_config"
+
+  local config_jq_str
+  # shellcheck disable=SC2016
+  config_jq_str='.modules += [{name: $name, url: $url}]'
+  if [ -n "$branch" ]; then
+    # shellcheck disable=SC2016
+    config_jq_str='.modules += [{name: $name, url: $url, branch: $branch}]'
+  fi
+  if [ -n "$commit" ]; then
+    # shellcheck disable=SC2016
+    config_jq_str='.modules += [{name: $name, url: $url, commit: $commit}]'
+  fi
+  if [ -n "$tag" ]; then
+    # shellcheck disable=SC2016
+    config_jq_str='.modules += [{name: $name, url: $url, tag: $tag}]'
+  fi
+
+  ensure_jq
+
+  info "Updating config file"
+
+  jq \
+    --arg name "$name" \
+    --arg url "$url" \
+    --arg branch "$branch" \
+    --arg commit "$commit" \
+    --arg tag "$tag" \
+    "$config_jq_str" \
+    "$config_file" \
+    >"$tmp_config"
+  cat "$tmp_config" >"$config_file"
+}
+
+# Removes a named entry from the config file.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` module name
+module_config_remove_for() {
+  local config_file="$1"
+  local name="$2"
+
+  # Early return if config file does not exist
+  if ! config_exists "$config_file"; then
+    return 0
+  fi
+
+  local tmp_config
+  tmp_config="$(mktemp_file)"
+  cleanup_file "$tmp_config"
+
+  ensure_jq
+
+  info "Updating config file"
+
+  jq \
+    --arg name "$name" \
+    'del(.modules[] | select(.name == $name))' \
+    "$config_file" \
+    >"$tmp_config"
+  cat "$tmp_config" >"$config_file"
+}
+
+# Removes a named entry from the lock file.
+#
+# * `@param [String]` modules lock file path
+# * `@param [String]` module name
+module_lock_remove_for() {
+  local modules_lock_file="$1"
+  local name="$2"
+
+  # Early return if lock file does not exist
+  if ! modules_lock_exists "$modules_lock_file"; then
+    return 0
+  fi
+
+  local tmp_lock
+  tmp_lock="$(mktemp_file)"
+  cleanup_file "$tmp_lock"
+
+  ensure_jq
+
+  info "Updating modules lock file"
+
+  jq \
+    --arg name "$name" \
+    'del(.modules[] | select(.name == $name))' \
+    "$modules_lock_file" \
+    >"$tmp_lock"
+  cat "$tmp_lock" >"$modules_lock_file"
+}
+
 # Updates the lock file entry for a module with the given Git sha.
 #
 # * `@param [String]` configuration file path
@@ -196,6 +306,7 @@ module_lock_update_for() {
 
   local tmp_lock
   tmp_lock="$(mktemp_file)"
+  cleanup_file "$tmp_lock"
 
   jq -r -S \
     --argjson module "$lock_json_str" \
@@ -211,7 +322,7 @@ module_lock_update_for() {
     "$modules_lock_file" \
     | jq -r '.modules |= sort_by(.name)' \
       >"$tmp_lock"
-  mv "$tmp_lock" "$modules_lock_file"
+  cat "$tmp_lock" >"$modules_lock_file"
 }
 
 # Installs a module for the first time.
@@ -283,6 +394,15 @@ module_install_from_lock() {
   fi
 
   indent git -C "$mod_path" checkout "$commit"
+}
+
+module_uninstall() {
+  local mod_path="$1"
+
+  if [ -d "$mod_path" ]; then
+    info "Removing '$(basename "$mod_path")'"
+    rm -rf "$mod_path"
+  fi
 }
 
 # Returns whether a module directory exists on disk.
