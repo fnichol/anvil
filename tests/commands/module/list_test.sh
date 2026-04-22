@@ -23,6 +23,7 @@ testCmdModuleListHelpShortFlag() {
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'USAGE:'
+  assertStdoutContains 'module list'
   assertStderrNull
 }
 
@@ -31,6 +32,7 @@ testCmdModuleListHelpLongFlag() {
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'USAGE:'
+  assertStdoutContains 'module list'
   assertStderrNull
 }
 

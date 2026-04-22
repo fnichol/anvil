@@ -46,7 +46,6 @@ testCmdModuleHelpLongFlag() {
 
 testCmdModuleUnknownSubcommandFails() {
   runCli module unknowncmd
-  debugLastRun
 
   assertFalse 'should fail for unknown subcommand' "$return_status"
   assertStderrContains 'unknown subcommand'
