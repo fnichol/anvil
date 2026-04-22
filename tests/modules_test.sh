@@ -59,6 +59,445 @@ testModulesLockPathDefaultsToXdgConfigHome() {
   assertStderrNull
 }
 
+testModulesLockExistsWithLockFile() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+  mkdir -p "$(dirname "$lock_file")"
+  touch "$lock_file"
+
+  run modules_lock_exists "$lock_file"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModulesLockExistsMissingLockFile() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  run modules_lock_exists "$lock_file"
+
+  assertFalse 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModulesLockCreate() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  run modules_lock_create "$lock_file"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+  assertJsonFromFile "$lock_file" ".modules | length == 0"
+}
+
+testModulesLockCreateFileAlreadyExists() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+  mkdir -p "$(dirname "$lock_file")"
+  touch "$lock_file"
+
+  run modules_lock_create "$lock_file"
+
+  assertFalse 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrContains "file already exists"
+}
+
+testModuleLockJsonForMissingLockFile() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  run module_lock_json_for "$lock_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleLockJsonForMissingEntry() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com","commit":"abc123"}
+	  ]
+	} 
+	EOF
+
+  run module_lock_json_for "$lock_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleLockJsonForMatchingEntry() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com","commit":"abc123"}
+	  ]
+	} 
+	EOF
+
+  run module_lock_json_for "$lock_file" "foo"
+
+  local actual
+  actual="$tmpdir/out.json"
+  cp "$stdout" "$actual"
+
+  assertTrue 'function failed' "$return_status"
+  assertJsonFromFile "$actual" '.name == "foo"'
+  assertJsonFromFile "$actual" '.url == "https://example.com"'
+  assertJsonFromFile "$actual" '.commit == "abc123"'
+  assertStderrNull
+}
+
+testModuleConfigJsonForMissingConfigFile() {
+  local config_file
+  config_file="$(config_path)"
+
+  run module_config_json_for "$config_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleConfigJsonForMissingEntry() {
+  local config_file
+  config_file="$(config_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_config_json_for "$config_file" "nonexistent"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutNull
+  assertStderrNull
+}
+
+testModuleConfigJsonForMatchingEntry() {
+  local config_file
+  config_file="$(config_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  run module_config_json_for "$config_file" "foo"
+
+  local actual
+  actual="$tmpdir/out.json"
+  cp "$stdout" "$actual"
+
+  assertTrue 'function failed' "$return_status"
+  assertJsonFromFile "$actual" '.name == "foo"'
+  assertJsonFromFile "$actual" '.url == "https://example.com"'
+  assertStderrNull
+}
+
+testModuleLockUpdateForNoConfigFile() {
+  local config_file
+  config_file="$(config_path)"
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  assertTrue 'config file exists' "[ ! -f '$config_file' ]"
+
+  run module_lock_update_for "$config_file" "$lock_file" "foo" "abc123"
+
+  assertFalse 'function failed' "$return_status"
+  assertStdoutContains "No lock file entry"
+  assertStderrNull
+}
+
+testModuleLockUpdateForNoLockFile() {
+  local config_file
+  config_file="$(config_path)"
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  assertTrue 'lock file exists' "[ ! -f '$lock_file' ]"
+
+  run module_lock_update_for "$config_file" "$lock_file" "foo" "abc123"
+
+  assertTrue 'lock file missing' "[ -f '$lock_file' ]"
+  assertJsonFromFile "$lock_file" \
+    '.modules[] | select(.name == "foo") | .url == "https://example.com"'
+  assertJsonFromFile "$lock_file" \
+    '.modules[] | select(.name == "foo") | .commit == "abc123"'
+}
+
+testModuleLockUpdateForWithBranch() {
+  local config_file
+  config_file="$(config_path)"
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$config_file")"
+  cat <<-EOF >"$config_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com","branch":"dev"}
+	  ]
+	} 
+	EOF
+
+  assertTrue 'lock file exists' "[ ! -f '$lock_file' ]"
+
+  run module_lock_update_for "$config_file" "$lock_file" "foo" "abc123"
+
+  assertTrue 'lock file missing' "[ -f '$lock_file' ]"
+  assertJsonFromFile "$lock_file" \
+    '.modules[] | select(.name == "foo") | .url == "https://example.com"'
+  assertJsonFromFile "$lock_file" \
+    '.modules[] | select(.name == "foo") | .commit == "abc123"'
+  assertJsonFromFile "$lock_file" \
+    '.modules[] | select(.name == "foo") | .branch == "dev"'
+}
+
+testModuleInstall() {
+  local mod_path
+  mod_path="$(module_path_for "$data_home" "great")"
+  mkdir -p "$(dirname "$mod_path")"
+
+  # Use a fake git that creates the directory without actually cloning
+  mkdir -p "$tmpdir/bin"
+  cat <<-'EOF' >"$tmpdir/bin/git"
+	#!/usr/bin/env sh
+	mkdir -p "$3/tags" "$3/roles"
+	echo '{"name":"great"}' >"$3/module.json"
+	EOF
+  chmod +x "$tmpdir/bin/git"
+  PATH="$tmpdir/bin:$PATH"
+
+  _ensure_git_called=""
+  # shellcheck disable=SC2329
+  ensure_git() { _ensure_git_called="yes"; }
+
+  assertTrue 'tags dir exists' "[ ! -d '$mod_path/tags' ]"
+  assertTrue 'roles dir exists' "[ ! -d '$mod_path/roles' ]"
+
+  run module_install "$mod_path" "https://example.com"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
+  assertTrue 'tags dir not exists' "[ -d '$mod_path/tags' ]"
+  assertTrue 'roles dir not exists' "[ -d '$mod_path/roles' ]"
+  assertStdoutContains "great"
+  assertStderrNull
+}
+
+testModuleInstallWithCommit() {
+  local mod_path
+  mod_path="$(module_path_for "$data_home" "great")"
+  mkdir -p "$(dirname "$mod_path")"
+
+  _ensure_git_called=""
+  # shellcheck disable=SC2329
+  ensure_git() { _ensure_git_called="yes"; }
+  # shellcheck disable=SC2329
+  indent() { "$@"; }
+
+  _clone_called=""
+  _checkout_called=""
+  # shellcheck disable=SC2329
+  git() {
+    case "$*" in
+      *"clone https://example.com "*)
+        _clone_called="yes"
+        ;;
+      *"checkout abc123")
+        _checkout_called="yes"
+        ;;
+    esac
+  }
+
+  run module_install "$mod_path" "https://example.com" "abc123"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
+  assertEquals 'git clone not called' "yes" "$_clone_called"
+  assertEquals 'git checkout not called' "yes" "$_checkout_called"
+  assertStdoutContains "great"
+  assertStderrNull
+}
+
+testModuleInstallFromLockNoLockFile() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  # shellcheck disable=SC2329
+  git() { return 1; }
+
+  assertTrue 'lock file exists' "[ ! -f '$lock_file' ]"
+
+  run module_install_from_lock "$data_home" "$lock_file" "foo"
+
+  assertFalse 'function succeeded' "$return_status"
+  assertStdoutContains "No lock file entry"
+  assertStderrNull
+}
+
+testModuleInstallFromLockNoUrl() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+	    # {"name":"foo","url":"https://example.com","commit":"abc123"}
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","commit":"abc123"}
+	  ]
+	} 
+	EOF
+
+  # shellcheck disable=SC2329
+  git() { return 1; }
+
+  run module_install_from_lock "$data_home" "$lock_file" "foo"
+
+  assertFalse 'function succeeded' "$return_status"
+  assertStdoutContains "missing url field"
+  assertStderrNull
+}
+
+testModuleInstallFromLockNoCommit() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com"}
+	  ]
+	} 
+	EOF
+
+  # shellcheck disable=SC2329
+  git() { return 1; }
+
+  run module_install_from_lock "$data_home" "$lock_file" "foo"
+
+  assertFalse 'function succeeded' "$return_status"
+  assertStdoutContains "missing commit field"
+  assertStderrNull
+}
+
+testModuleInstallFromLockMissingDirClones() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com","commit":"abc123"}
+	  ]
+	} 
+	EOF
+
+  _clone_called=""
+  _checkout_called=""
+  # shellcheck disable=SC2329
+  git() {
+    case "$*" in
+      *"clone https://example.com "*)
+        _clone_called="yes"
+        ;;
+      *"checkout abc123")
+        _checkout_called="yes"
+        ;;
+    esac
+  }
+
+  run module_install_from_lock "$data_home" "$lock_file" "foo"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
+  assertEquals 'git clone not called' "yes" "$_clone_called"
+  assertEquals 'git checkout not called' "yes" "$_checkout_called"
+  assertStdoutContains "foo"
+  assertStderrNull
+}
+
+testModuleInstallFromLockExitingGitRepoCheckout() {
+  local lock_file
+  lock_file="$(modules_lock_path)"
+
+  mkdir -p "$(dirname "$lock_file")"
+  cat <<-EOF >"$lock_file"
+	{
+	  "modules":[
+	    {"name":"foo","url":"https://example.com","commit":"abc123"}
+	  ]
+	} 
+	EOF
+
+  local mod_path
+  mod_path="$(module_path_for "$data_home" "foo")"
+  mkdir -p "$mod_path/.git"
+
+  _clone_called=""
+  _checkout_called=""
+  # shellcheck disable=SC2329
+  git() {
+    case "$*" in
+      *clone*)
+        _clone_called="yes"
+        ;;
+      *"checkout abc123")
+        _checkout_called="yes"
+        ;;
+    esac
+  }
+
+  run module_install_from_lock "$data_home" "$lock_file" "foo"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
+  assertEquals 'git clone called' "" "$_clone_called"
+  assertEquals 'git checkout not called' "yes" "$_checkout_called"
+  assertStdoutNull
+  assertStderrNull
+}
+
 testModulesIsInstalledReturnsFalseWhenMissing() {
   run module_is_installed "$data_home" "nonexistent"
 
@@ -155,6 +594,96 @@ testModulesResolveContentReturnsFailureWhenMissing() {
   assertFalse 'should fail when not found' "$return_status"
   assertStdoutNull
   assertStderrNull
+}
+
+testModulesExpandUrlGithubHttpsShortForm() {
+  run module_expand_url "github.com/user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "https://github.com/user/repo.git"
+}
+
+testModulesExpandUrlCodebergHttpsShortForm() {
+  run module_expand_url "codeberg.org/user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "https://codeberg.org/user/repo.git"
+}
+
+testModulesExpandUrlGithubSshShortForm() {
+  run module_expand_url "github.com:user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "git@github.com:user/repo.git"
+}
+
+testModulesExpandUrlCodebergSshShortForm() {
+  run module_expand_url "codeberg.org:user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "git@codeberg.org:user/repo.git"
+}
+
+testModulesExpandUrlFullHttpsPassThrough() {
+  run module_expand_url "https://github.com/user/repo.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "https://github.com/user/repo.git"
+}
+
+testModulesExpandUrlFullHttpsAppendsGit() {
+  run module_expand_url "https://github.com/user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "https://github.com/user/repo.git"
+}
+
+testModulesExpandUrlFullSshPassThrough() {
+  run module_expand_url "git@github.com:user/repo.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "git@github.com:user/repo.git"
+}
+
+testModulesExpandUrlFullSshAppendsGit() {
+  run module_expand_url "git@github.com:user/repo"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "git@github.com:user/repo.git"
+}
+
+testModulesExpandUrlFullSshArbitraryHost() {
+  run module_expand_url "https://git.example.com/user/repo.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "https://git.example.com/user/repo.git"
+}
+
+testModulesExpandUrlInvalidFails() {
+  run module_expand_url "not-a-url"
+
+  assertFalse 'should fail for invalid url' "$return_status"
+}
+
+testModulesNameFromUrlExtractsRepoName() {
+  run module_name_from_url "https://github.com/user/my-modules.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "my-modules"
+}
+
+testModulesNameFromUrlExtractsOrgFromAnvilModuleRepoName() {
+  run module_name_from_url "https://github.com/user/anvil-module.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "user"
+}
+
+testModulesNameFromUrlExtractsOrgFromAnvilModulesRepoName() {
+  run module_name_from_url "https://github.com/user/anvil-modules.git"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutEquals "user"
 }
 
 # shellcheck source=tests/test_helpers.sh
