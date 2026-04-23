@@ -5,8 +5,6 @@
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
-# shellcheck source=lib/anvil/jq.sh
-. "$SRC_ROOT/lib/anvil/jq.sh"
 
 print_usage_module_remove() {
   local program="$1"

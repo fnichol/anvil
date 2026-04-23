@@ -5,6 +5,8 @@
 . "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
+# shellcheck source=lib/anvil/git.sh
+. "$SRC_ROOT/lib/anvil/git.sh"
 
 # Returns the Anvil data home directory.
 #
@@ -172,7 +174,7 @@ module_config_add() {
 
   ensure_jq
 
-  info "Updating config file"
+  info "$(_name_prefix "$name") Updating config file"
 
   jq \
     --arg name "$name" \
@@ -205,7 +207,7 @@ module_config_remove_for() {
 
   ensure_jq
 
-  info "Updating config file"
+  info "$(_name_prefix "$name") Updating config file"
 
   jq \
     --arg name "$name" \
@@ -234,7 +236,7 @@ module_lock_remove_for() {
 
   ensure_jq
 
-  info "Updating modules lock file"
+  info "$(_name_prefix "$name") Updating modules lock file"
 
   jq \
     --arg name "$name" \
@@ -302,7 +304,7 @@ module_lock_update_for() {
     modules_lock_create "$modules_lock_file"
   fi
 
-  info "Updating modules lock file"
+  info "$(_name_prefix "$name") Updating modules lock file"
 
   local tmp_lock
   tmp_lock="$(mktemp_file)"
@@ -339,11 +341,18 @@ module_install() {
 
   ensure_git
 
-  info "Cloning '$(basename "$mod_path")'"
+  local name
+  name="$(basename "$mod_path")"
+
+  local name_prefix
+  name_prefix="$(_name_prefix "$name")"
+
+  info "$name_prefix Cloning"
   mkdir -p "$(dirname "$mod_path")"
   indent git clone "$url" "$mod_path"
 
   if [ -n "$commit" ]; then
+    info "$name_prefix Checking out commit: $commit"
     indent git -C "$mod_path" checkout "$commit"
   fi
 }
@@ -393,14 +402,28 @@ module_install_from_lock() {
     module_install "$mod_path" "$url"
   fi
 
-  indent git -C "$mod_path" checkout "$commit"
+  local current_sha
+  current_sha="$(git_current_sha "$mod_path")"
+
+  local name_prefix
+  name_prefix="$(_name_prefix "$name")"
+
+  if [ "$current_sha" != "$commit" ]; then
+    info "$name_prefix Checking out commit: $commit"
+    indent git -C "$mod_path" checkout "$commit"
+  else
+    info "$name_prefix Up to date"
+  fi
 }
 
 module_uninstall() {
   local mod_path="$1"
 
+  local name
+  name="$(basename "$mod_path")"
+
   if [ -d "$mod_path" ]; then
-    info "Removing '$(basename "$mod_path")'"
+    info "$(_name_prefix "$name") Removing"
     rm -rf "$mod_path"
   fi
 }
@@ -416,6 +439,19 @@ module_is_installed() {
   local name="$2"
 
   [ -d "$(module_path_for "$data_home" "$name")" ]
+}
+
+# Returns whether the named module is present in the lock file.
+#
+# * `@param [String]` modules lock file path
+# * `@param [String]` module name
+# * `@return 0` if present
+# * `@return 1` if not present
+module_is_in_lock() {
+  local modules_lock_file="$1"
+  local name="$2"
+
+  [ -n "$(module_lock_json_for "$modules_lock_file" "$name")" ]
 }
 
 # Returns installed module names in config priority order.
@@ -684,4 +720,10 @@ module_name_from_url() {
   base="${url##*/}"
   # Strip .git suffix
   echo "${base%.git}"
+}
+
+_name_prefix() {
+  local name="$1"
+
+  printf "[%10s]\n" "$name"
 }

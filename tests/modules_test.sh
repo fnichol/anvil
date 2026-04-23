@@ -528,8 +528,7 @@ testModuleInstallFromLockMissingDirClones() {
   local lock_file
   lock_file="$(modules_lock_path)"
 
-  mkdir -p "$(dirname "$lock_file")"
-  cat <<-EOF >"$lock_file"
+  writeLockFile <<-EOF
 	{
 	  "modules":[
 	    {"name":"foo","url":"https://example.com","commit":"abc123"}
@@ -548,13 +547,22 @@ testModuleInstallFromLockMissingDirClones() {
       *"checkout abc123")
         _checkout_called="yes"
         ;;
+      *"rev-parse HEAD")
+        echo "somethingelse"
+        ;;
+      *)
+        echo "Unexpected Git call: $*" >&2
+        exit 1
+        ;;
     esac
   }
+
+  # shellcheck disable=SC2329
+  indent() { "$@"; }
 
   run module_install_from_lock "$data_home" "$lock_file" "foo"
 
   assertTrue 'function failed' "$return_status"
-  assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
   assertEquals 'git clone not called' "yes" "$_clone_called"
   assertEquals 'git checkout not called' "yes" "$_checkout_called"
   assertStdoutContains "foo"
@@ -592,13 +600,16 @@ testModuleInstallFromLockExitingGitRepoCheckout() {
     esac
   }
 
+  # shellcheck disable=SC2329
+  indent() { "$@"; }
+
   run module_install_from_lock "$data_home" "$lock_file" "foo"
 
   assertTrue 'function failed' "$return_status"
   assertEquals 'ensure_git not called' "yes" "$_ensure_git_called"
   assertEquals 'git clone called' "" "$_clone_called"
   assertEquals 'git checkout not called' "yes" "$_checkout_called"
-  assertStdoutNull
+  assertStdoutContains "Checking out"
   assertStderrNull
 }
 

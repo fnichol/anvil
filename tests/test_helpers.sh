@@ -72,13 +72,28 @@ writeConfigFile() {
   echo "$content" >"$location"
 }
 
+# shellcheck disable=SC2120
+writeLockFile() {
+  local content
+  if [ -n "${1:-}" ]; then
+    content="$1"
+  else
+    content="$(cat)"
+  fi
+
+  local location="$HOME/.config/anvil/modules.lock.json"
+
+  mkdir -p "$(dirname "$location")"
+  echo "$content" >"$location"
+}
+
 writeModuleFixture() {
   local name="$1"
   local tags_src="${2:-}"
   local roles_src="${3:-}"
 
   local mod_dir="${XDG_DATA_HOME:-$HOME/.local/share}/anvil/modules/$name"
-  mkdir -p "$mod_dir/tags" "$mod_dir/roles"
+  mkdir -p "$mod_dir/tags" "$mod_dir/roles" "$mod_dir/.git"
 
   # Write a minimal module.json
   printf '{"name":"%s","description":"Test fixture module"}\n' "$name" \
