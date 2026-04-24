@@ -7,6 +7,8 @@
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/git.sh
 . "$SRC_ROOT/lib/anvil/git.sh"
+# shellcheck source=lib/anvil/state.sh
+. "$SRC_ROOT/lib/anvil/state.sh"
 
 # Returns the Anvil data home directory.
 #
@@ -351,6 +353,8 @@ module_install() {
   mkdir -p "$(dirname "$mod_path")"
   indent git clone "$url" "$mod_path"
 
+  state_write_module_fetched_at "$name"
+
   if [ -n "$commit" ]; then
     info "$name_prefix Checking out commit: $commit"
     indent git -C "$mod_path" checkout "$commit"
@@ -375,6 +379,8 @@ module_pull_update() {
 
   info "$name_prefix Updating ($ref)"
   indent git_update_checkout "$mod_path" "$ref"
+
+  state_write_module_fetched_at "$name"
 }
 
 # Installs a module from state in lock file.

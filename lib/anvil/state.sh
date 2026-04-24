@@ -79,3 +79,67 @@ state_read_last_run() {
     jq -r '.last_run // empty' "$state_file"
   fi
 }
+
+# Writes a fetched_at timestamp for a module to the state file.
+#
+# * `@param [String]` module name
+# * `@param [optional, String]` ISO 8601 timestamp, defaults to current time
+# * `@return 0` if successful
+state_write_module_fetched_at() {
+  need_cmd date
+  need_cmd mkdir
+
+  ensure_jq
+
+  local name="$1"
+  local timestamp="${2:-$(date -u +%FT%TZ)}"
+
+  local state_file
+  state_file="$(state_path)"
+
+  mkdir -p "$(dirname "$state_file")"
+
+  if [ -f "$state_file" ]; then
+    local tmp_state
+    tmp_state="$(mktemp_file)"
+    cleanup_file "$tmp_state"
+
+    jq \
+      --arg name "$name" \
+      --arg ts "$timestamp" \
+      '(.modules // []) |= map(if .name == $name then .fetched_at = $ts else . end)
+       | if ([.modules[]? | select(.name == $name)] | length) == 0
+         then .modules += [{"name": $name, "fetched_at": $ts}]
+         else . end' \
+      "$state_file" \
+      >"$tmp_state"
+
+    cat "$tmp_state" >"$state_file"
+  else
+    jq -n \
+      --arg name "$name" \
+      --arg ts "$timestamp" \
+      '{modules: [{"name": $name, "fetched_at": $ts}]}' \
+      >"$state_file"
+  fi
+}
+
+# Reads the fetched_at timestamp for a module from the state file.
+#
+# * `@param [String]` module name
+# * `@stdout` ISO 8601 timestamp, or empty if not present
+# * `@return 0` if successful
+state_read_module_fetched_at() {
+  local name="$1"
+
+  local state_file
+  state_file="$(state_path)"
+
+  if [ -f "$state_file" ]; then
+    ensure_jq
+
+    jq -r --arg name "$name" \
+      '.modules[]? | select(.name == $name) | .fetched_at // empty' \
+      "$state_file"
+  fi
+}
