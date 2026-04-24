@@ -13,21 +13,6 @@ fi
 # shellcheck source=lib/anvil/modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
 
-# **DEPRECATED**: use `modules_list_content` instead.
-#
-# FIXME: Remove
-#
-# Returns the path to the roles directory.
-#
-# * `@param [String]` root directory path
-# * `@stdout` roles directory path
-# * `@return 0` if successful
-roles_path() {
-  local root="$1"
-
-  echo "$root/data/roles"
-}
-
 # Returns the path to a specific role file.
 #
 # * `@param [String]` configuration file path

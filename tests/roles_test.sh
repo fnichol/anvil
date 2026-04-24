@@ -25,23 +25,6 @@ setUp() {
     '{"modules":[{"name":"apple","url":"https://example.com/a.git"}]}'
 }
 
-testRolesListAvailableRolesFixtures() {
-  run roles_list "$(roles_path "${0%/*}/fixtures")"
-
-  assertTrue 'function failed' "$return_status"
-  assertStdoutContains "alfa"
-  assertStdoutContains "bravo"
-  assertStdoutContains "charlie"
-  assertStderrNull
-}
-
-testRolesListAvailableRolesDefault() {
-  run roles_list "$(roles_path "$root")"
-
-  assertTrue 'function failed' "$return_status"
-  assertStderrNull
-}
-
 testRolesListMissingDir() {
   run roles_list "/nonexistent/path/data/roles"
 

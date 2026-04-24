@@ -11,8 +11,8 @@ main() {
   version="0.1.0"
   author="Fletcher Nichol <fnichol@nichol.ca>"
 
-  # shellcheck source=lib/realpath.sh
-  . "${0%/*}/../lib/realpath.sh"
+  # shellcheck source=vendor/lib/realpath.sh
+  . "${0%/*}/../vendor/lib/realpath.sh"
 
   root="$(realpath "${0%/*}/..")"
   SRC_ROOT="$root"

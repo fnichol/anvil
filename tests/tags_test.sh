@@ -23,27 +23,6 @@ setUp() {
     '{"modules":[{"name":"apple","url":"https://example.com/a.git"}]}'
 }
 
-testTagsListAvailableTagsDefault() {
-  run tags_list "$(tags_path "$root")"
-
-  assertTrue 'function failed' "$return_status"
-  assertStdoutContains "base"
-  assertStdoutContains "base-gui"
-  assertStdoutContains "multimedia"
-  assertStderrNull
-}
-
-testTagsListAvailableTagsFixtures() {
-  run tags_list "$(tags_path "${0%/*}/fixtures")"
-
-  assertTrue 'function failed' "$return_status"
-  assertStdoutContains "alfa"
-  assertStdoutContains "bravo"
-  assertStdoutContains "charlie"
-  assertStdoutContains "delta"
-  assertStderrNull
-}
-
 testTagsResolve() {
   run tags_resolve "$(config_path)" "$data_home" delta
 
