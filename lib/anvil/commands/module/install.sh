@@ -110,8 +110,7 @@ cmd_module_install() {
       )"
 
       if [ -z "$url" ]; then
-        warn "Missing configuration URL for module named '$name'"
-        return 1
+        die "Missing configuration URL for module named '$name'"
       fi
 
       local mod_path
