@@ -1,6 +1,0 @@
-{
-  "name": "dev-headless",
-  "description": "Headless environment for software development",
-  "depends_on": ["dev", "headless"],
-  "tags": []
-}

@@ -1,6 +1,0 @@
-{
-  "name": "graphical-core",
-  "description": "Core packages for minimal graphical systems",
-  "depends_on": [],
-  "tags": ["gui-base"]
-}

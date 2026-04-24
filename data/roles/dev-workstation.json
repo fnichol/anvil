@@ -1,6 +1,0 @@
-{
-  "name": "dev-workstation",
-  "description": "Workstation for software development",
-  "depends_on": ["dev", "workstation"],
-  "tags": ["container-runtime", "gui-virtualization"]
-}
