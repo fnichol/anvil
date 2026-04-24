@@ -416,6 +416,50 @@ module_install_from_lock() {
   fi
 }
 
+# Returns whether a module's current commit is the same as the lock file.
+#
+# * `@param [String]` data home directory path
+# * `@param [String]` modules lock file path
+# * `@param [String]` module name
+# * `@return 0` if commits are the same
+# * `@return 1` if commits are different
+module_is_current_with_lock_for() {
+  local data_home="$1"
+  local modules_lock_file="$2"
+  local name="$3"
+
+  local lock_json
+  lock_json="$(module_lock_json_for "$modules_lock_file" "$name")"
+
+  if [ -z "$lock_json" ]; then
+    warn "No lock file entry for module named '$name'"
+    return 1
+  fi
+
+  local commit
+  commit="$(echo "$lock_json" | jq -r '.commit // empty')"
+
+  if [ -z "$commit" ]; then
+    warn "Lock file entry for '$name' missing commit field"
+    return 1
+  fi
+
+  local mod_path
+  mod_path="$(module_path_for "$data_home" "$name")"
+
+  if [ -d "$mod_path" ]; then
+    if [ ! -d "$mod_path/.git" ]; then
+      warn "Module directory $mod_path already exists and is not a Git repo"
+      return 1
+    fi
+  fi
+
+  local current_sha
+  current_sha="$(git_current_sha "$mod_path")"
+
+  [ "$current_sha" = "$commit" ]
+}
+
 module_uninstall() {
   local mod_path="$1"
 
@@ -452,6 +496,88 @@ module_is_in_lock() {
   local name="$2"
 
   [ -n "$(module_lock_json_for "$modules_lock_file" "$name")" ]
+}
+
+# Determines the status of the named module.
+#
+# * `@param [String]` config file path
+# * `@param [String]` modules lock file path
+# * `@param [String]` module name
+# * `@stdout` module lock status: [`pin-current`, `pin-outdated`,
+#             `lock-current`, `lock-current`]
+# * `@return 0` if successful
+# * `@return 1` if an error occured
+module_lock_status_for() {
+  local config_file="$1"
+  local modules_lock_file="$2"
+  local name="$3"
+
+  local config_json
+  config_json="$(module_config_json_for "$config_file" "$name")"
+
+  if [ -z "$config_json" ]; then
+    warn "Missing configuration for module named '$name'" >&2
+    return 1
+  fi
+
+  local lock_json
+  lock_json="$(module_lock_json_for "$modules_lock_file" "$name")"
+
+  if [ -z "$lock_json" ]; then
+    warn "Missing lock file entry for module named '$name'" >&2
+    return 1
+  fi
+
+  ensure_jq
+
+  local pinned pattern
+  pinned="$(echo "$config_json" | jq -r '.commit // empty')"
+  pattern="$(echo "$config_json" | jq -r '.branch // .tag // empty')"
+
+  local url lock_commit
+  url="$(echo "$lock_json" | jq -r '.url // empty')"
+  lock_commit="$(echo "$lock_json" | jq -r '.commit // empty')"
+
+  if [ -z "$url" ]; then
+    warn "Missing lock file entry URL for module named '$name'" >&2
+    return 1
+  fi
+  if [ -z "$lock_commit" ]; then
+    warn "Missing lock file entry commit for module named '$name'" >&2
+    return 1
+  fi
+
+  if [ -n "$pinned" ]; then
+    if [ "$pinned" = "$lock_commit" ]; then
+      # Lock file mataches pinned commit in config file
+      echo "pin-current"
+      return 0
+    else
+      # Running an update would bring module up to date with lock file
+      echo "pin-outdated"
+      return 0
+    fi
+  fi
+
+  local remote_current_sha
+  remote_current_sha="$(git_remote_current_sha "$url" "$pattern")"
+
+  if [ "$remote_current_sha" = "$lock_commit" ]; then
+    # Remote commit mataches commit in lock file
+    echo "lock-current"
+    return 0
+  else
+    # Running an update would bring module up to date with remote commit
+    echo "lock-outdated"
+    return 0
+  fi
+}
+
+module_message() {
+  local name="$1"
+  local message="$2"
+
+  printf "%s %s\n" "$(_name_prefix "$name")" "$message"
 }
 
 # Returns installed module names in config priority order.

@@ -54,3 +54,12 @@ git_current_sha() {
 
   git -C "$path" rev-parse HEAD
 }
+
+git_remote_current_sha() {
+  local url="$1"
+  local pattern="${2:-HEAD}"
+
+  ensure_git
+
+  git ls-remote "$url" "$pattern" | awk '{print $1}'
+}
