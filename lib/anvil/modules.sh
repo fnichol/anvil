@@ -357,6 +357,26 @@ module_install() {
   fi
 }
 
+# Updates a module by fetching from Git repository.
+#
+# * `@param [String]` destination modules clone directory
+# * `@param [String]` git ref
+# * `@return 0` if successful
+# * `@return 1` if not successful
+module_pull_update() {
+  local mod_path="$1"
+  local ref="$2"
+
+  local name
+  name="$(basename "$mod_path")"
+
+  local name_prefix
+  name_prefix="$(_name_prefix "$name")"
+
+  info "$name_prefix Updating ($ref)"
+  indent git_update_checkout "$mod_path" "$ref"
+}
+
 # Installs a module from state in lock file.
 #
 # * `@param [String]` data home directory path

@@ -63,3 +63,13 @@ git_remote_current_sha() {
 
   git ls-remote "$url" "$pattern" | awk '{print $1}'
 }
+
+git_update_checkout() {
+  local path="$1"
+  local ref="$2"
+
+  ensure_git
+
+  git -C "$path" fetch origin || return 1
+  git -C "$path" reset --hard "origin/$ref"
+}
