@@ -51,7 +51,8 @@ testApplyDryRunWithConfig() {
   # Create minimal config
   cat >"$test_config" <<-'EOF'
 	{
-	  "tags": ["base"],
+	  "modules": [{"name":"foo","url":"https://example.com"}],
+	  "tags": ["alfa"],
 	  "skip_steps": [],
 	  "custom_packages": {
 	    "add": [],
@@ -59,6 +60,7 @@ testApplyDryRunWithConfig() {
 	  }
 	}
 	EOF
+  writeModuleFixture "foo" "$root/tests/fixtures/data/tags"
 
   runCli apply --dry-run
 
@@ -68,6 +70,16 @@ testApplyDryRunWithConfig() {
   # # Should show either packages to install or "converged" message
   # assertTrue 'Missing expected output' \
   #   "cat '$stdout' | grep -qE '(Would Install|System Converged|No changes)'"
+}
+
+testCmdApplyFailsWithNoModules() {
+  echo '{"modules":[]}' >"$test_config"
+
+  runCli apply
+
+  assertFalse 'should fail with no modules' "$return_status"
+  assertStdoutContains 'No modules are installed'
+  assertStderrContains 'Nothing configured to apply'
 }
 
 # shellcheck source=tests/test_helpers.sh

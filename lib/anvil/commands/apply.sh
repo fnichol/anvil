@@ -135,6 +135,16 @@ cmd_apply() {
     warn "Dry-run mode: no changes will be applied"
   fi
 
+  # Require at least one module to be installed
+  if [ -z "$(modules_installed_names "$config_file" "$data_home")" ]; then
+    warn "No modules are installed."
+    warn ""
+    warn "Run 'anvil module add <url>' to add a module,"
+    warn "then 'anvil module install' to install it locally."
+
+    die "Nothing configured to apply"
+  fi
+
   section "Anvil Apply"
 
   phases_run "$config_file" "$data_home" "$skip_coords"
