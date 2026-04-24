@@ -20,6 +20,7 @@ print_usage_role_show() {
 	    $program role show [FLAGS] <NAME>
 	
 	FLAGS:
+	    -a, --all               Show all versions of role, even if shadowed
 	    -h, --help              Prints help information
 
 	ARGUMENTS:
@@ -41,9 +42,14 @@ cmd_role_show() {
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
+  local show_all=""
+
   OPTIND=1
-  while getopts "h-:" arg; do
+  while getopts "ah-:" arg; do
     case "$arg" in
+      a)
+        show_all="true"
+        ;;
       h)
         print_usage_role_show "$program" \
           "$default_config_path" "$default_data_home"
@@ -52,6 +58,9 @@ cmd_role_show() {
       -)
         # long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
+          all)
+            show_all="true"
+            ;;
           help)
             print_usage_role_show "$program" \
               "$default_config_path" "$default_data_home"
@@ -88,38 +97,94 @@ cmd_role_show() {
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
   data_home="${ANVIL_DATA_HOME:-$default_data_home}"
 
-  local role_file
-  role_file="$(roles_path_for "$config_file" "$data_home" "$name")"
-
-  if [ ! -f "$role_file" ]; then
-    die "Role not found: $name"
-  fi
-
   ensure_jq
 
-  section "Role: $name"
+  local all_role_files=""
 
-  # Show description
-  local desc
-  desc="$(jq -r '.description // "No description"' "$role_file")"
-  echo "Description: $desc"
-  echo ""
+  # Determine all role files that apply
+  if [ -n "$show_all" ]; then
+    local tmp_list
+    tmp_list="$(mktemp_file)"
+    cleanup_file "$tmp_list"
 
-  # Show dependencies
-  local deps
-  deps="$(jq -r '.depends_on[]? // empty' "$role_file")"
+    modules_installed_names "$config_file" "$data_home" \
+      | while read -r mod_name; do
+        local roles_dir
+        roles_dir="$(module_path_for "$data_home" "$mod_name")/roles"
 
-  if [ -n "$deps" ]; then
-    echo "Dependencies:"
-    echo "$deps" | while IFS= read -r dep; do
-      echo "  - $dep"
-    done
-    echo ""
+        if [ ! -d "$roles_dir" ]; then
+          continue
+        fi
+
+        local role_file
+        role_file="$(module_path_for "$data_home" "$mod_name")/roles/$name.json"
+
+        if [ -f "$role_file" ]; then
+          echo "$role_file" >>"$tmp_list"
+        fi
+      done
+
+    all_role_files="$(cat "$tmp_list")"
+
+    if [ -z "$all_role_files" ]; then
+      die "Role not found: $name"
+    fi
+  else
+    # Only one candidate file when resolving for current active version
+    local role_file
+    role_file="$(roles_path_for "$config_file" "$data_home" "$name")"
+
+    if [ ! -f "$role_file" ]; then
+      die "Role not found: $name"
+    fi
+
+    all_role_files="$role_file"
   fi
 
-  # Show tags
-  echo "Tags:"
-  jq -r '.tags[]? // empty' "$role_file" | while IFS= read -r tag; do
-    echo "  - $tag"
+  # For each matching role, render show output
+  echo "$all_role_files" | while read -r role_file; do
+    section "Role: $name"
+
+    if [ -n "$show_all" ]; then
+      local active_file
+      active_file="$(
+        modules_resolve_content \
+          "$config_file" \
+          "$data_home" \
+          "roles" \
+          "$(basename "$role_file")"
+      )"
+
+      # Show status
+      if [ "$active_file" = "$role_file" ]; then
+        echo "Status: active"
+      else
+        echo "Status: (shadowed)"
+      fi
+    fi
+
+    # Show description
+    local desc
+    desc="$(jq -r '.description // "No description"' "$role_file")"
+    echo "Description: $desc"
+    echo ""
+
+    # Show dependencies
+    local deps
+    deps="$(jq -r '.depends_on[]? // empty' "$role_file")"
+
+    if [ -n "$deps" ]; then
+      echo "Dependencies:"
+      echo "$deps" | while IFS= read -r dep; do
+        echo "  - $dep"
+      done
+      echo ""
+    fi
+
+    # Show tags
+    echo "Tags:"
+    jq -r '.tags[]? // empty' "$role_file" | while IFS= read -r tag; do
+      echo "  - $tag"
+    done
   done
 }

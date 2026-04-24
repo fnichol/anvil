@@ -24,6 +24,7 @@ print_usage_tag_show() {
 	    $program tag show [FLAGS] <NAME>
 	
 	FLAGS:
+	    -a, --all               Show all versions of tag, even if shadowed
 	    -h, --help              Prints help information
 
 	ARGUMENTS:
@@ -45,9 +46,14 @@ cmd_tag_show() {
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
+  local show_all=""
+
   OPTIND=1
-  while getopts "h-:" arg; do
+  while getopts "ah-:" arg; do
     case "$arg" in
+      a)
+        show_all="true"
+        ;;
       h)
         print_usage_tag_show "$program" \
           "$default_config_path" "$default_data_home"
@@ -56,6 +62,9 @@ cmd_tag_show() {
       -)
         # long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
+          all)
+            show_all="true"
+            ;;
           help)
             print_usage_tag_show "$program" \
               "$default_config_path" "$default_data_home"
@@ -92,60 +101,116 @@ cmd_tag_show() {
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
   data_home="${ANVIL_DATA_HOME:-$default_data_home}"
 
-  local tag_file
-  tag_file="$(tags_path_for "$config_file" "$data_home" "$name")"
-
-  if [ ! -f "$tag_file" ]; then
-    die "Tag not found: $name"
-  fi
-
   ensure_jq
 
-  section "Tag: $name"
+  local all_tag_files=""
 
-  # Show description
-  local desc
-  desc="$(jq -r '.description // "No description"' "$tag_file")"
-  echo "Description: $desc"
-  echo ""
+  # Determine all tag files that apply
+  if [ -n "$show_all" ]; then
+    local tmp_list
+    tmp_list="$(mktemp_file)"
+    cleanup_file "$tmp_list"
 
-  # Show dependencies
-  local deps
-  deps="$(jq -r '.depends_on[]? // empty' "$tag_file")"
+    modules_installed_names "$config_file" "$data_home" \
+      | while read -r mod_name; do
+        local tags_dir
+        tags_dir="$(module_path_for "$data_home" "$mod_name")/tags"
 
-  if [ -n "$deps" ]; then
-    echo "Dependencies:"
-    echo "$deps" | while IFS= read -r dep; do
-      echo "  - $dep"
-    done
-    echo ""
-  fi
+        if [ ! -d "$tags_dir" ]; then
+          continue
+        fi
 
-  # Show packages for current platform
-  local os arch
-  os="$(facts_os)"
-  arch="$(facts_arch)"
+        local tag_file
+        tag_file="$(module_path_for "$data_home" "$mod_name")/tags/$name.json"
 
-  section "Packages ($os/$arch)"
+        if [ -f "$tag_file" ]; then
+          echo "$tag_file" >>"$tmp_list"
+        fi
+      done
 
-  local packages
-  packages="$(
-    tags_packages_for \
-      "$config_file" \
-      "$data_home" \
-      "$name" \
-      "$os" \
-      "$arch" \
-      "homebrew"
-  )"
+    all_tag_files="$(cat "$tmp_list")"
 
-  if [ -z "$packages" ]; then
-    echo "  (none defined for this platform/architecture)"
+    if [ -z "$all_tag_files" ]; then
+      die "Tag not found: $name"
+    fi
   else
-    echo "$packages" | while IFS= read -r pkg; do
-      if [ -n "$pkg" ]; then
-        echo "  - $pkg"
-      fi
-    done
+    # Only one candidate file when resolving for current active version
+    local tag_file
+    tag_file="$(tags_path_for "$config_file" "$data_home" "$name")"
+
+    if [ ! -f "$tag_file" ]; then
+      die "Tag not found: $name"
+    fi
+
+    all_tag_files="$tag_file"
   fi
+
+  # For each matching tag, render show output
+  echo "$all_tag_files" | while read -r tag_file; do
+    section "Tag: $name"
+
+    if [ -n "$show_all" ]; then
+      local active_file
+      active_file="$(
+        modules_resolve_content \
+          "$config_file" \
+          "$data_home" \
+          "tags" \
+          "$(basename "$tag_file")"
+      )"
+
+      # Show status
+      if [ "$active_file" = "$tag_file" ]; then
+        echo "Status: active"
+      else
+        echo "Status: (shadowed)"
+      fi
+    fi
+
+    # Show description
+    local desc
+    desc="$(jq -r '.description // "No description"' "$tag_file")"
+    echo "Description: $desc"
+    echo ""
+
+    # Show dependencies
+    local deps
+    deps="$(jq -r '.depends_on[]? // empty' "$tag_file")"
+
+    if [ -n "$deps" ]; then
+      echo "Dependencies:"
+      echo "$deps" | while IFS= read -r dep; do
+        echo "  - $dep"
+      done
+      echo ""
+    fi
+
+    # Show packages for current platform
+    local os arch
+    os="$(facts_os)"
+    arch="$(facts_arch)"
+
+    section "Packages ($os/$arch)"
+
+    local packages
+    packages="$(
+      tags_packages_for \
+        "$config_file" \
+        "$data_home" \
+        "$name" \
+        "$os" \
+        "$arch" \
+        "homebrew"
+    )"
+
+    if [ -z "$packages" ]; then
+      echo "  (none defined for this platform/architecture)"
+    else
+      echo "$packages" | while IFS= read -r pkg; do
+        if [ -n "$pkg" ]; then
+          echo "  - $pkg"
+        fi
+      done
+    fi
+  done
 }

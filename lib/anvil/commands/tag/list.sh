@@ -22,6 +22,7 @@ print_usage_tag_list() {
 	    $program tag list [FLAGS]
 	
 	FLAGS:
+	    -a, --all               Show all tags, even shadowed items
 	    -h, --help              Prints help information
 
 	ENVIRONMENT VARIABLES:
@@ -40,9 +41,14 @@ cmd_tag_list() {
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
+  local show_all=""
+
   OPTIND=1
-  while getopts "h-:" arg; do
+  while getopts "ah-:" arg; do
     case "$arg" in
+      a)
+        show_all="true"
+        ;;
       h)
         print_usage_tag_list "$program" \
           "$default_config_path" "$default_data_home"
@@ -51,6 +57,9 @@ cmd_tag_list() {
       -)
         # long_optarg="${OPTARG#*=}"
         case "$OPTARG" in
+          all)
+            show_all="true"
+            ;;
           help)
             print_usage_tag_list "$program" \
               "$default_config_path" "$default_data_home"
@@ -83,13 +92,59 @@ cmd_tag_list() {
 
   section "Available Tags"
 
-  tags_list_all "$config_file" "$data_home" | while IFS= read -r tag; do
-    local tag_file
-    tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
+  if [ -n "$show_all" ]; then
+    modules_installed_names "$config_file" "$data_home" \
+      | while read -r mod_name; do
+        local tags_dir
+        tags_dir="$(module_path_for "$data_home" "$mod_name")/tags"
 
-    local desc
-    desc="$(jq -r '.description // "No description"' "$tag_file")"
+        if [ ! -d "$tags_dir" ]; then
+          continue
+        fi
 
-    printf "  %-20s %s\n" "$tag" "$desc"
-  done
+        tags_list "$tags_dir" | while read -r tag; do
+          local tag_file
+          tag_file="$(module_path_for "$data_home" "$mod_name")/tags/$tag.json"
+
+          local desc
+          desc="$(jq -r '.description // "No description"' "$tag_file")"
+
+          local active_file
+          active_file="$(
+            modules_resolve_content \
+              "$config_file" \
+              "$data_home" \
+              "tags" \
+              "$(basename "$tag_file")"
+          )"
+
+          if [ "$active_file" = "$tag_file" ]; then
+            printf "  %-20s %-15s %-12s %s\n" \
+              "$tag" \
+              "$mod_name" \
+              "active" \
+              "$desc"
+          else
+            printf "  %-20s %-15s %-12s %s\n" \
+              "$tag" \
+              "$mod_name" \
+              "(shadowed)" \
+              "$desc"
+          fi
+        done
+      done
+  else
+    tags_list_all "$config_file" "$data_home" | while IFS= read -r tag; do
+      local tag_file
+      tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
+
+      local mod_name
+      mod_name="$(basename "$(dirname "$(dirname "$tag_file")")")"
+
+      local desc
+      desc="$(jq -r '.description // "No description"' "$tag_file")"
+
+      printf "  %-20s %-15s %s\n" "$tag" "$mod_name" "$desc"
+    done
+  fi
 }
