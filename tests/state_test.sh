@@ -67,6 +67,71 @@ testReadLastRunMissingFile() {
   assertStderrNull
 }
 
+testUpdateCheckIsDueWhenNoStateFile() {
+  local state_file="$tmpdir/state/anvil/state.json"
+
+  assertFalse 'state file should not exist' "[ -f '$state_file' ]"
+
+  run state_is_update_check_due
+
+  assertTrue 'check should be due when no state file' "$return_status"
+  assertStderrNull
+}
+
+testUpdateCheckIsDueWhenNextTsIsInPast() {
+  local past_ts
+  past_ts="$(($(date -u +%s) - 1))"
+
+  state_write_update_check "0.1.0" "$past_ts"
+
+  run state_is_update_check_due
+
+  assertTrue 'check should be due when next_ts is past' "$return_status"
+  assertStderrNull
+}
+
+testUpdateCheckIsNotDueWhenNextTsIsInFuture() {
+  local future_ts
+  future_ts="$(($(date -u +%s) + 86400))"
+
+  state_write_update_check "0.1.0" "$future_ts"
+
+  run state_is_update_check_due
+
+  assertFalse 'check should not be due when next_ts is future' "$return_status"
+  assertStderrNull
+}
+
+testWriteUpdateCheckCreatesFields() {
+  local state_file="$tmpdir/state/anvil/state.json"
+  local future_ts="$(($(date -u +%s) + 86400))"
+
+  run state_write_update_check "0.2.0" "$future_ts"
+
+  assertTrue 'function should succeed' "$return_status"
+  assertTrue 'state file should exist' "[ -f '$state_file' ]"
+  assertJsonFromFile "$state_file" '.latest_known_version == "0.2.0"'
+  assertJsonFromFile "$state_file" ".next_update_check_ts == $future_ts"
+}
+
+testReadLatestKnownVersionReturnsEmpty() {
+  run state_read_latest_known_version
+
+  assertTrue 'function should succeed' "$return_status"
+  assertStdoutEquals ''
+  assertStderrNull
+}
+
+testReadLatestKnownVersionReturnsStoredVersion() {
+  state_write_update_check "0.2.0" "$(($(date -u +%s) + 86400))"
+
+  run state_read_latest_known_version
+
+  assertTrue 'function should succeed' "$return_status"
+  assertStdoutEquals '0.2.0'
+  assertStderrNull
+}
+
 # shellcheck source=tests/test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 

@@ -143,3 +143,81 @@ state_read_module_fetched_at() {
       "$state_file"
   fi
 }
+
+# Writes update check cache fields to state.json.
+#
+# * `@param [String]` latest known version string (e.g. "0.2.0")
+# * `@param [optional, Integer]` next check Unix epoch timestamp; defaults to
+#   now + 86400 (24 hours)
+# * `@return 0` if successful
+state_write_update_check() {
+  need_cmd date
+  need_cmd mkdir
+
+  local latest_version="$1"
+  local next_ts="${2:-$(($(date -u +%s) + 86400))}"
+
+  ensure_jq
+
+  local state_file
+  state_file="$(state_path)"
+
+  if [ -f "$state_file" ]; then
+    local tmp_state
+    tmp_state="$(mktemp_file)"
+    cleanup_file "$tmp_state"
+
+    jq \
+      --arg v "$latest_version" \
+      --argjson ts "$next_ts" \
+      '.latest_known_version = $v | .next_update_check_ts = $ts' \
+      "$state_file" \
+      >"$tmp_state"
+    cat "$tmp_state" >"$state_file"
+  else
+    mkdir -p "$(dirname "$state_file")"
+
+    jq -n \
+      --arg v "$latest_version" \
+      --argjson ts "$next_ts" \
+      '{latest_known_version: $v, next_update_check_ts: $ts}' \
+      >"$state_file"
+  fi
+}
+
+# Determines whether an update check should be performed.
+#
+# * `@return 0` if check is due or no cache exists
+# * `@return 1` if check is not yet due
+state_is_update_check_due() {
+  local state_file
+  state_file="$(state_path)"
+
+  # Early return if no state file exists--we can infer that a check is
+  # warranted.
+  if [ ! -f "$state_file" ]; then
+    return 0
+  fi
+
+  ensure_jq
+
+  local next_ts
+  next_ts="$(jq -r '.next_update_check_ts // 0' "$state_file")"
+
+  [ "$(date +%s)" -ge "$next_ts" ]
+}
+
+# Reads the latest known version from the state file.
+#
+# * `@stdout` version string, or empty if not present
+# * `@return 0` if successful
+state_read_latest_known_version() {
+  local state_file
+  state_file="$(state_path)"
+
+  if [ -f "$state_file" ]; then
+    ensure_jq
+
+    jq -r '.latest_known_version // empty' "$state_file"
+  fi
+}
