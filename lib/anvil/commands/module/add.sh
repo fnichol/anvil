@@ -18,7 +18,7 @@ print_usage_module_add() {
 	Add a module
 
 	USAGE:
-	    $program module add [FLAGS] <URL>
+	    $program module add [FLAGS] [OPTIONS] <URL>
 
 	FLAGS:
 	    -h, --help              Prints help information
