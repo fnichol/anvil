@@ -142,6 +142,14 @@ assertStdoutStripAnsiContains() {
   fi
 }
 
+assertStdoutNotContains() {
+  if [ "$#" -eq 2 ]; then
+    assertFalse "$1" "grep -E '$2' <'$stdout'"
+  else
+    assertFalse 'stdout should not contain' "grep -E '$1' <'$stdout'"
+  fi
+}
+
 assertStdoutNull() {
   assertTrue 'stdout is not empty' "[ ! -s '$stdout' ]"
 }

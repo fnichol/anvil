@@ -11,6 +11,10 @@
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/phases.sh
 . "$SRC_ROOT/lib/anvil/phases.sh"
+# shellcheck source=lib/anvil/state.sh
+. "$SRC_ROOT/lib/anvil/state.sh"
+# shellcheck source=lib/anvil/anvil.sh
+. "$SRC_ROOT/lib/anvil/anvil.sh"
 
 # Prints usage for the apply command.
 print_apply_usage() {
@@ -38,8 +42,10 @@ print_apply_usage() {
 
 # Apply command - converge system to desired state
 cmd_apply() {
-  local program
+  local program version
   program="$1"
+  shift
+  version="$1"
   shift
 
   ensure_script
@@ -157,4 +163,37 @@ cmd_apply() {
   info "Run time: $(
     printf '%02d:%02d (mm:ss)' "$((elapsed_s / 60))" "$((elapsed_s % 60))"
   )"
+
+  check_anvil_update_advisory "$program" "$version"
+}
+
+check_anvil_update_advisory() {
+  local program version
+  program="$1"
+  version="$2"
+
+  local latest=""
+
+  # Use cached result if still fresh
+  if ! state_is_update_check_due; then
+    latest="$(state_read_latest_known_version)"
+  fi
+
+  # Perform live check when cache is stale
+  if [ -z "$latest" ]; then
+    latest="$(latest_anvil_version)"
+
+    # Write to cache regardless (even if empty, to avoid hammering the API)
+    if [ -n "$latest" ]; then
+      state_write_update_check "$latest" || true
+    fi
+  fi
+
+  # Print advisory if newer version exists
+  if [ -n "$latest" ] && anvil_version_lt "$version" "$latest"; then
+    echo ""
+    section "New $program version detected"
+    info "$program $latest is available (installed: $version)."
+    info "Run '$program self update' to upgrade."
+  fi
 }

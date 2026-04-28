@@ -104,7 +104,7 @@ anvil_cli() {
   case "$subcommand" in
     apply)
       . "$root/lib/anvil/commands/apply.sh"
-      cmd_apply "$program" "$@"
+      cmd_apply "$program" "$version" "$@"
       ;;
     config)
       . "$root/lib/anvil/commands/config/lib.sh"
