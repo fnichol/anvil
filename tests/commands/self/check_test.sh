@@ -12,8 +12,6 @@ oneTimeSetUp() {
 
 setUp() {
   commonSetUp
-
-  . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 runCli() {
