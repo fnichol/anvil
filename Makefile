@@ -5,7 +5,7 @@ include vendor/mk/json.mk
 include vendor/mk/libsh-vendor.mk
 include vendor/mk/shell.mk
 
-SH_SOURCES += ./bin/anvil ./bin/log ./bin/prep ./bin/update
+SH_SOURCES += ./bin/anvil
 
 build:
 .PHONY: build
