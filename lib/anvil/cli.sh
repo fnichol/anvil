@@ -29,6 +29,7 @@ print_usage() {
 	    facts           Show discovered system info
 	    module          Manage modules
 	    role            Manage roles
+	    self            Manage the Anvil installation
 	    tag             Manage tags
 	    status          Show current vs desired state
 	EOF
@@ -128,6 +129,10 @@ anvil_cli() {
     role)
       . "$root/lib/anvil/commands/role/lib.sh"
       cmd_role "$program" "$@"
+      ;;
+    self)
+      . "$root/lib/anvil/commands/self/lib.sh"
+      cmd_self "$program" "$version" "$@"
       ;;
     tag)
       . "$root/lib/anvil/commands/tag/lib.sh"
