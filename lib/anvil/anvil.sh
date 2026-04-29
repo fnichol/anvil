@@ -164,6 +164,8 @@ verify_asset_sha256() {
 extract_asset() {
   local asset="$1"
 
+  info "Extracting $asset"
+
   need_cmd tar
   need_cmd zcat
 
