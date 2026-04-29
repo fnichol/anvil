@@ -48,9 +48,15 @@ main() {
   release="$RELEASE"
   unset DEST GIT_REF RELEASE
 
+  need_cmd awk
   need_cmd basename
+  need_cmd find
+  need_cmd head
   need_cmd ln
   need_cmd mkdir
+  need_cmd tar
+  need_cmd uname
+  need_cmd zcat
 
   setup_cleanups
   setup_traps trap_cleanups
@@ -236,8 +242,6 @@ parse_cli_args() {
 latest_release() {
   local gh_repo="$1"
 
-  need_cmd awk
-
   local tmpfile
   tmpfile="$(mktemp_file)"
   cleanup_file "$tmpfile"
@@ -273,8 +277,6 @@ asset_url() {
 verify_asset_sha256() {
   local asset="$1"
 
-  need_cmd uname
-
   info "Verifying SHA256 checksum"
   case "$(uname -s)" in
     Darwin)
@@ -284,7 +286,6 @@ verify_asset_sha256() {
       ;;
     FreeBSD | OpenBSD)
       if check_cmd sha256; then
-        need_cmd awk
         indent sha256 -c "$(awk '{print $1}' "$asset.sha256")" "$asset"
       fi
       ;;
@@ -299,13 +300,10 @@ verify_asset_sha256() {
 verify_asset_md5() {
   local asset="$1"
 
-  need_cmd uname
-
   info "Verifying MD5 checksum"
   case "$(uname -s)" in
     Darwin)
       if check_cmd md5; then
-        need_cmd awk
         local expected actual
         expected="$(awk '{ print $1 }' "$asset.md5")"
         actual="$(md5 "$asset" | awk '{ print $NF }')"
@@ -320,7 +318,6 @@ verify_asset_md5() {
       ;;
     FreeBSD | OpenBSD)
       if check_cmd md5; then
-        need_cmd awk
         indent md5 -c "$(awk '{print $1}' "$asset.md5")" "$asset"
       fi
       ;;
@@ -337,17 +334,11 @@ extract_asset() {
 
   info "Extracting $asset"
 
-  need_cmd tar
-  need_cmd zcat
-
   zcat "$asset" | indent tar xvf -
 }
 
 find_extracted_dir() {
   local root="$1"
-
-  need_cmd find
-  need_cmd head
 
   find "$root" -maxdepth 1 -mindepth 1 -type d | head -1
 }
