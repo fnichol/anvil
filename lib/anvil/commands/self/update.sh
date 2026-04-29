@@ -146,9 +146,9 @@ cmd_self_update() {
 
     section "Verifying '$asset'"
     (cd "$work_dir" && verify_asset_md5 "$asset" "$asset.md5") \
-      || die "MD5 mismatch"
+      || die "Failed to verify MD5 digest"
     (cd "$work_dir" && verify_asset_sha256 "$asset" "$asset.sha256") \
-      || die "SHA256 mismatch"
+      || die "Failed to verify SHA256 digest"
 
     section "Installing '$program' release '$latest'"
     (cd "$work_dir" && extract_asset "$asset")
