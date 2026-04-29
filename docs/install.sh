@@ -365,8 +365,10 @@ install_release() {
   need_cmd chmod
   need_cmd ln
   need_cmd mkdir
+  need_cmd rm
 
   info_start "Installing to '$dest_path'"
+  rm -rf "$dest_path"
   mkdir -p "$dest_path"
   cp -rp "$src_path/." "$dest_path/"
   chmod +x "$dest_path/bin/anvil"
