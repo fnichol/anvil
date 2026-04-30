@@ -6,15 +6,16 @@ main() {
   if [ -n "${DEBUG:-}" ]; then set -v; fi
   if [ -n "${TRACE:-}" ]; then set -xv; fi
 
-  local root program version author
-  program="anvil"
-  version="0.1.0"
-  author="Fletcher Nichol <fnichol@nichol.ca>"
-
   # Resolve any links to main program then pop up 2 levels to determine source
   # tree root directory
+  local root
   root="$(dirname "$(dirname "$(realpath "$0")")")"
   SRC_ROOT="$root"
+
+  local program version author
+  program="anvil"
+  version="$(cat "$root/VERSION.txt")"
+  author="Fletcher Nichol <fnichol@nichol.ca>"
 
   # shellcheck source=vendor/lib/libsh.full.sh
   . "$root/vendor/lib/libsh.full.sh"
