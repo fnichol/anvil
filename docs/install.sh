@@ -82,13 +82,13 @@ main() {
     cd "$tmpdir"
 
     local installs_path
-    installs_path="$dest/share/anvil/installs"
+    installs_path="$dest/share/$bin/installs"
 
     section "Installing '$program' from Git ref '$git_ref'"
     extract_asset "$asset" || die "Failed to extract asset"
     local src_path
     src_path="$(find_extracted_dir "$tmpdir")"
-    install_release "$src_path" "$installs_path" "$install_name"
+    install_release "$src_path" "$installs_path" "$install_name" "$bin"
   else
     if [ "$release" = "latest" ]; then
       info_start "Determining latest release for '$bin'"
@@ -117,13 +117,13 @@ main() {
     verify_asset_sha256 "$asset" || die "Failed to verify SHA256 checksum"
 
     local installs_path
-    installs_path="$dest/share/anvil/installs"
+    installs_path="$dest/share/$bin/installs"
 
     section "Installing '$asset'"
     extract_asset "$asset" || die "Failed to extract asset"
     local src_path
     src_path="$(find_extracted_dir "$tmpdir")"
-    install_release "$src_path" "$installs_path" "$install_name"
+    install_release "$src_path" "$installs_path" "$install_name" "$bin"
   fi
 
   local bin_dir bin_link
@@ -131,11 +131,11 @@ main() {
   bin_link="$bin_dir/$bin"
   info_start "Linking '$bin_link'"
   mkdir -p "$bin_dir"
-  ln -sf "$installs_path/$install_name/bin/$bin" "$bin_link"
+  ln -sf "$installs_path/current/bin/$bin" "$bin_link"
   info_end
 
   section "Verifying installation"
-  "$dest/bin/anvil" --version
+  "$bin_link" --version
 
   # PATH hint
   case ":$PATH:" in
@@ -347,6 +347,7 @@ install_release() {
   local src_path="$1"
   local installs_path="$2"
   local install_name="$3"
+  local bin="$4"
 
   local dest_path current_ln
   dest_path="$installs_path/$install_name"
@@ -362,7 +363,7 @@ install_release() {
   rm -rf "$dest_path"
   mkdir -p "$dest_path"
   cp -rp "$src_path/." "$dest_path/"
-  chmod +x "$dest_path/bin/anvil"
+  chmod +x "$dest_path/bin/$bin"
   info_end
 
   info_start "Setting 'current' to '$install_name'"

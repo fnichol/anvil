@@ -107,7 +107,7 @@ cmd_self_update() {
     (cd "$work_dir" && extract_asset "$git_ref.tar.gz")
     local src_path
     src_path="$(find_extracted_dir "$work_dir")"
-    install_release "$src_path" "$installs_path" "$install_name"
+    install_release "$src_path" "$installs_path" "$install_name" "anvil"
 
     section "'$program' installed from Git ref '$git_ref'"
   else
@@ -154,7 +154,7 @@ cmd_self_update() {
     (cd "$work_dir" && extract_asset "$asset")
     local src_path
     src_path="$(find_extracted_dir "$work_dir")"
-    install_release "$src_path" "$installs_path" "$install_name"
+    install_release "$src_path" "$installs_path" "$install_name" "anvil"
 
     section "'$program' updated from $version to $latest"
   fi

@@ -185,6 +185,7 @@ install_release() {
   local src_path="$1"
   local installs_path="$2"
   local install_name="$3"
+  local bin="$4"
 
   local dest_path current_ln
   dest_path="$installs_path/$install_name"
@@ -198,7 +199,7 @@ install_release() {
   info_start "Installing to '$dest_path'"
   mkdir -p "$dest_path"
   cp -rp "$src_path/." "$dest_path/"
-  chmod +x "$dest_path/bin/anvil"
+  chmod +x "$dest_path/bin/$bin"
   info_end
 
   info_start "Setting 'current' to '$install_name'"
