@@ -73,9 +73,9 @@ install_steps() {
 }
 
 install_step_apk() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -90,13 +90,18 @@ install_step_apk() {
 
   local package_type="apk"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_apt() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -111,13 +116,18 @@ install_step_apt() {
 
   local package_type="apt"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_aur() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -132,13 +142,18 @@ install_step_aur() {
 
   local package_type="aur"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_homebrew() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -153,13 +168,18 @@ install_step_homebrew() {
 
   local package_type="homebrew"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_homebrew_cask() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -174,13 +194,18 @@ install_step_homebrew_cask() {
 
   local package_type="homebrew_cask"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_homeshick() {
-  local root="$1"
+  local config_file="$1"
   shift
-  local config_path="$1"
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -196,7 +221,7 @@ install_step_homeshick() {
   local package_type="homeshick"
 
   local resolved_tags
-  resolved_tags="$(config_resolve_tags "$root" "$config_path")"
+  resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
   # No tags are configured, early return
   if [ -z "$resolved_tags" ]; then
@@ -205,7 +230,13 @@ install_step_homeshick() {
 
   local desired
   desired="$(
-    desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
+    desired_packages \
+      "$config_file" \
+      "$data_home" \
+      "$os" \
+      "$arch" \
+      "$package_type" \
+      "$resolved_tags"
   )"
 
   # If no castles are found desired, early return
@@ -225,9 +256,9 @@ install_step_homeshick() {
 }
 
 install_step_mise() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -242,13 +273,18 @@ install_step_mise() {
 
   local package_type="mise"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_pacman() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -263,13 +299,18 @@ install_step_pacman() {
 
   local package_type="pacman"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_freebsd_pkg() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -284,13 +325,18 @@ install_step_freebsd_pkg() {
 
   local package_type="freebsd_pkg"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 install_step_openbsd_pkg() {
-  local root="$1"
-  shift
   local config_path="$1"
+  shift
+  local data_home="$1"
   shift
   local _hostname="$1"
   shift
@@ -305,7 +351,12 @@ install_step_openbsd_pkg() {
 
   local package_type="openbsd_pkg"
 
-  _install_step_packages "$root" "$config_path" "$os" "$arch" "$package_type"
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
 }
 
 # Common package installation using convergence.
@@ -340,10 +391,16 @@ _install_step_packages() {
 
   local desired
   desired="$(
-    desired_packages "$root" "$os" "$arch" "$package_type" "$resolved_tags"
+    desired_packages \
+      "$config_file" \
+      "$data_home" \
+      "$os" \
+      "$arch" \
+      "$package_type" \
+      "$resolved_tags"
   )"
   desired="$(
-    _normalize_packages "$root" "$os" "$arch" "$package_type" "$desired"
+    _normalize_packages "$os" "$arch" "$package_type" "$desired"
   )"
 
   # If no packages are found desired, early return
@@ -557,11 +614,10 @@ _install_packages_openbsd_pkg() {
 }
 
 _normalize_packages() {
-  local _root="$1"
-  local _os="$2"
-  local _arch="$3"
-  local package_type="$4"
-  local pkgs="$5"
+  local _os="$1"
+  local _arch="$2"
+  local package_type="$3"
+  local pkgs="$4"
 
   case "$package_type" in
     mise)
