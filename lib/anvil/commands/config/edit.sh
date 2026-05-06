@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 
@@ -30,41 +32,30 @@ cmd_config_edit() {
   local default_config_path config_file
   default_config_path="$(config_path)"
 
-  OPTIND=1
-  while getopts "h-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_config_edit "$program" \
-          "$default_config_path"
+  usage() {
+    print_usage_config_edit "$program" "$default_config_path"
+  }
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage_config_edit "$program" \
-              "$default_config_path"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage "$program" \
-              "$default_config_path" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_config_edit "$program" \
-          "$default_config_path" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
 

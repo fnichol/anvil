@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
@@ -51,6 +53,14 @@ cmd_module_add() {
   local default_moduless_lock_path modules_lock_file
   default_moduless_lock_path="$(modules_lock_path)"
 
+  usage() {
+    print_usage_module_add \
+      "$program" \
+      "$default_config_path" \
+      "$default_data_home" \
+      "$default_moduless_lock_path"
+  }
+
   local name=""
 
   local branch=""
@@ -58,110 +68,74 @@ cmd_module_add() {
   local tag=""
   local url
 
-  OPTIND=1
-  while getopts "b:c:hn:t:-:" arg; do
-    case "$arg" in
-      b)
-        branch="$OPTARG"
-        ;;
-      c)
-        commit="$OPTARG"
-        ;;
-      h)
-        print_usage_module_add "$program" \
-          "$default_config_path" "$default_data_home" \
-          "$default_moduless_lock_path"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      n)
-        name="$OPTARG"
+      # Options
+      -b | --branch)
+        ensure_required_arg "$1" "${2:-}"
+        branch="$2"
+        shift 2
         ;;
-      t)
-        tag="$OPTARG"
+      -b=?* | --branch=?*)
+        branch="${1#*=}"
+        shift 1
         ;;
-      -)
-        long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          branch=?*)
-            branch="$long_optarg"
-            ;;
-          branch*)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          commit=?*)
-            commit="$long_optarg"
-            ;;
-          commit*)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          help)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path"
-            return 0
-            ;;
-          name=?*)
-            name="$long_optarg"
-            ;;
-          name*)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          tag=?*)
-            tag="$long_optarg"
-            ;;
-          tag*)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage_module_add "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      -c | --commit)
+        ensure_required_arg "$1" "${2:-}"
+        commit="$2"
+        shift 2
         ;;
-      \?)
-        print_usage_module_add "$program" \
-          "$default_config_path" "$default_data_home" \
-          "$default_moduless_lock_path" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -c=?* | --commit=?*)
+        commit="${1#*=}"
+        shift 1
+        ;;
+      -n | --name)
+        ensure_required_arg "$1" "${2:-}"
+        name="$2"
+        shift 2
+        ;;
+      -n=?* | --name=?*)
+        name="${1#*=}"
+        shift 1
+        ;;
+      -t | --tag)
+        ensure_required_arg "$1" "${2:-}"
+        tag="$2"
+        shift 2
+        ;;
+      -t=?* | --tag=?*)
+        tag="${1#*=}"
+        shift 1
+        ;;
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
+        ;;
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   if [ -n "${1:-}" ]; then
     url="$1"
   else
-    print_usage_module_add "$program" \
-      "$default_config_path" "$default_data_home" \
-      "$default_moduless_lock_path" >&2
-    die "required argument: URL"
+    usage_and_die "required argument: URL"
   fi
 
   if { [ -n "$branch" ] && [ -n "$commit" ]; } \
     || { [ -n "$branch" ] && [ -n "$tag" ]; } \
     || { [ -n "$commit" ] && [ -n "$tag" ]; }; then
-    print_usage_module_add "$program" \
-      "$default_config_path" "$default_data_home" \
-      "$default_moduless_lock_path" >&2
-    die "Options: branch, commit, and tag are mutually exclusive"
+    usage_and_die "Options: branch, commit, and tag are mutually exclusive"
   fi
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"

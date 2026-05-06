@@ -124,8 +124,7 @@ testCmdSelfUpdateAlreadyUpToDate() {
   local installs_dir="$tmpdir/share/anvil/installs"
 
   local current_version
-  current_version="$(grep '^  version=' "$root/bin/anvil" | head -1 \
-    | sed 's/.*version="\(.*\)"/\1/')"
+  current_version="$(cat "$root/VERSION.txt")"
 
   mkdir -p "$installs_dir/$current_version"
   ln -sfn "$current_version" "$installs_dir/current"
@@ -147,8 +146,7 @@ testCmdSelfUpdateInstallsNewVersion() {
   local installs_dir="$tmpdir/share/anvil/installs"
 
   local current_version
-  current_version="$(grep '^  version=' "$root/bin/anvil" | head -1 \
-    | sed 's/.*version="\(.*\)"/\1/')"
+  current_version="$(cat "$root/VERSION.txt")"
 
   mkdir -p "$installs_dir/$current_version"
   ln -sfn "$current_version" "$installs_dir/current"
@@ -179,8 +177,7 @@ testCmdSelfUpdateGitRefInstallsToGitPrefixedDir() {
   local installs_dir="$tmpdir/share/anvil/installs"
 
   local current_version
-  current_version="$(grep '^  version=' "$root/bin/anvil" | head -1 \
-    | sed 's/.*version="\(.*\)"/\1/')"
+  current_version="$(cat "$root/VERSION.txt")"
 
   mkdir -p "$installs_dir/$current_version"
   ln -sfn "$current_version" "$installs_dir/current"

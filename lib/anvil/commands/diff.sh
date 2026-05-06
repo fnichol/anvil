@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
@@ -14,7 +16,6 @@
 # shellcheck source=lib/anvil/phases/install.sh
 . "$SRC_ROOT/lib/anvil/phases/install.sh"
 
-# Prints usage for the diff command.
 print_usage_diff() {
   local program="$1"
   local default_config_path="$2"
@@ -35,7 +36,6 @@ print_usage_diff() {
 	EOF
 }
 
-# Diff command - show what would change
 cmd_diff() {
   local program
   program="$1"
@@ -46,40 +46,33 @@ cmd_diff() {
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
-  OPTIND=1
-  while getopts "h-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_diff "$program" \
-          "$default_config_path" "$default_data_home"
+  usage() {
+    print_usage_diff \
+      "$program" \
+      "$default_config_path" \
+      "$default_data_home"
+  }
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        case "$OPTARG" in
-          help)
-            print_usage_diff "$program" \
-              "$default_config_path" "$default_data_home"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage_diff "$program" \
-              "$default_config_path" "$default_data_home" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_diff "$program" \
-          "$default_config_path" "$default_data_home" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
   data_home="${ANVIL_DATA_HOME:-$default_data_home}"

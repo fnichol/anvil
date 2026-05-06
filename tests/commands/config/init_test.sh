@@ -66,7 +66,7 @@ testCmdConfigInitWithTagsLongOption() {
   local config_file
   config_file="$tmpdir/config.json"
 
-  runCliWithConfig "$config_file" config init --tags=alfa,bravo,charlie
+  runCliWithConfig "$config_file" config init --tag=alfa,bravo,charlie
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'Created config file'
@@ -104,7 +104,7 @@ testCmdConfigInitWithRolesLongOption() {
   local config_file
   config_file="$tmpdir/config.json"
 
-  runCliWithConfig "$config_file" config init --roles=headless,workstation
+  runCliWithConfig "$config_file" config init --role=headless,workstation
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'Created config file'
@@ -146,7 +146,7 @@ testCmdConfigInitWithRolesAndTags() {
   local config_file
   config_file="$tmpdir/config.json"
 
-  runCliWithConfig "$config_file" config init --roles=headless --tags=extra-tag
+  runCliWithConfig "$config_file" config init --role=headless --tag=extra-tag
 
   assertTrue 'cli command failed' "$return_status"
   assertStdoutContains 'Created config file'

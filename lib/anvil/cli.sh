@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
+
 # Anvil CLI command parsing
 
 print_usage() {
@@ -46,57 +49,44 @@ anvil_cli() {
   author="$1"
   shift
 
+  usage() {
+    print_usage "$program" "$version" "$author"
+  }
+
   VERBOSE=""
 
-  OPTIND=1
-  while getopts "hvV-:" arg; do
-    case "$arg" in
-      h)
-        print_usage "$program" "$version" "$author"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      v)
+      -v | --verbose)
         VERBOSE=true
+        shift 1
         ;;
-      V)
+      -V | --version)
         print_version "$program" "$version" "${VERBOSE:-}"
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage "$program" "$version" "$author"
-            return 0
-            ;;
-          verbose)
-            VERBOSE=true
-            ;;
-          version)
-            print_version "$program" "$version" "${VERBOSE:-}"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage "$program" "$version" "$author" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage "$program" "$version" "$author" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   local subcommand="${1:-}"
   if [ -z "$subcommand" ]; then
-    print_usage "$program" "$version" "$author"
+    usage
     return 0
   fi
   shift
@@ -143,8 +133,7 @@ anvil_cli() {
       cmd_status "$program" "$@"
       ;;
     *)
-      print_usage "$program" "$version" "$author" >&2
-      die "unknown subcommand: $subcommand"
+      usage_and_die "unknown subcommand: $subcommand"
       ;;
   esac
 }

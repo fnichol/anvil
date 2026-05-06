@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
@@ -39,52 +41,41 @@ cmd_module_install() {
   default_config_path="$(config_path)"
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
-  local default_moduless_lock_path modules_lock_file
-  default_moduless_lock_path="$(modules_lock_path)"
+  local default_modules_lock_path modules_lock_file
+  default_modules_lock_path="$(modules_lock_path)"
 
-  OPTIND=1
-  while getopts "h-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_module_install "$program" \
-          "$default_config_path" "$default_data_home" \
-          "$default_moduless_lock_path"
+  usage() {
+    print_usage_module_install \
+      "$program" \
+      "$default_config_path" \
+      "$default_data_home" \
+      "$default_modules_lock_path"
+  }
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage_module_install "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage_module_install "$program" \
-              "$default_config_path" "$default_data_home" \
-              "$default_moduless_lock_path" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_module_install "$program" \
-          "$default_config_path" "$default_data_home" \
-          "$default_moduless_lock_path" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"
   data_home="${ANVIL_DATA_HOME:-$default_data_home}"
-  modules_lock_file="${ANVIL_MODULES_LOCK_PATH:-$default_moduless_lock_path}"
+  modules_lock_file="${ANVIL_MODULES_LOCK_PATH:-$default_modules_lock_path}"
 
   if ! config_exists "$config_file"; then
     warn "No config found at: $config_file"

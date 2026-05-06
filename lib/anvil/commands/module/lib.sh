@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
+
 print_usage_module() {
   local program="$1"
 
@@ -29,41 +32,34 @@ cmd_module() {
   program="$1"
   shift
 
-  OPTIND=1
-  while getopts "h-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_module "$program"
+  usage() {
+    print_usage_module "$program"
+  }
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage_module "$program"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage_module "$program" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_module "$program" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   local subcommand="${1:-}"
   if [ -z "$subcommand" ]; then
-    print_usage_module "$program"
+    usage
     return 0
   fi
   shift
@@ -98,8 +94,7 @@ cmd_module() {
       cmd_module_update "$program" "$@"
       ;;
     *)
-      print_usage_module "$program" >&2
-      die "unknown subcommand: $subcommand"
+      usage_and_die "unknown subcommand: $subcommand"
       ;;
   esac
 }

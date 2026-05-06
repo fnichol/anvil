@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/anvil.sh
 . "$SRC_ROOT/lib/anvil/anvil.sh"
 
@@ -30,36 +32,30 @@ cmd_self_check() {
   version="$1"
   shift
 
-  OPTIND=1
-  while getopts "h-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_self_check "$program"
+  usage() {
+    print_usage_self_check "$program"
+  }
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage_self_check "$program"
-            return 0
-            ;;
-          '')
-            break
-            ;;
-          *)
-            print_usage_self_check "$program" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_self_check "$program" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   local latest
   latest="$(latest_anvil_version)"

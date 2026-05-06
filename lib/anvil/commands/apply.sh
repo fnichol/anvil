@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/script.sh
 . "$SRC_ROOT/lib/anvil/script.sh"
 # shellcheck source=lib/anvil/logging.sh
@@ -31,7 +33,7 @@ print_apply_usage() {
 	FLAGS:
 	    -h, --help                  Prints help information
 	    -n, --dry-run               Show what would change without applying
-	        --skip=<p:s>[,<p:s>..]  Skip steps (supports:
+	    -s  --skip=<p:s>[,<p:s>..]  Skip steps (supports:
                                         phase:*, *:step, *:*)
 
 	ENVIRONMENT VARIABLES:
@@ -50,65 +52,57 @@ cmd_apply() {
 
   ensure_script
 
-  logging_exec "anvil-apply" "$0" apply "$@"
+  local prog_0 prog_argv
+  prog_0="$0"
+  prog_argv="$*"
 
   local default_config_path config_file
   default_config_path="$(config_path)"
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
+  usage() {
+    print_apply_usage \
+      "$program" \
+      "$default_config_path" \
+      "$default_data_home"
+  }
+
   local dry_run=""
   local cli_skip_steps=""
 
-  OPTIND=1
-  while getopts "hn-:" arg; do
-    case "$arg" in
-      h)
-        print_apply_usage "$program" \
-          "$default_config_path" "$default_data_home"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      n)
-        dry_run=true
+      -n | --dry-run)
+        dry_run="true"
+        shift 1
         ;;
-      -)
-        long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_apply_usage "$program" \
-              "$default_config_path" "$default_data_home"
-            return 0
-            ;;
-          dry-run)
-            dry_run=true
-            ;;
-          skip=?*)
-            cli_skip_steps="$long_optarg"
-            ;;
-          skip*)
-            print_apply_usage "$program" \
-              "$default_config_path" "$default_data_home" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_apply_usage "$program" \
-              "$default_config_path" "$default_data_home" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Options
+      -s | --skip)
+        ensure_required_arg "$1" "${2:-}"
+        cli_skip_steps="${roles:+$roles,}$2" # skips are comma-delimited
+        shift 2
         ;;
-      \?)
-        print_apply_usage "$program" \
-          "$default_config_path" "$default_data_home" >&2
-        die "invalid argument; arg=-$OPTARG"
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
+        ;;
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
+
+  logging_exec "anvil-apply" "$prog_0" apply "$prog_argv"
 
   local start_time
   start_time="$(date +%s)"

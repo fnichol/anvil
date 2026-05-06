@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
 
@@ -20,8 +22,8 @@ print_usage_config_init() {
 	OPTIONS:
 	    -f, --fqdn=<FQDN>       Host FQDN (bare hostname will append .local
 	                            as FQDN)
-	    -r, --roles=<R>[,<R>..] Roles to use in config
-	    -t, --tags=<T>[,<T>..]  Tags to use in config
+	    -r, --role=<R>[,<R>..]  Roles to use in config
+	    -t, --tag=<T>[,<T>..]   Tags to use in config
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_CONFIG_PATH       [default: $default_config_path]
@@ -33,81 +35,67 @@ cmd_config_init() {
   program="$1"
   shift
 
-  local roles=""
-  local tags=""
-  local fqdn=""
-
   local default_config_path config_file
   default_config_path="$(config_path)"
 
-  OPTIND=1
-  while getopts "hf:r:t:-:" arg; do
-    case "$arg" in
-      h)
-        print_usage_config_init "$program" \
-          "$default_config_path"
+  usage() {
+    print_usage_config_init \
+      "$program" \
+      "$default_config_path"
+  }
+
+  local fqdn=""
+  local roles=""
+  local tags=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      f)
-        fqdn="$OPTARG"
+      # Options
+      -f | --fqdn)
+        ensure_required_arg "$1" "${2:-}"
+        fqdn="$2"
+        shift 2
         ;;
-      r)
-        roles="$OPTARG"
+      -f=?* | --fqdn=?*)
+        fqdn="${1#*=}"
+        shift 1
         ;;
-      t)
-        tags="$OPTARG"
+      -r | --role)
+        ensure_required_arg "$1" "${2:-}"
+        roles="${roles:+$roles,}$2" # roles are comma-delimited
+        shift 2
         ;;
-      -)
-        long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          help)
-            print_usage_config_init "$program" \
-              "$default_config_path"
-            return 0
-            ;;
-          fqdn=?*)
-            fqdn="$long_optarg"
-            ;;
-          fqdn*)
-            print_usage_config_init "$program" \
-              "$default_config_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          roles=?*)
-            roles="$long_optarg"
-            ;;
-          roles*)
-            print_usage_config_init "$program" \
-              "$default_config_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          tags=?*)
-            tags="$long_optarg"
-            ;;
-          tags*)
-            print_usage_config_init "$program" \
-              "$default_config_path" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage "$program" \
-              "$default_config_path" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      -r=?* | --role=?*)
+        roles="${roles:+$roles,}${1#*=}" # roles are comma-delimited
+        shift 1
         ;;
-      \?)
-        print_usage_config_init "$program" \
-          "$default_config_path" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -t | --tag)
+        ensure_required_arg "$1" "${2:-}"
+        tags="${tags:+$tags,}$2" # tags are comma-delimited
+        shift 2
+        ;;
+      -t=?* | --tag=?*)
+        tags="${tags:+$tags,}${1#*=}" # tags are comma-delimited
+        shift 1
+        ;;
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
+        ;;
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   # Append `.local` to fqdn if no domain part is present
   case "$fqdn" in

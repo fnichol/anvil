@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/config.sh
@@ -46,56 +48,44 @@ cmd_tag_show() {
   local default_data_home data_home
   default_data_home="$(modules_data_home)"
 
+  usage() {
+    print_usage_tag_show \
+      "$program" \
+      "$default_config_path" \
+      "$default_data_home"
+  }
+
   local show_all=""
 
-  OPTIND=1
-  while getopts "ah-:" arg; do
-    case "$arg" in
-      a)
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -a | --all)
         show_all="true"
+        shift 1
         ;;
-      h)
-        print_usage_tag_show "$program" \
-          "$default_config_path" "$default_data_home"
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        # long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          all)
-            show_all="true"
-            ;;
-          help)
-            print_usage_tag_show "$program" \
-              "$default_config_path" "$default_data_home"
-            return 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage_tag_show "$program" \
-              "$default_config_path" "$default_data_home" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
         ;;
-      \?)
-        print_usage_tag_show "$program" \
-          "$default_config_path" "$default_data_home" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   if [ -n "${1:-}" ]; then
     name="$1"
   else
-    print_usage_tag_show "$program" \
-      "$default_config_path" "$default_data_home" >&2
-    die "required argument: NAME"
+    usage_and_die "required argument: NAME"
   fi
 
   config_file="${ANVIL_CONFIG_PATH:-$default_config_path}"

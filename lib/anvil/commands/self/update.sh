@@ -4,6 +4,8 @@
 # Base URL for project
 __ANVIL_REPO_BASE__="https://github.com/fnichol/anvil"
 
+# shellcheck source=lib/anvil/argparse.sh
+. "${SRC_ROOT}/lib/anvil/argparse.sh"
 # shellcheck source=lib/anvil/anvil.sh
 . "$SRC_ROOT/lib/anvil/anvil.sh"
 
@@ -20,7 +22,7 @@ print_usage_check_update() {
 	    -h, --help      Prints help information
 
 	OPTIONS:
-	    -G, --git=<REF> Installs from a Git reference
+	    -g, --git=<REF> Installs from a Git reference
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_FORCE_UPDATE  Forces update install
@@ -34,48 +36,42 @@ cmd_self_update() {
   version="$1"
   shift
 
+  usage() {
+    print_usage_check_update "$program"
+  }
+
   local git_ref=""
 
-  OPTIND=1
-  while getopts "g:h-:" arg; do
-    case "$arg" in
-      g)
-        git_ref="$OPTARG"
-        ;;
-      h)
-        print_usage_check_update "$program"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         return 0
         ;;
-      -)
-        long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          git=?*)
-            git_ref="$long_optarg"
-            ;;
-          git*)
-            print_usage_check_update "$program" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          help)
-            print_usage_check_update "$program"
-            return 0
-            ;;
-          '')
-            break
-            ;;
-          *)
-            print_usage_check_update "$program" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Options
+      -g | --git)
+        ensure_required_arg "$1" "${2:-}"
+        git_ref="$2"
+        shift 2
         ;;
-      \?)
-        print_usage_check_update "$program" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -g=?* | --git=?*)
+        git_ref="${1#*=}"
+        shift 1
+        ;;
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
+        ;;
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
 
   if [ -z "${ANVIL_FORCE_UPDATE:-}" ]; then
     # A `.git/` directory signals a development checkout and a `.git` file
