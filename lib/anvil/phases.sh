@@ -206,7 +206,7 @@ _phases_run_hook_step() {
     export USER="$user"
     export HOME="$home"
 
-    export ANVIL_ROOT="$root"
+    export ANVIL_ROOT="$SRC_ROOT"
     export ANVIL_CONFIG_FILE="$config_file"
     export ANVIL_HOSTNAME="$hostname"
     export ANVIL_OS="$os"

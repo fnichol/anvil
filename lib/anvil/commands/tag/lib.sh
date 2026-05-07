@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 #
-# shellcheck source=../argparse.sh
+# shellcheck source=lib/anvil/argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 print_usage_tag() {
