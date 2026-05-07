@@ -462,6 +462,8 @@ module_is_current_with_lock_for() {
     return 1
   fi
 
+  ensure_jq
+
   local commit
   commit="$(echo "$lock_json" | jq -r '.commit // empty')"
 
