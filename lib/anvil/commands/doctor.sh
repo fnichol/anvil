@@ -7,6 +7,8 @@
 . "$SRC_ROOT/lib/anvil/config.sh"
 # shellcheck source=lib/anvil/modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
+# shellcheck source=lib/anvil/tags.sh
+. "$SRC_ROOT/lib/anvil/tags.sh"
 # shellcheck source=lib/anvil/facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
 # shellcheck source=lib/anvil/jq.sh
@@ -141,7 +143,7 @@ cmd_doctor() {
   # Check config
   section "Configuration"
 
-  if [ -f "$config_file" ]; then
+  if config_exists "$config_file"; then
     info "✓ Config found: $config_file"
 
     # Validate JSON
@@ -166,21 +168,33 @@ cmd_doctor() {
   fi
   echo ""
 
-  # Check data directory
-  section "Data Directory"
+  section "Modules"
 
-  local tags_dir
-  tags_dir="$root/data/tags"
+  if config_exists "$config_file"; then
+    local module_count
+    module_count="$(jq '.modules | length' "$config_file")"
 
-  if [ -d "$tags_dir" ]; then
-    local tag_count
-    tag_count="$(
-      find "$tags_dir" -maxdepth 1 -name '*.json' | wc -l | tr -d ' '
-    )"
-    info "✓ Found $tag_count tag definition(s) in: $tags_dir"
+    info "✓ Found $module_count module(s)"
+
+    local roles role_count
+    roles="$(roles_list_all "$config_file" "$data_home")"
+    if [ -n "$roles" ]; then
+      role_count="$(echo "$roles" | wc -l | tr -d ' ')"
+    else
+      role_count=0
+    fi
+    info "✓ Found $role_count active installed role definition(s)"
+
+    local tags tag_count
+    tags="$(tags_list_all "$config_file" "$data_home")"
+    if [ -n "$tags" ]; then
+      tag_count="$(echo "$tags" | wc -l | tr -d ' ')"
+    else
+      tag_count=0
+    fi
+    info "✓ Found $tag_count active installed tag definition(s)"
   else
-    warn "✗ Tag directory not found: $tags_dir"
-    issues=$((issues + 1))
+    info "○ No modules as no config file present (optional)"
   fi
   echo ""
 

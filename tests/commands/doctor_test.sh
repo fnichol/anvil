@@ -46,7 +46,7 @@ testCmdDoctor() {
   assertStdoutContains 'Required Commands'
   assertStdoutContains 'Platform-Specific'
   assertStdoutContains 'Configuration'
-  assertStdoutContains 'Data Directory'
+  assertStdoutContains 'Modules'
   assertStdoutContains 'Summary'
 }
 
