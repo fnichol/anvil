@@ -26,26 +26,7 @@ prepare_steps() {
 }
 
 prepare_step_detect_privilege() {
-  need_cmd id
-  need_cmd uname
-
-  if [ "$(id -u)" -eq 0 ]; then
-    __ANVIL_SUDO__=""
-    info "Running as root; privilege elevation not required"
-    return 0
-  fi
-
-  # Facts phase hasn't been run, so we'll check the kernel ourselves
-  case "$(uname -s)" in
-    OpenBSD)
-      need_cmd doas
-      __ANVIL_SUDO__="doas"
-      ;;
-    *)
-      need_cmd sudo
-      __ANVIL_SUDO__="sudo"
-      ;;
-  esac
+  detect_sudo
 
   info "Privilege elevation command: $__ANVIL_SUDO__"
 }

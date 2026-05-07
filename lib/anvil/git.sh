@@ -10,6 +10,8 @@ fi
 
 # shellcheck source=lib/anvil/facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
+# shellcheck source=lib/anvil/sudo.sh
+. "$SRC_ROOT/lib/anvil/sudo.sh"
 
 # Ensures that a version of Git is present on the system
 ensure_git() {
@@ -17,6 +19,9 @@ ensure_git() {
 
   # Ensure Git is available and install via system package manager if not
   if ! check_cmd git; then
+    detect_sudo
+    get_sudo "$(facts_hostname)"
+
     case "$os" in
       alpine)
         info "Installing git"

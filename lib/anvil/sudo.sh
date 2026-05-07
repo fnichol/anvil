@@ -11,11 +11,40 @@
 # * `__ANVIL_SUDO__`: contains the computed command to invoke, typically `sudo`
 #    or `doas` depending on the platform
 as_root() {
-  if [ -n "$__ANVIL_SUDO__" ]; then
+  if [ -n "${__ANVIL_SUDO__:-}" ]; then
     "$__ANVIL_SUDO__" "$@"
   else
     "$@"
   fi
+}
+
+# Detects a suitable sudo program for the system and the current user.
+#
+# # Global Variables
+#
+# * `__ANVIL_SUDO__`: sets the computed command to invoke, typically `sudo` or
+#   `doas` depending on the platform
+detect_sudo() {
+  need_cmd id
+  need_cmd uname
+
+  if [ "$(id -u)" -eq 0 ]; then
+    __ANVIL_SUDO__=""
+    info "Running as root; privilege elevation not required"
+    return 0
+  fi
+
+  # Facts phase hasn't been run, so we'll check the kernel ourselves
+  case "$(uname -s)" in
+    OpenBSD)
+      need_cmd doas
+      __ANVIL_SUDO__="doas"
+      ;;
+    *)
+      need_cmd sudo
+      __ANVIL_SUDO__="sudo"
+      ;;
+  esac
 }
 
 # Aquires an initial sudo/doas session.
