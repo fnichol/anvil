@@ -403,6 +403,8 @@ module_install_from_lock() {
     return 1
   fi
 
+  ensure_jq
+
   local url commit
   url="$(echo "$lock_json" | jq -r '.url // empty')"
   commit="$(echo "$lock_json" | jq -r '.commit // empty')"
