@@ -119,6 +119,11 @@ cmd_module_check() {
   echo 0 >"$ec"
 
   echo "$modules" | while read -r name; do
+    # Skip empty string, such as when `$modules` is an empty string
+    if [ -z "$name" ]; then
+      continue
+    fi
+
     local status
     if ! status="$(
       module_lock_status_for "$config_file" "$modules_lock_file" "$name"
