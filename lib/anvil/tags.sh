@@ -1,0 +1,239 @@
+#!/usr/bin/env sh
+# shellcheck disable=SC3043
+
+# Import cookie to prevent circular loading
+if [ -n "${__ANVIL_SOURCED_TAGS__:-}" ]; then
+  return 0
+else
+  __ANVIL_SOURCED_TAGS__=true
+fi
+
+# shellcheck source=lib/anvil/jq.sh
+. "$SRC_ROOT/lib/anvil/jq.sh"
+# shellcheck source=lib/anvil/modules.sh
+. "$SRC_ROOT/lib/anvil/modules.sh"
+
+# Returns the path to a specific tag file.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@param [String]` tag name
+# * `@stdout` tag file path
+# * `@return 0` if successful
+tags_path_for() {
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
+
+  modules_resolve_content "$config_file" "$data_home" "tags" "$name.json"
+}
+
+# Lists all available tag names from a tags directory.
+#
+# * `@param [String]` tags directory path
+# * `@stdout` sorted list of tag names, one per line
+# * `@return 0` if successful
+# * `@return 1` if tags directory not found
+#
+# # Examples
+#
+# Basic usage:
+#
+# ```sh
+# tags_list "$(tags_path /path/to/anvil)"
+# ```
+tags_list() {
+  local tags_path="$1"
+
+  if [ ! -d "$tags_path" ]; then
+    warn "Tags path not found: $tags_path"
+    return 1
+  fi
+
+  ensure_jq
+
+  {
+    for tag_file in "$tags_path"/*.json; do
+      if [ -f "$tag_file" ]; then
+        jq -r '.name' <"$tag_file"
+      fi
+    done
+  } | sort
+}
+
+# Lists all available tag names across all installed modules, deduplicated
+# (first-match wins for conflicts).
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@stdout` sorted list of tag names, one per line
+# * `@return 0` if successful
+tags_list_all() {
+  local config_file="$1"
+  local data_home="$2"
+
+  modules_list_content "$config_file" "$data_home" "tags" \
+    | while IFS= read -r file; do
+      jq -r '.name' <"$file"
+    done \
+    | sort
+}
+
+# Resolves tag dependencies and returns tags in dependency order.
+#
+# This function takes a list of requested tags and recursively resolves their
+# dependencies, returning all tags in an order such that dependencies come
+# before the tags that depend on them.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@param [String...]` one or more requested tag names
+# * `@stdout` space-separated list of tags in dependency order
+# * `@return 0` if successful
+# * `@return 1` if a tag file is not found
+#
+# # Notes
+#
+# The algorithm uses a depth-first search to resolve dependencies. It maintains
+# a list of resolved tags and a processing queue. For each tag, it reads the
+# `depends_on` field from the tag's JSON file and adds those dependencies to
+# the front of the processing queue. Tags already in the resolved list are
+# skipped to avoid duplicates. The final output is reversed so dependencies
+# appear before dependent tags.
+tags_resolve() {
+  local config_file="$1"
+  shift
+  local data_home="$1"
+  shift
+  local requested_tags="$*"
+
+  need_cmd awk
+  need_cmd sed
+  need_cmd tr
+
+  ensure_jq
+
+  local resolved=""
+  local to_process="$requested_tags"
+
+  while [ -n "$to_process" ]; do
+    local tag
+    tag="$(echo "$to_process" | awk '{print $1}')"
+    to_process="$(echo "$to_process" | awk '{$1=""; print $0}' | sed 's/^ *//')"
+
+    # Skip if already resolved
+    if echo "$resolved" | grep -q "\<$tag\>"; then
+      continue
+    fi
+
+    local tag_file
+    tag_file="$(tags_path_for "$config_file" "$data_home" "$tag")"
+
+    if [ ! -f "$tag_file" ]; then
+      warn "Tag file not found: $tag_file"
+      return 1
+    fi
+
+    # Get additional dependencies
+    local deps
+    deps="$(
+      jq -r \
+        '.depends_on[]? // empty | if type == "string" then . else .name end' \
+        "$tag_file" \
+        | tr '\n' ' '
+    )"
+
+    # Add dependencies to process queue (at front)
+    if [ -n "$deps" ]; then
+      to_process="$deps $to_process"
+    fi
+
+    # Add this tag to resolved list
+    if [ -z "$resolved" ]; then
+      resolved="$tag"
+    else
+      resolved="$tag $resolved"
+    fi
+  done
+
+  echo "$resolved"
+}
+
+# Extracts packages for a specific tag, OS, architecture, and package type.
+#
+# This function queries a tag's JSON file to retrieve packages matching the
+# given criteria. It returns packages from both the "all" architecture and the
+# specific architecture, allowing for architecture-independent packages to be
+# included alongside architecture-specific ones.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@param [String]` tag name
+# * `@param [String]` operating system (e.g., "darwin", "arch")
+# * `@param [String]` architecture (e.g., "x86_64", "arm64")
+# * `@param [String]` package type (e.g., "homebrew", "apt")
+# * `@stdout` list of package names, one per line
+# * `@return 0` if successful
+# * `@return 1` if `jq` command is not available
+tags_packages_for() {
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
+  local os="$4"
+  local arch="$5"
+  local package_type="$6"
+
+  ensure_jq
+
+  # Select all packages for the specific architecture and the `"all"`
+  # architecture
+  jq -r \
+    --arg os "$os" \
+    --arg arch "$arch" \
+    --arg package_type "$package_type" \
+    '(
+        (.packages["all"].all[$package_type] // []) +
+        (.packages["all"][$arch][$package_type] // []) +
+        (.packages[$os].all[$package_type] // []) +
+        (.packages[$os][$arch][$package_type] // [])
+     )[] | if type == "string" then . else .name end
+    ' "$(tags_path_for "$config_file" "$data_home" "$name")"
+}
+
+# Extracts hook names for a specific tag, phase, OS, and architecture.
+#
+# This function queries a tag's JSON file to retrieve hooks matching the
+# given criteria. It returns names from both the "all" OS and the specific OS,
+# allowing for OS-independent hooks alongside OS-specific ones.
+#
+# * `@param [String]` configuration file path
+# * `@param [String]` data home directory path
+# * `@param [String]` tag name
+# * `@param [String]` operating system (e.g. "darwin", "arch")
+# * `@param [String]` architecture (e.g. "x86_64", "aarch64")
+# * `@param [String]` phase name (e.g. "configure", "finalize")
+# * `@stdout` list of hook names, one per line
+# * `@return 0` if successful
+# * `@return 1` if `jq` command is not available
+tags_hooks_for() {
+  local config_file="$1"
+  local data_home="$2"
+  local name="$3"
+  local os="$4"
+  local arch="$5"
+  local phase="$6"
+
+  ensure_jq
+
+  jq -r \
+    --arg phase "$phase" \
+    --arg os "$os" \
+    --arg arch "$arch" \
+    '(
+        (.hooks[$phase]["all"].all    // []) +
+        (.hooks[$phase]["all"][$arch] // []) +
+        (.hooks[$phase][$os].all      // []) +
+        (.hooks[$phase][$os][$arch]   // [])
+     )[] | if type == "string" then . else .name end
+    ' "$(tags_path_for "$config_file" "$data_home" "$name")"
+}

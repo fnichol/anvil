@@ -1,2 +1,4 @@
-.vagrant/
-log/
+/.vagrant/
+/log/
+/tmp/
+.worktrees

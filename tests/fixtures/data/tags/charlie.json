@@ -1,0 +1,16 @@
+{
+  "name": "charlie",
+  "depends_on": [],
+  "packages": {
+    "arch": {
+      "all": {
+        "packages": ["circle"]
+      }
+    },
+    "openbsd": {
+      "all": {
+        "packages": ["pepper"]
+      }
+    }
+  }
+}

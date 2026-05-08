@@ -1,0 +1,36 @@
+{
+  "name": "golf",
+  "depends_on": [
+    "charlie",
+    {
+      "#": ["A dependency with a comment"],
+      "name": "bravo"
+    }
+  ],
+  "packages": {
+    "macos": {
+      "all": {
+        "homebrew": [
+          "mango",
+          {
+            "#": ["A tropical fruit"],
+            "name": "papaya"
+          }
+        ]
+      }
+    }
+  },
+  "hooks": {
+    "finalize": {
+      "all": {
+        "all": [
+          "fig",
+          {
+            "#": ["A hook with a comment"],
+            "name": "guava"
+          }
+        ]
+      }
+    }
+  }
+}

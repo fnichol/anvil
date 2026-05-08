@@ -1,0 +1,18 @@
+{
+  "name": "echo",
+  "description": "Echo role with object-style depends_on and tags",
+  "depends_on": [
+    "alfa",
+    {
+      "#": ["A role dependency with a comment"],
+      "name": "bravo"
+    }
+  ],
+  "tags": [
+    "alfa",
+    {
+      "#": ["A tag with a comment"],
+      "name": "bravo"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "charlie",
+  "description": "Charlie role, depends on bravo and alpha",
+  "depends_on": ["bravo"],
+  "tags": ["delta"]
+}

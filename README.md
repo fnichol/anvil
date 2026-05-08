@@ -1,31 +1,30 @@
-# Workstation Automation
+<h1 align="center">
+  <br/>
+  Anvil
+  <br/>
+</h1>
 
-|         |                                           |
-| ------: | ----------------------------------------- |
-|      CI | [![CI Status][badge-ci-overall]][ci]      |
-| License | [![Crate license][badge-license]][github] |
+<h4 align="center">
+A system provisioning & configuration tool for bootstrapping &
+maintaining consistent software across multiple platforms.
+</h4>
 
-**Table of Contents**
+|         |                                     |
+| ------: | ----------------------------------- |
+| License | [![License][badge-license]][github] |
+
+<!-- CI badge will be added here once a CI provider is configured -->
+
+<details>
+<summary><strong>Table of Contents</strong></summary>
 
 <!-- toc -->
 
 - [Supported Platforms](#supported-platforms)
 - [Installation](#installation)
-  - [New System](#new-system)
-    - [Unix Platforms](#unix-platforms)
-    - [Windows Platforms](#windows-platforms)
-  - [Existing System](#existing-system)
+- [Quick Start](#quick-start)
 - [Usage](#usage)
-  - [Unix Platforms](#unix-platforms-1)
-  - [Windows Platforms](#windows-platforms-1)
-- [Development and Testing](#development-and-testing)
-  - [Alpine Linux](#alpine-linux)
-  - [Arch Linux](#arch-linux)
-  - [CentOS Linux](#centos-linux)
-  - [FreeBSD](#freebsd)
-  - [macOS](#macos)
-  - [OpenBSD](#openbsd)
-  - [Ubuntu Linux](#ubuntu-linux)
+- [Development](#development)
 - [Code of Conduct](#code-of-conduct)
 - [Issues](#issues)
 - [Contributing](#contributing)
@@ -34,309 +33,134 @@
 
 <!-- tocstop -->
 
+</details>
+
+## Overview
+
+Anvil converges a system to a declared desired state using tags and roles to
+specify which software and configuration should be present. Operations are
+idempotent: Anvil always queries live system state and applies only what is
+missing, making it safe to run repeatedly on new or existing systems.
+
 ## Supported Platforms
 
-Currently, the following platforms are supported (older and newer version may
+Currently, the following platforms are supported (older and newer versions may
 also work):
 
-- Alpine Linux (3.15)
-- Arch Linux (rolling latest)
-- CentOS (8)
-- FreeBSD (13.0)
-- macOS (10.15)
-- OpenBSD (7.1)
-- Ubuntu Linux (20.04)
-- Windows 10 (21H2)
+| Platform       | Version         | Tier   |
+| -------------- | --------------- | ------ |
+| [Alpine Linux] | 3.23            | Tier 1 |
+| [Arch Linux]   | rolling         | Tier 1 |
+| [Bazzite]      | rolling         | Tier 2 |
+| [CachyOS]      | rolling         | Tier 1 |
+| [Debian]       | 13, rolling     | Tier 2 |
+| [FreeBSD]      | 15.0            | Tier 3 |
+| [macOS]        | 26 (Tahoe)      | Tier 1 |
+| [OpenBSD]      | 7.8             | Tier 1 |
+| [TrueNAS]      | 25.10 (Goldeye) | Tier 2 |
+| [Ubuntu]       | 26.04           | Tier 2 |
+
+- **Tier 1**: Actively used and maintained, expected to work from test coverage,
+  CI, and real world usage.
+- **Tier 2**: Built with platform in mind, not used as frequently, full fidelity
+  may drift over time.
+- **Tier 3**: Best effort support, not actively used or tested, may accumulate
+  issues.
+
+[Alpine Linux]: https://alpinelinux.org/about/
+[Arch Linux]: https://archlinux.org/
+[Bazzite]: https://bazzite.gg/
+[CachyOS]: https://cachyos.org/
+[Debian]: https://www.debian.org/
+[FreeBSD]: https://www.freebsd.org/
+[macOS]: https://www.apple.com/os/macos/
+[OpenBSD]: https://www.openbsd.org/
+[TrueNAS]: https://www.truenas.com/truenas-community-edition/
+[Ubuntu]: https://ubuntu.com/
 
 ## Installation
 
-There are probably 2 use cases: running on a brand new system (before Git is
-even installed), and on an existing system (presumably with Git installed).
-
-### New System
-
-#### Unix Platforms
+On a system with Curl installed, download and run the install script:
 
 ```sh
-wget https://github.com/fnichol/workstation/archive/master.tar.gz
-tar xfz master.tar.gz
-cd workstation-master
+curl -fsSL https://fnichol.github.io/anvil/install.sh | sh
 ```
 
-Alternatively, if `wget` is not present you can use `curl`:
+Alternatively with `wget`:
 
 ```sh
-curl -LO https://github.com/fnichol/workstation/archive/master.tar.gz
-tar xfz master.tar.gz
-cd workstation-master
+wget -qO- https://fnichol.github.io/anvil/install.sh | sh
 ```
 
-#### Windows Platforms
-
-From a non-administrative PowerShell session:
-
-```ps1
-irm https://github.com/fnichol/workstation/archive/master.zip -OutFile master.zip
-Expand-Archive master.zip
-cd master\workstation-master
-```
-
-### Existing System
-
-On either Windows or Unix platforms:
+For a full set of options, check out the help usage with:
 
 ```sh
-git clone https://github.com/fnichol/workstation.git
-cd workstation
+curl -fsSL https://fnichol.github.io/anvil/install.sh | sh -s -- --help
+```
+
+## Quick Start
+
+On first run, initialise your configuration interactively:
+
+```sh
+anvil config init
+```
+
+Then converge your system to the desired state:
+
+```sh
+anvil apply
 ```
 
 ## Usage
 
-### Unix Platforms
+| Command                | Description                               |
+| ---------------------- | ----------------------------------------- |
+| `anvil apply`          | Converge system to desired state          |
+| `anvil config edit`    | Edit current config in `$EDITOR`          |
+| `anvil config init`    | Initialize a config file                  |
+| `anvil config show`    | Show current config                       |
+| `anvil module add`     | Register and fetch a module               |
+| `anvil module check`   | Check if modules are up to date           |
+| `anvil module install` | Fetch registered modules not yet on disk  |
+| `anvil module list`    | List registered modules                   |
+| `anvil module remove`  | Deregister and delete a module            |
+| `anvil module show`    | Show details of a module                  |
+| `anvil module update`  | Pull latest for one or all modules        |
+| `anvil diff`           | Show what would change if `apply` was run |
+| `anvil doctor`         | Verify system health and requirements     |
+| `anvil facts`          | Show discovered system information        |
+| `anvil role list`      | List available roles                      |
+| `anvil role show`      | Show details of a role                    |
+| `anvil self check`     | Check if a newer version is available     |
+| `anvil self update`    | Update to the latest release              |
+| `anvil tag list`       | List available roles                      |
+| `anvil tag show`       | Show details of a role                    |
+| `anvil status`         | Show current system vs. desired state     |
 
-To run the workstation prep with the `graphical` profile and set a hostname,
-provide your FQDN as the argument:
+Run `anvil --help` or `anvil <command> --help` for full details.
 
-```sh
-./bin/prep <FQDN>
-```
+## Development
 
-If an FQDN isn't provided, then your hostname is left as-is.
-
-There are currently 3 profiles to select from `base`, `headless`, and
-`graphical` with each profile building on the previous one. For example, running
-the `headless` profile can be done with:
-
-```sh
-./bin/prep --profile=headless <FQDN>
-```
-
-A full usage is reported with the `--help` flag:
-
-```console
-❯ prep --help
-prep 0.5.0
-
-Workstation Setup
-
-USAGE:
-    prep [FLAGS] [OPTIONS] [--] [<FQDN>]
-
-FLAGS:
-    -h, --help      Prints help information
-    -V, --version   Prints version information
-    -v, --verbose   Prints verbose output
-
-OPTIONS:
-    -p, --profile=<PROFILE> Setup profile name
-                            [values: base, headless, graphical]
-                            [default: graphical]
-    -o, --only=<T>[,<T>..]  Only run specific tasks
-                            [values: hostname, pkg-init, update-system,
-                            base-pkgs, preferences, keys, bashrc,
-                            base-dot-configs, base-finalize,
-                            headless-pkgs, rust, ruby, go, node,
-                            headless-finalize, graphical-pkgs,
-                            graphical-dot-configs, graphical-finalize, vim,
-                            finish-base, finish-headless, finish-graphical]
-    -s, --skip=<T>[,<T>..]  Skip specific tasks
-                            [values: hostname, pkg-init, update-system,
-                            base-pkgs, preferences, keys, bashrc,
-                            base-dot-configs, base-finalize,
-                            headless-pkgs, rust, ruby, go, node,
-                            headless-finalize, graphical-pkgs,
-                            graphical-dot-configs, graphical-finalize, vim,
-                            finish-base, finish-headless, finish-graphical]
-
-ARGS:
-    <FQDN>  The name for this workstation
-    <T>     Task name to include or skip
-
-AUTHOR:
-    Fletcher Nichol <fnichol@nichol.ca>
-
-```
-
-To update the codebase to the current state of the main branch you can run:
+Check formatting and linting:
 
 ```sh
-./bin/update
+make check
 ```
 
-### Windows Platforms
-
-On new Windows platforms, you'll need to update your execution policy to allow
-the current user to run external PowerShell scripts:
-
-```ps1
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-```
-
-To run the workstation prep with the `graphical` profile and set a hostname,
-provide your hostname with the `-Hostname` option:
-
-```ps1
-.\bin\prep -Hostname <HOSTNAME>
-
-```
-
-If a hostname isn't provided, then your hostname is left as-is.
-
-There are currently 3 profiles to select from: `base`, `headless`, and
-`graphical` with each profile building on the previous one. For example, running
-the `headless` profile can be done with:
-
-```ps1
-.\bin\prep -Profile headless
-
-```
-
-A full usage is provided using the `Get-Help` cmdlet with:
-
-```console
-PS workstation> Get-Help .\bin\prep
-
-NAME
-    .\bin\prep.ps1
-
-SYNOPSIS
-    Workstation setup
-
-
-SYNTAX
-    .\bin\prep.ps1 [[-Profile] <String>] [[-Skip] <String[]>]
-		[[-Only] <String[]>] [[-Hostname] <String>] [-NoReboot]
-    [<CommonParameters>]
-
-
-DESCRIPTION
-    This program sets up a workstation
-
-
-RELATED LINKS
-
-REMARKS
-    To see the examples, type: "get-help .\bin\prep.ps1 -examples".
-    For more information, type: "get-help .\bin\prep.ps1 -detailed".
-    For technical information, type: "get-help .\bin\prep.ps1 -full".
-
-```
-
-To update the codebase to the current state of the main branch you can run:
-
-```ps1
-.\bin\update
-```
-
-## Development and Testing
-
-### Alpine Linux
-
-Build the `headless` profile using Docker by running:
+Run the test suite:
 
 ```sh
-./support/bin/ci docker build alpine 3.12 headless
+make test
 ```
 
-You can log into the instance with:
-
-```sh
-./support/bin/ci docker run -D '--rm -ti' alpine 3.12 headless
-```
-
-### Arch Linux
-
-Build the `headless` profile using Docker by running:
-
-```sh
-./support/bin/ci docker build arch latest headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci docker run -D '--rm -ti' arch latest headless
-```
-
-### CentOS Linux
-
-Build the `headless` profile using Docker by running:
-
-```sh
-./support/bin/ci docker build centos 8 headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci docker run -D '--rm -ti' centos 8 headless
-```
-
-### FreeBSD
-
-Build the `headless` profile using Vagrant by running:
-
-```sh
-./support/bin/ci vagrant build freebsd 12.1 headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci vagrant console freebsd 12.1 headless
-```
-
-### macOS
-
-The Vagrant box will need to be built via the
-[Bento project](https://github.com/chef/bento) and added before this box will
-work.
-
-Build the `headless` profile using Vagrant by running:
-
-```sh
-./support/bin/ci vagrant build macos 10.12 headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci vagrant console macos 10.12 headless
-```
-
-### OpenBSD
-
-Build the `headless` profile using Vagrant by running:
-
-```sh
-./support/bin/ci vagrant build openbsd 6.8 headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci vagrant console openbsd 6.8 headless
-```
-
-### Ubuntu Linux
-
-Build the `headless` profile using Docker by running:
-
-```sh
-./support/bin/ci docker build ubuntu 20.04 headless
-```
-
-You can log into the instance with:
-
-```sh
-./support/bin/ci docker run -D '--rm -ti' ubuntu 20.04 headless
-```
+> CI configuration will be added in the future.
 
 ## Code of Conduct
 
 This project adheres to the Contributor Covenant [code of
 conduct][code-of-conduct]. By participating, you are expected to uphold this
-code. Please report unacceptable behavior to fnichol@nichol.ca.
+code. Please report unacceptable behavior to <fnichol@nichol.ca>.
 
 ## Issues
 
@@ -366,18 +190,9 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the MPL-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
 
-[badge-check-format]:
-  https://img.shields.io/cirrus/github/fnichol/workstation.svg?style=flat-square&task=check&script=format
-[badge-check-lint]:
-  https://img.shields.io/cirrus/github/fnichol/workstation.svg?style=flat-square&task=check&script=lint
-[badge-ci-overall]:
-  https://img.shields.io/cirrus/github/fnichol/workstation.svg?style=flat-square
-[badge-license]: https://img.shields.io/badge/License-MPL%202.0%20-blue.svg
-[ci]: https://cirrus-ci.com/github/fnichol/workstation
-[ci-master]: https://cirrus-ci.com/github/fnichol/workstation/master
-[code-of-conduct]:
-  https://github.com/fnichol/workstation/blob/master/CODE_OF_CONDUCT.md
+[badge-license]: https://img.shields.io/badge/License-MPL%202.0-blue.svg
+[code-of-conduct]: https://github.com/fnichol/anvil/blob/main/CODE_OF_CONDUCT.md
 [fnichol]: https://github.com/fnichol
-[github]: https://github.com/fnichol/workstation
-[issues]: https://github.com/fnichol/workstation/issues
-[license]: https://github.com/fnichol/workstation/blob/master/LICENSE.txt
+[github]: https://github.com/fnichol/anvil
+[issues]: https://github.com/fnichol/anvil/issues
+[license]: https://github.com/fnichol/anvil/blob/main/LICENSE.txt

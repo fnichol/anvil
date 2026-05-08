@@ -1,0 +1,6 @@
+{
+  "name": "alfa",
+  "description": "Alfa role with no dependencies",
+  "depends_on": [],
+  "tags": ["alfa", "bravo"]
+}
