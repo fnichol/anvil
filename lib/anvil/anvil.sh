@@ -9,7 +9,7 @@ else
 fi
 
 # Base API URL for project releases
-__ANVIL_REPO_API_BASE__="https://api.github.com/repos/fnichol/workstation"
+__ANVIL_REPO_API_BASE__="https://api.github.com/repos/fnichol/anvil"
 
 # shellcheck source=lib/anvil/facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
