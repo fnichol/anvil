@@ -172,10 +172,8 @@ _phases_run_hook_step() {
   local arch="$9"
 
   # Compute the shell interpreter to use for hook subprocesses.
-  #
-  # **Note**: `SHELL` is the user's login shell and `sh` is a safe fallback.
   if [ -z "${__ANVIL_SHELL__:-}" ]; then
-    __ANVIL_SHELL__="${SHELL:-sh}"
+    __ANVIL_SHELL__="sh"
   fi
 
   local user
