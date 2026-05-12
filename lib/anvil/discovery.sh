@@ -171,7 +171,7 @@ discover_installed_packages() {
         openbsd_pkg)
           need_cmd pkg_info
 
-          pkg_info -q
+          pkg_info -z
           ;;
         *)
           warn "unsupported: os=$os; package type=$package_type"

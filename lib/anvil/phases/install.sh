@@ -608,7 +608,7 @@ _install_packages_openbsd_pkg() {
     if [ -n "$pkg" ]; then
       current=$((current + 1))
       info "[$current/$total] Installing: $pkg"
-      indent as_root pkg_add -Iv "$pkg"
+      indent as_root pkg_add -Ivz "$pkg"
     fi
   done
 }
@@ -634,6 +634,25 @@ _normalize_packages() {
             pkg="$pkg@latest"
             ;;
         esac
+
+        normalized_pkgs="$normalized_pkgs${normalized_pkgs:+
+}$pkg"
+      done
+
+      echo "$normalized_pkgs"
+      ;;
+    openbsd_pkg)
+      local normalized_pkgs pkg
+      normalized_pkgs=""
+
+      need_cmd pkg_info
+
+      for pkg in $pkgs; do
+        # Convert to a "fuzzy listing option", used to recreate package
+        # installation on other OpenBSD systems.
+        #
+        # See: https://man.openbsd.org/pkg_info
+        pkg="$(pkg_info -z "$pkg")"
 
         normalized_pkgs="$normalized_pkgs${normalized_pkgs:+
 }$pkg"
