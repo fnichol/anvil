@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
+# shellcheck source=lib/anvil/facts.sh
+. "$SRC_ROOT/lib/anvil/facts.sh"
+
 # Re-execs the current process under `script` for full PTY logging.
 #
 # This implementation detects if it's already running inside a `script` session
@@ -34,17 +37,24 @@ logging_exec() {
   info "Logging to $log_file"
   echo
 
-  # Detect GNU script (Linux/Alpine) vs BSD script (macOS/FreeBSD/OpenBSD).
-  #
-  # - GNU program style script uses `-c <cmd-string> <logfile>`
-  # - BSD program style script uses `<logfile> <cmd> [args]`.
-  #
-  # This detection is ported from the legacy bin/log script.
-  if { script -h || true; } 2>&1 | grep -q '\-c[, \t]'; then
-    __ANVIL_LOGGING__=1 exec script -q -c "$*" "$log_file"
-  else
-    __ANVIL_LOGGING__=1 exec script -q "$log_file" "$@"
-  fi
+  case "$(facts_kernel)" in
+    openbsd)
+      __ANVIL_LOGGING__=1 exec script -c "$*" "$log_file"
+      ;;
+    *)
+      # Detect GNU script (Linux/Alpine) vs BSD script (macOS/FreeBSD).
+      #
+      # - GNU program style script uses `-c <cmd-string> <logfile>`
+      # - BSD program style script uses `<logfile> <cmd> [args]`.
+      #
+      # This detection is ported from the legacy bin/log script.
+      if { script -h || true; } 2>&1 | grep -q '\-c[, \t]'; then
+        __ANVIL_LOGGING__=1 exec script -q -c "$*" "$log_file"
+      else
+        __ANVIL_LOGGING__=1 exec script -q "$log_file" "$@"
+      fi
+      ;;
+  esac
 }
 
 # Returns the logging directory home for Anvil.
