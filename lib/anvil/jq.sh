@@ -87,6 +87,13 @@ _install_jq() {
       __JQ_VENDORED_PATH="$path"
       export __JQ_VENDORED_PATH
       ;;
+    openbsd)
+      detect_sudo
+      get_sudo "$(facts_hostname)"
+
+      info "Installing jq"
+      indent as_root pkg_add jq
+      ;;
     *)
       warn "Currently unsupported distribution: $kernel"
       return 1
