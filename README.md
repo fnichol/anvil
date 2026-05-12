@@ -92,6 +92,12 @@ Alternatively with `wget`:
 wget -qO- https://fnichol.github.io/anvil/install.sh | sh
 ```
 
+On a fresh OpenBSD system with `ftp`:
+
+```sh
+ftp -o - https://fnichol.github.io/anvil/install.sh | sh
+```
+
 For a full set of options, check out the help usage with:
 
 ```sh
