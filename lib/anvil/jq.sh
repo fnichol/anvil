@@ -41,7 +41,7 @@ ensure_jq() {
   fi
 
   # Otherwise, attempt to install program
-  _install_jq
+  _install_jq >&2
 
   # If vendored package was installed, append program parent directory to PATH
   if [ -n "${__JQ_VENDORED_PATH:-}" ]; then
