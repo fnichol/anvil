@@ -202,6 +202,9 @@ cmd_config_init() {
   done
 
   if [ -n "$apply" ]; then
+    # Trigger trap cleanups before exec'ing
+    trap_cleanups
+
     ANVIL_CONFIG_PATH="$config_file" \
       ANVIL_DATA_HOME="$data_home" \
       ANVIL_MODULES_LOCK_PATH="$modules_lock_file" \
