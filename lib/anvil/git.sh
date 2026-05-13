@@ -40,6 +40,10 @@ ensure_git() {
         info "Installing git"
         indent as_root apt-get install --no-install-recommends -y git
         ;;
+      fedora)
+        info "Installing git"
+        indent as_root dnf install --assumeyes git
+        ;;
       freebsd)
         info "Installing git"
         indent as_root pkg install -y git

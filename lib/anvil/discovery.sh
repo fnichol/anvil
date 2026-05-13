@@ -58,7 +58,7 @@ discover_installed_packages() {
           ;;
       esac
       ;;
-    bazzite)
+    bazzite | fedora)
       case "$package_type" in
         dnf)
           need_cmd dnf

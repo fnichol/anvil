@@ -88,7 +88,7 @@ prepare_step_hostname() {
       as_root hostname -F /etc/hostname \
         || warn "Failed to update hostname to '$fqdn'; continuing"
       ;;
-    arch | bazzite | cachyos | debian | ubuntu)
+    arch | bazzite | cachyos | debian | fedora | ubuntu)
       need_cmd sed
       need_cmd tee
 

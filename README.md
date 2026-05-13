@@ -54,6 +54,7 @@ also work):
 | [Bazzite]      | rolling         | Tier 2 |
 | [CachyOS]      | rolling         | Tier 1 |
 | [Debian]       | 13, rolling     | Tier 2 |
+| [Fedora]       | 44              | Tier 2 |
 | [FreeBSD]      | 15.0            | Tier 3 |
 | [macOS]        | 26 (Tahoe)      | Tier 1 |
 | [OpenBSD]      | 7.8             | Tier 1 |
@@ -72,6 +73,7 @@ also work):
 [Bazzite]: https://bazzite.gg/
 [CachyOS]: https://cachyos.org/
 [Debian]: https://www.debian.org/
+[Fedora]: https://fedoraproject.org/
 [FreeBSD]: https://www.freebsd.org/
 [macOS]: https://www.apple.com/os/macos/
 [OpenBSD]: https://www.openbsd.org/

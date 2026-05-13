@@ -271,6 +271,8 @@ bootstrap_step_bashrc() {
   if [ -f "$HOME/.bash/bashrc" ]; then
     # Ensure Bash is installed for updating later
     _ensure_bash "$os"
+    # Ensure diff is installed for updating later
+    _ensure_diff "$os"
     # Ensure Git is installed for updating later
     ensure_git "$os"
 
@@ -376,7 +378,7 @@ _ensure_bash() {
         indent as_root pacman -Sy --noconfirm
         indent as_root pacman -S --noconfirm bash
         ;;
-      bazzite | cachyos | truenas)
+      bazzite | cachyos | fedora | truenas)
         need_cmd bash
         ;;
       debian | ubuntu)
@@ -394,6 +396,23 @@ _ensure_bash() {
       openbsd)
         info "Installing bash"
         indent as_root pkg_add bash
+        ;;
+    esac
+  fi
+}
+
+_ensure_diff() {
+  local os="$1"
+
+  # Ensure diff is available and install via system package manager if not
+  if ! check_cmd diff; then
+    case "$os" in
+      fedora)
+        info "Installing diffutils"
+        indent as_root dnf install --assumeyes diffutils
+        ;;
+      *)
+        need_cmd diff
         ;;
     esac
   fi
@@ -418,7 +437,7 @@ _ensure_system_bash() {
         indent as_root pacman -Sy --noconfirm
         indent as_root pacman -S --noconfirm bash
         ;;
-      bazzite | cachyos | macos | truenas)
+      bazzite | cachyos | fedora | macos | truenas)
         # NOTE: macOS should have `/bin/bash` installed and on PATH
         need_cmd bash
         ;;
@@ -522,6 +541,14 @@ esac' /usr/bin/ldd
     bazzite)
       # Bazzite Linux already has an installation of Homebrew set up
       need_cmd brew
+      ;;
+    fedora)
+      info "Installing Homebrew build dependencies"
+      indent as_root dnf group install --assumeyes development-tools
+      indent as_root dnf install --assumeyes \
+        curl \
+        file \
+        procps-ng
       ;;
     debian | ubuntu)
       info "Installing Homebrew build dependencies"

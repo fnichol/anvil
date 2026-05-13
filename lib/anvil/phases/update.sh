@@ -45,6 +45,9 @@ update_steps() {
       echo "apt_sync"
       echo "apt"
       ;;
+    fedora)
+      echo "dnf"
+      ;;
     freebsd)
       echo "freebsd_pkg_sync"
       echo "freebsd_pkg"
@@ -153,6 +156,13 @@ update_step_apk() {
 
   info "Upgrading apk packages"
   indent as_root apk upgrade
+}
+
+update_step_dnf() {
+  need_cmd dnf
+
+  info "Upgrading DNF packages"
+  indent as_root dnf upgrade --assumeyes --refresh
 }
 
 update_step_freebsd_pkg_sync() {

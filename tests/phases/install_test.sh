@@ -84,7 +84,7 @@ testInstallStepsEmitsHomeshickOnAllPlatformsIfDefined() {
     echo "homeshick"
   }
 
-  for os in alpine arch bazzite cachyos debian freebsd macos openbsd truenas ubuntu; do
+  for os in alpine arch bazzite cachyos debian fedora freebsd macos openbsd truenas ubuntu; do
     run install_steps "$config_file" "$data_home" "$os" "" "" ""
 
     assertTrue "homeshick missing for $os" \

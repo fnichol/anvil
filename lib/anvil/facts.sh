@@ -58,6 +58,7 @@ facts_kernel() {
 # * `bazzite` - Bazzite Linux
 # * `cachyos` - CachyOS Linux
 # * `debian` - Debian Linux
+# * `fedora` - Fedora systems
 # * `freebsd` - FreeBSD systems
 # * `macos` - macOS/Darwin systems
 # * `openbsd` - OpenBSD systems
@@ -110,6 +111,12 @@ facts_os() {
         # docker run --rm -ti cachyos/cachyos sh -c '. /etc/os-release; echo $ID'
         # ```
         #
+        # - Fedora Linux:
+        #
+        # ```
+        # docker run --rm -ti fedora sh -c '. /etc/os-release; echo $ID'
+        # ```
+        #
         # - Debian Linux:
         #
         # ```
@@ -121,7 +128,7 @@ facts_os() {
         # docker run --rm -ti ubuntu sh -c '. /etc/os-release; echo $ID'
         # ```
         case "$os_release_id_lowercase" in
-          alpine | arch | bazzite | cachyos | ubuntu)
+          alpine | arch | bazzite | cachyos | fedora | ubuntu)
             echo "$os_release_id_lowercase"
             ;;
           debian)
@@ -222,7 +229,7 @@ facts_version() {
   os="$(facts_os)"
 
   case "$os" in
-    alpine | arch | bazzite | cachyos | ubuntu)
+    alpine | arch | bazzite | cachyos | fedora | ubuntu)
       # Attempt first to use os-release
       #
       # See:
@@ -283,7 +290,7 @@ facts_hostname() {
   os="$(facts_os)"
 
   case "$os" in
-    arch | cachyos)
+    arch | cachyos | fedora)
       if [ -f /etc/hostname ]; then
         cat /etc/hostname
         return 0
@@ -337,7 +344,7 @@ facts_json() {
     --arg arch "$(facts_arch)" \
     --arg kernel "$(facts_kernel)" \
     --arg version "$(facts_version)" \
-    --arg hostname "$(hostname)" \
+    --arg hostname "$(facts_hostname)" \
     '{
       hostname: $hostname,
       os: $os,

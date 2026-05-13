@@ -37,6 +37,9 @@ install_steps() {
     debian | ubuntu)
       echo "apt"
       ;;
+    fedora)
+      echo "dnf"
+      ;;
     freebsd)
       echo "freebsd_pkg"
       ;;
@@ -141,6 +144,32 @@ install_step_aur() {
   shift
 
   local package_type="aur"
+
+  _install_step_packages \
+    "$config_path" \
+    "$data_home" \
+    "$os" \
+    "$arch" \
+    "$package_type"
+}
+
+install_step_dnf() {
+  local config_path="$1"
+  shift
+  local data_home="$1"
+  shift
+  local _hostname="$1"
+  shift
+  local os="$1"
+  shift
+  local _version="$1"
+  shift
+  local _kernel="$1"
+  shift
+  local arch="$1"
+  shift
+
+  local package_type="dnf"
 
   _install_step_packages \
     "$config_path" \
@@ -483,6 +512,24 @@ _install_packages_aur() {
     info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
     # shellcheck disable=SC2086
     indent paru -S --needed --noconfirm $packages
+  fi
+}
+
+# Installs a list of DNF packages.
+#
+# * `@param [String]` newline-delimited package list
+_install_packages_dnf() {
+  local packages="$1"
+
+  need_cmd dnf
+
+  local total
+  total="$(echo "$packages" | grep -c . || echo 0)"
+
+  if [ -n "$packages" ]; then
+    info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    indent as_root dnf install --assumeyes $packages
   fi
 }
 
