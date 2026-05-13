@@ -242,7 +242,7 @@ testDiscoverInstalledOpenbsdPkgAddUsesPkgInfo() {
   cat <<-'EOF' >"$isolated_path/pkg_info"
 	#!/bin/sh
 	case "$*" in
-	  *-q*)
+	  *-z*)
 	    echo "rsync"
 	    echo "zsh"
 	    ;;
