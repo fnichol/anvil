@@ -11,11 +11,11 @@ print_usage() {
 	$program $version
 
 	USAGE:
-	    $program [FLAGS] [OPTIONS] [--]
+	    $program [FLAGS] [OPTIONS] [--] [<INIT_ARG> ..]
 
 	FLAGS:
-	    -h, --help      Prints help information
-	    -V, --version   Prints version information
+	    -h, --help                Prints help information
+	    -V, --version             Prints version information
 
 	OPTIONS:
 	    -d, --destination=<DEST>  Destination directory for installation
@@ -24,6 +24,14 @@ print_usage() {
 	    -r, --release=<RELEASE>   Release version
 	                              [examples: latest, 1.2.3, nightly]
 	                              [default: latest]
+	ARGS:
+	    <INIT_ARG>                If set, invoke 'anvil config init'
+	                              immediately after installing
+
+	ENVIRONMENT VARIABLES:
+	    ANVIL_CONFIG_PATH
+	    ANVIL_DATA_HOME
+	    ANVIL_MODULES_LOCK_PATH
 	EOF
 }
 
@@ -42,11 +50,12 @@ main() {
   bin="anvil"
 
   parse_cli_args "$program" "$version" "$author" "$@"
-  local dest git_ref release
+  local dest git_ref release init_args
   dest="$DEST"
   git_ref="$GIT_REF"
   release="$RELEASE"
-  unset DEST GIT_REF RELEASE
+  init_args="$INIT_ARGS"
+  unset DEST GIT_REF RELEASE INIT_ARGS
 
   need_cmd awk
   need_cmd basename
@@ -54,6 +63,7 @@ main() {
   need_cmd head
   need_cmd ln
   need_cmd mkdir
+  need_cmd pwd
   need_cmd tar
   need_cmd uname
   need_cmd zcat
@@ -66,6 +76,9 @@ main() {
   local tmpdir
   tmpdir="$(mktemp_directory)"
   cleanup_directory "$tmpdir"
+
+  local initial_cwd
+  initial_cwd="$(pwd)"
 
   if [ -n "$git_ref" ]; then
     local install_name="git-$git_ref"
@@ -84,7 +97,7 @@ main() {
     local installs_path
     installs_path="$dest/share/$bin/installs"
 
-    section "Installing '$program' from Git ref '$git_ref'"
+    section "Installing '$bin' from Git ref '$git_ref'"
     extract_asset "$asset" || die "Failed to extract asset"
     local src_path
     src_path="$(find_extracted_dir "$tmpdir")"
@@ -147,6 +160,20 @@ main() {
   esac
 
   section "Installation of '$bin' complete"
+
+  if [ -n "$init_args" ]; then
+    cd "$initial_cwd"
+
+    # Trigger trap cleanups before exec'ing
+    trap_cleanups
+
+    echo ""
+    echo ""
+    section "Invoking 'anvil config init $init_args'"
+    echo ""
+    # shellcheck disable=SC2086
+    exec "$bin_link" config init $init_args
+  fi
 }
 
 parse_cli_args() {
@@ -165,78 +192,83 @@ parse_cli_args() {
     DEST="$HOME/.local"
   fi
 
+  usage() {
+    print_usage "$program" "$version" "$author" "$DEST"
+  }
+
   GIT_REF=""
   RELEASE="latest"
+  INIT_ARGS=""
 
-  OPTIND=1
-  while getopts "d:g:hr:V-:" arg; do
-    case "$arg" in
-      d)
-        DEST="$OPTARG"
-        ;;
-      g)
-        GIT_REF="$OPTARG"
-        ;;
-      h)
-        print_usage "$program" "$version" "$author" "$DEST"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      # Flags
+      -h | --help)
+        usage
         exit 0
         ;;
-      r)
-        RELEASE="$OPTARG"
-        ;;
-      V)
+      -V | --version)
         print_version "$program" "$version" "true"
         exit 0
         ;;
-      -)
-        long_optarg="${OPTARG#*=}"
-        case "$OPTARG" in
-          destination=?*)
-            DEST="$long_optarg"
-            ;;
-          destination*)
-            print_usage "$program" "$version" "$author" "$DEST" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          git=?*)
-            GIT_REF="$long_optarg"
-            ;;
-          git*)
-            print_usage "$program" "$version" "$author" "$DEST" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          help)
-            print_usage "$program" "$version" "$author" "$DEST"
-            exit 0
-            ;;
-          release=?*)
-            RELEASE="$long_optarg"
-            ;;
-          release*)
-            print_usage "$program" "$version" "$author" "$DEST" >&2
-            die "missing required argument for --$OPTARG option"
-            ;;
-          version)
-            print_version "$program" "$version" "true"
-            exit 0
-            ;;
-          '')
-            # "--" terminates argument processing
-            break
-            ;;
-          *)
-            print_usage "$program" "$version" "$author" "$DEST" >&2
-            die "invalid argument --$OPTARG"
-            ;;
-        esac
+      # Options
+      -d | --destination)
+        ensure_required_arg "$1" "${2:-}"
+        DEST="$2"
+        shift 2
         ;;
-      \?)
-        print_usage "$program" "$version" "$author" "$DEST" >&2
-        die "invalid argument; arg=-$OPTARG"
+      -d=?* | --destination=?*)
+        DEST="${1#*=}"
+        shift 1
+        ;;
+      -g | --git)
+        ensure_required_arg "$1" "${2:-}"
+        GIT_REF="$2"
+        shift 2
+        ;;
+      -g=?* | --git=?*)
+        GIT_REF="${1#*=}"
+        shift 1
+        ;;
+      -r | --release)
+        ensure_required_arg "$1" "${2:-}"
+        RELEASE="$2"
+        shift 2
+        ;;
+      -r=?* | --release=?*)
+        RELEASE="${1#*=}"
+        shift 1
+        ;;
+      # Parsing
+      --) # explicitly terminates argument processing
+        shift 1
+        break
+        ;;
+      -?*)
+        usage_and_die "invalid argument $1"
+        ;;
+      *)
+        break
         ;;
     esac
   done
-  shift "$((OPTIND - 1))"
+
+  if [ -n "$*" ]; then
+    INIT_ARGS="$*"
+  fi
+}
+
+usage_and_die() {
+  usage >&2
+  die "$1"
+}
+
+ensure_required_arg() {
+  case "${2:-}" in
+    "" | -?*)
+      usage_and_die "missing required argument for $1 option"
+      ;;
+  esac
 }
 
 latest_release() {
