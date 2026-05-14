@@ -49,7 +49,6 @@ init_step_validate_commands() {
   need_cmd cut
   need_cmd date
   need_cmd dirname
-  need_cmd getent
   need_cmd grep
   need_cmd gzip
   need_cmd id
@@ -60,6 +59,15 @@ init_step_validate_commands() {
   need_cmd tar
   need_cmd tr
   need_cmd uname
+
+  case "$(uname -s)" in
+    Darwin)
+      # getent not present on stock macOS
+      ;;
+    *)
+      need_cmd getent
+      ;;
+  esac
 
   # Facts phase hasn't been run, so we'll check the kernel ourselves
   case "$(uname -s)" in

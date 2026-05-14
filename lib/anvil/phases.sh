@@ -179,6 +179,9 @@ _phases_run_hook_step() {
   local user
   if [ -n "${USER:-}" ]; then
     user="$USER"
+  elif [ "$os" = "macos" ]; then
+    # Thanks to Server Fault answer, see: https://serverfault.com/a/1164128
+    home="$(id -P | cut -d: -f9)"
   else
     user="$(getent passwd "$(id -u)" | cut -d: -f1)"
   fi
@@ -186,6 +189,9 @@ _phases_run_hook_step() {
   local home
   if [ -n "${HOME:-}" ]; then
     home="$HOME"
+  elif [ "$os" = "macos" ]; then
+    # Thanks to Server Fault answer, see: https://serverfault.com/a/1164128
+    home="$(id -P | cut -d: -f9)"
   else
     home="$(getent passwd "$(id -u)" | cut -d: -f6)"
   fi
