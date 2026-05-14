@@ -15,9 +15,7 @@ discover_installed_packages() {
           apk info
           ;;
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         mise)
           _discover_mise_global_tools
@@ -40,9 +38,7 @@ discover_installed_packages() {
           pacman --query --quiet --foreign
           ;;
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         mise)
           _discover_mise_global_tools
@@ -68,9 +64,7 @@ discover_installed_packages() {
             | while read -r pkg; do echo "${pkg%.*}"; done
           ;;
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         mise)
           _discover_mise_global_tools
@@ -93,9 +87,7 @@ discover_installed_packages() {
           pacman --query --quiet --foreign
           ;;
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         mise)
           _discover_mise_global_tools
@@ -119,9 +111,7 @@ discover_installed_packages() {
           dpkg-query -f '${Package}\n' -W
           ;;
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         mise)
           _discover_mise_global_tools
@@ -148,14 +138,10 @@ discover_installed_packages() {
     macos)
       case "$package_type" in
         homebrew)
-          need_cmd brew
-
-          brew list --formula --versions | cut -d ' ' -f 1
+          _discover_homebrew_formulae
           ;;
         homebrew_cask)
-          need_cmd brew
-
-          brew list --cask --versions | cut -d ' ' -f 1
+          _discover_homebrew_casks
           ;;
         mise)
           _discover_mise_global_tools
@@ -210,6 +196,20 @@ is_package_installed() {
       die "FIXME: unimplemented"
       ;;
   esac
+}
+
+# Discovers installed Homebrew casks, emitting full name strings.
+_discover_homebrew_casks() {
+  need_cmd brew
+
+  brew list --cask --full-name -1
+}
+
+# Discovers installed Homebrew formulae, emitting full name strings.
+_discover_homebrew_formulae() {
+  need_cmd brew
+
+  brew list --formula --full-name -1
 }
 
 # Discovers globally installed Mise tools, emitting `tool@version` strings.
