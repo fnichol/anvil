@@ -366,7 +366,7 @@ extract_asset() {
 
   info "Extracting $asset"
 
-  zcat "$asset" | indent tar xvf -
+  cat "$asset" | zcat | indent tar xvf -
 }
 
 find_extracted_dir() {
