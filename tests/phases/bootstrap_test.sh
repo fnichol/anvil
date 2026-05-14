@@ -905,18 +905,11 @@ testHomebrewSkipsIfAlreadyInstalled() {
   _brew_installed_path() {
     echo "$isolated_path/brew"
   }
-
   # shellcheck disable=SC2329
-  check_cmd() {
-    case "$1" in
-      git)
-        return 0
-        ;;
-      *)
-        return 1
-        ;;
-    esac
+  ensure_git() {
+    return 0
   }
+
   # If download function is invoked, the test must fail
   # shellcheck disable=SC2329
   download() { return 1; }
