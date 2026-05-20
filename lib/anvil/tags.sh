@@ -122,7 +122,7 @@ tags_resolve() {
     to_process="$(echo "$to_process" | awk '{$1=""; print $0}' | sed 's/^ *//')"
 
     # Skip if already resolved
-    if echo "$resolved" | grep -q "\<$tag\>"; then
+    if echo "$resolved" | grep -q -E "(^| )$tag($| )"; then
       continue
     fi
 
