@@ -379,7 +379,24 @@ testCreateJsonRolesAbsentWhenEmpty() {
 testResolveTagsWithOnlyTags() {
   writeConfigFile <<-EOF
 	{
-	  "tags": ["alfa", "bravo"]
+	  "tags": ["alfa", "bravo"],
+	  "modules":[{"name":"default","url":"https://example.com/a.git"}]
+	}
+	EOF
+
+  run config_resolve_tags "$config_file" "$data_home"
+
+  assertTrue 'function failed' "$return_status"
+  assertStdoutContains "alfa"
+  assertStdoutContains "bravo"
+  assertStderrNull
+}
+
+testResolveTagsExpandsTagDependencies() {
+  writeConfigFile <<-EOF
+	{
+	  "tags": ["bravo"],
+	  "modules":[{"name":"default","url":"https://example.com/a.git"}]
 	}
 	EOF
 

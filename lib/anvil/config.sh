@@ -12,6 +12,8 @@ fi
 . "$SRC_ROOT/lib/anvil/jq.sh"
 # shellcheck source=lib/anvil/roles.sh
 . "$SRC_ROOT/lib/anvil/roles.sh"
+# shellcheck source=lib/anvil/tags.sh
+. "$SRC_ROOT/lib/anvil/tags.sh"
 
 # Returns the Anvil config home directory.
 #
@@ -306,6 +308,12 @@ config_resolve_tags() {
   # Append config tags to role-resolved and derived tags
   if [ -n "$config_tags" ]; then
     all_tags="${all_tags}${all_tags:+ }${config_tags}"
+  fi
+
+  # Resolve tag dependencies so that depends_on chains are expanded
+  if [ -n "$all_tags" ]; then
+    # shellcheck disable=SC2086
+    all_tags="$(tags_resolve "$config_file" "$data_home" $all_tags)"
   fi
 
   # Note: drop trailing newline, hence the use of `printf`
