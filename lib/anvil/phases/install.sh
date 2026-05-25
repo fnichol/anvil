@@ -647,17 +647,14 @@ _install_packages_openbsd_pkg() {
 
   need_cmd pkg_add
 
-  local total current
+  local total
   total="$(echo "$packages" | grep -c . || echo 0)"
-  current=0
 
-  echo "$packages" | while IFS= read -r pkg; do
-    if [ -n "$pkg" ]; then
-      current=$((current + 1))
-      info "[$current/$total] Installing: $pkg"
-      indent as_root pkg_add -Ivz "$pkg"
-    fi
-  done
+  if [ -n "$packages" ]; then
+    info "[$total/$total] Installing: $(echo "$packages" | tr '\n' ' ')"
+    # shellcheck disable=SC2086
+    indent as_root pkg_add -Ivz $packages
+  fi
 }
 
 _normalize_packages() {
