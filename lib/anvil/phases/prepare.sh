@@ -26,6 +26,12 @@ prepare_steps() {
 }
 
 prepare_step_detect_privilege() {
+  # Early return if sudo behavior is disabled
+  if [ "${__ANVIL_SUDO__:-}" = "__disabled__" ]; then
+    info "Privilege elevation disabled (--no-sudo); as_root calls will fail"
+    return 0
+  fi
+
   detect_sudo
 
   info "Privilege elevation command: $__ANVIL_SUDO__"
@@ -39,11 +45,18 @@ prepare_step_acquire_sudo() {
   local hostname="$1"
   shift
 
-  # If root user was detect, early return
-  if [ -z "${__ANVIL_SUDO__:-}" ]; then
-    info "Running as root; $__ANVIL_SUDO__ keepalive not required"
-    return 0
-  fi
+  case "${__ANVIL_SUDO__:-}" in
+    "")
+      # If root user was detected, early return
+      info "Running as root; $__ANVIL_SUDO__ keepalive not required"
+      return 0
+      ;;
+    __disabled__)
+      # If privilege escalation is disabled, early return
+      info "Privilege elevation disabled (--no-sudo); skipping credential acquisition"
+      return 0
+      ;;
+  esac
 
   get_sudo "${hostname:-unknown-host}"
   keep_sudo

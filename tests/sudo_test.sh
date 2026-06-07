@@ -16,6 +16,9 @@ setUp() {
   . "${SRC:=lib/anvil/sudo.sh}"
 
   unset __ANVIL_SUDO__
+
+  ANVIL_ROOT="$SRC_ROOT"
+  export ANVIL_ROOT
 }
 
 makeFakeSudo() {
@@ -68,6 +71,38 @@ testRunAsRootWithDoasPrependsDoas() {
   assertTrue 'function failed' "$return_status"
   assertStdoutEquals "doas:echo hello"
   assertStderrNull
+}
+
+testAsRootDiesWhenElevationIsDisabled() {
+  run_in_sh_script <<-'EOF'
+	. "$ANVIL_ROOT/vendor/lib/libsh.full.sh"
+	__ANVIL_SUDO__="__disabled__"
+	as_root echo "hello"
+	EOF
+
+  assertFalse 'as_root should refuse when elevation is disabled' "$return_status"
+  assertStdoutNull
+  assertStderrContains 'Privilege elevation disabled'
+  assertStderrContains 'refusing to run: echo hello'
+}
+
+testDetectSudoPreservesDisabledSentinelValue() {
+  __ANVIL_SUDO__="__disabled__"
+
+  # Stub id/uname/need_cmd — if detect_sudo probes despite the sentinel value,
+  # let the function run to completion and overwrite __ANVIL_SUDO__
+
+  # shellcheck disable=SC2329
+  id() { echo "1000"; }
+  # shellcheck disable=SC2329
+  uname() { echo "Linux"; }
+  # shellcheck disable=SC2329
+  need_cmd() { :; }
+
+  run detect_sudo
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'sentinel was overwritten' "__disabled__" "${__ANVIL_SUDO__:-}"
 }
 
 testGetSudoCallsSudoV() {

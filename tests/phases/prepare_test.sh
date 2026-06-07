@@ -91,6 +91,27 @@ testDetectPrivilegeSetsSudoOnLinux() {
   assertEquals 'ANVIL_SUDO not sudo' "sudo" "${__ANVIL_SUDO__:-}"
 }
 
+testDetectPrivilegesLogsAndKeepsDisabledSentinelValue() {
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  __ANVIL_SUDO__="__disabled__"
+
+  # If detect_sudo is invoked this will fail the test
+  # shellcheck disable=SC2329
+  detect_sudo() { return 1; }
+
+  run prepare_step_detect_privilege \
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'function failed' "$return_status"
+  assertEquals 'sentinel was overwritten' "__disabled__" "${__ANVIL_SUDO__:-}"
+  assertStdoutContains 'Privilege elevation disabled'
+}
+
 testAcquireSudoFastPathWhenRoot() {
   local hostname="myhost.local"
   local os="arch"
@@ -111,6 +132,28 @@ testAcquireSudoFastPathWhenRoot() {
     "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
 
   assertTrue 'should succeed for root' "$return_status"
+}
+
+testAcquireSudoFastPathWhenDisabled() {
+  local hostname="myhost.local"
+  local os="arch"
+  local version=""
+  local kernel="linux"
+  local arch="x86_64"
+
+  __ANVIL_SUDO__="__disabled__"
+
+  # If get_sudo or keep_sudo are called this will fail the test
+  # shellcheck disable=SC2329
+  get_sudo() { return 1; }
+  # shellcheck disable=SC2329
+  keep_sudo() { return 1; }
+
+  run prepare_step_acquire_sudo \
+    "$config_file" "$data_home" "$hostname" "$os" "$version" "$kernel" "$arch"
+
+  assertTrue 'should succeed when elevation is disabled' "$return_status"
+  assertStdoutContains 'Privilege elevation disabled'
 }
 
 testAcquireSudoCallsGetAndKeepForNonRoot() {

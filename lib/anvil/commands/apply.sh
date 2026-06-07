@@ -33,8 +33,12 @@ print_apply_usage() {
 	FLAGS:
 	    -h, --help                  Prints help information
 	    -n, --dry-run               Show what would change without applying
+	        --no-sudo               Declare sudo/doas elevation unavailable;
+	                                as_root calls fail with an error
+
+	OPTIONS:
 	    -s  --skip=<p:s>[,<p:s>..]  Skip steps (supports:
-                                        phase:*, *:step, *:*)
+	                                 phase:*, *:step, *:*)
 
 	ENVIRONMENT VARIABLES:
 	    ANVIL_CONFIG_PATH       [default: $default_config_path]
@@ -80,6 +84,10 @@ cmd_apply() {
         ;;
       -n | --dry-run)
         dry_run="true"
+        shift 1
+        ;;
+      --no-sudo)
+        __ANVIL_SUDO__="__disabled__"
         shift 1
         ;;
       # Options

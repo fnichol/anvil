@@ -41,6 +41,13 @@ testCmdConfigHelpLongFlag() {
   assertStderrNull
 }
 
+testCmdApplyHelpShowsNoSudoFlag() {
+  runCli apply --help
+
+  assertTrue 'cli command failed' "$return_status"
+  assertStdoutContains 'no-sudo'
+}
+
 testCmdApplyNoConfigShowsError() {
   runCli apply
 
@@ -72,6 +79,26 @@ testApplyDryRunWithConfig() {
   # # Should show either packages to install or "converged" message
   # assertTrue 'Missing expected output' \
   #   "cat '$stdout' | grep -qE '(Would Install|System Converged|No changes)'"
+}
+
+testApplyNoSudoDeclaresElevationDisabled() {
+  cat >"$test_config" <<-'EOF'
+	{
+	  "modules": [{"name":"foo","url":"https://example.com"}],
+	  "tags": ["alfa"],
+	  "skip_steps": [],
+	  "custom_packages": {
+	    "add": [],
+	    "remove": []
+	  }
+	}
+	EOF
+  writeModuleFixture "foo" "$root/tests/fixtures/data/tags"
+
+  runCli apply --no-sudo --dry-run
+
+  assertTrue 'apply --no-sudo --dry-run should succeed' "$return_status"
+  assertStdoutContains 'Privilege elevation disabled'
 }
 
 testCmdApplyFailsWithNoModules() {

@@ -9,13 +9,20 @@
 # # Global Variables
 #
 # * `__ANVIL_SUDO__`: contains the computed command to invoke, typically `sudo`
-#    or `doas` depending on the platform
+#    or `doas` depending on the platform. May also contain value of
+#    `__disabled__` which signals the command should *not* be executed.
 as_root() {
-  if [ -n "${__ANVIL_SUDO__:-}" ]; then
-    "$__ANVIL_SUDO__" "$@"
-  else
-    "$@"
-  fi
+  case "${__ANVIL_SUDO__:-}" in
+    "")
+      "$@"
+      ;;
+    __disabled__)
+      die "Privilege elevation disabled (--no-sudo); refusing to run: $*"
+      ;;
+    *)
+      "$__ANVIL_SUDO__" "$@"
+      ;;
+  esac
 }
 
 # Detects a suitable sudo program for the system and the current user.
@@ -25,6 +32,11 @@ as_root() {
 # * `__ANVIL_SUDO__`: sets the computed command to invoke, typically `sudo` or
 #   `doas` depending on the platform
 detect_sudo() {
+  # Early return if sudo behavior is disabled
+  if [ "${__ANVIL_SUDO__:-}" = "__disabled__" ]; then
+    return 0
+  fi
+
   need_cmd id
   need_cmd uname
 
