@@ -221,6 +221,8 @@ bootstrap_step_homeshick() {
 
   # Early return if already installed
   if [ -f "$homeshick_path/homeshick.sh" ]; then
+    # Ensure Bash is installed for updating later
+    _ensure_bash "$os"
     # Ensure Git is installed for updating later
     ensure_git "$os"
 
@@ -231,6 +233,7 @@ bootstrap_step_homeshick() {
     return 0
   fi
 
+  _ensure_bash "$os"
   ensure_git "$os"
 
   info "Installing homeshick"
