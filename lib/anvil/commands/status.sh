@@ -112,6 +112,10 @@ cmd_status() {
 
   # Show configured tags
   section "Configuration"
+  local config_roles
+  config_roles="$(config_read_roles "$config_file")"
+  local config_tags
+  config_tags="$(config_read_tags "$config_file")"
   local resolved_tags
   resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
@@ -119,9 +123,10 @@ cmd_status() {
     die "No tags configured. Run: $program config init"
   fi
 
-  info "Tags: $resolved_tags"
+  info "Roles: $config_roles"
+  info "Tags: $config_tags"
 
-  info "Resolved (with dependencies): $resolved_tags"
+  info "Resolved tags (with dependencies): $resolved_tags"
   echo ""
 
   local pkg_managers
