@@ -119,12 +119,12 @@ cmd_status() {
   local resolved_tags
   resolved_tags="$(config_resolve_tags "$config_file" "$data_home")"
 
+  info "Roles: $config_roles"
+  info "Tags: $config_tags"
+
   if [ -z "$resolved_tags" ]; then
     die "No tags configured. Run: $program config init"
   fi
-
-  info "Roles: $config_roles"
-  info "Tags: $config_tags"
 
   info "Resolved tags (with dependencies): $resolved_tags"
   echo ""
