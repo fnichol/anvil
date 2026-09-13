@@ -80,7 +80,7 @@ _install_jq() {
   kernel="$(facts_kernel)"
 
   case "$kernel" in
-    linux | macos)
+    darwin | linux)
       local path
       path="$(_install_static_jq "$kernel")"
 
