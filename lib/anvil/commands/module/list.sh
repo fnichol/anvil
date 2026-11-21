@@ -1,13 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
-# shellcheck source=lib/anvil/jq.sh
+# shuck: source=../../jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/modules.sh
+# shuck: source=../../modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
 
 print_usage_module_list() {

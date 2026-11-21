@@ -17,9 +17,9 @@ main() {
   version="$(cat "$root/VERSION.txt")"
   author="Fletcher Nichol <fnichol@nichol.ca>"
 
-  # shellcheck source=vendor/lib/libsh.full.sh
+  # shuck: source=../vendor/lib/libsh.full.sh
   . "$root/vendor/lib/libsh.full.sh"
-  # shellcheck source=lib/anvil/cli.sh
+  # shuck: source=../lib/anvil/cli.sh
   . "$root/lib/anvil/cli.sh"
 
   anvil_cli "$root" "$program" "$version" "$author" "$@"

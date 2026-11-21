@@ -8,7 +8,7 @@ else
   __ANVIL_SOURCED_JQ__=true
 fi
 
-# shellcheck source=lib/anvil/facts.sh
+# shuck: source=facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
 
 # Ensures that a version of jq is present on the system.

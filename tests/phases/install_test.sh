@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/_ksh_local.sh
+# shuck: source=../_ksh_local.sh
 . "${0%/*}/../_ksh_local.sh"
 
 oneTimeSetUp() {
@@ -9,14 +9,18 @@ oneTimeSetUp() {
 
   commonOneTimeSetUp
 
+  # shuck: source=../../vendor/lib/libsh.full.sh
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
+  # shuck: source=../../lib/anvil/hooks.sh
   . "$SRC_ROOT/lib/anvil/hooks.sh"
+  # shuck: source=../../lib/anvil/modules.sh
   . "$SRC_ROOT/lib/anvil/modules.sh"
 }
 
 setUp() {
   commonSetUp
 
+  # shuck: source=../../lib/anvil/phases/install.sh
   . "${SRC:=lib/anvil/phases/install.sh}"
 
   config_file="$(config_path)"
@@ -475,9 +479,10 @@ testInstallHomeshickClonesNewCastle() {
   assertEquals 'wrong castle cloned' "fnichol/dotneovim" "$_cloned_castle"
 }
 
-# shellcheck source=tests/test_helpers.sh
+# shuck: source=../test_helpers.sh
 . "${0%/*}/../test_helpers.sh"
 
 shell_compat "$0"
 
+# shuck: source=../../tmp/shunit2/shunit2
 . "${0%/*}/../../$shunit2RelRoot"

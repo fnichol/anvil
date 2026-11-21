@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/convergence.sh
+# shuck: source=../convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
-# shellcheck source=lib/anvil/discovery.sh
+# shuck: source=../discovery.sh
 . "$SRC_ROOT/lib/anvil/discovery.sh"
 
 # Returns platform-specific install steps, one package manager per step.

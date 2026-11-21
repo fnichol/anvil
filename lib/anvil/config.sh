@@ -8,11 +8,11 @@ else
   __ANVIL_SOURCED_CONFIG__=true
 fi
 
-# shellcheck source=lib/anvil/jq.sh
+# shuck: source=jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
-# shellcheck source=lib/anvil/roles.sh
+# shuck: source=roles.sh
 . "$SRC_ROOT/lib/anvil/roles.sh"
-# shellcheck source=lib/anvil/tags.sh
+# shuck: source=tags.sh
 . "$SRC_ROOT/lib/anvil/tags.sh"
 
 # Returns the Anvil config home directory.

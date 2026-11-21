@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-# shellcheck source=tests/test_helpers.sh
+# shuck: source=test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
 oneTimeSetUp() {
@@ -35,4 +35,5 @@ testAnvilVersion() {
 
 shell_compat "$0"
 
+# shuck: source=../tmp/shunit2/shunit2
 . "$shunit2"

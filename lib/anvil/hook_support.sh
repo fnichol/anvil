@@ -11,7 +11,7 @@
 # privilege-escalation function. ANVIL_ROOT must be set (it is exported by the
 # hook runner before any hook script is sourced).
 
-# shellcheck source=vendor/lib/libsh.full.sh
+# shuck: source=../../vendor/lib/libsh.full.sh
 . "$ANVIL_ROOT/vendor/lib/libsh.full.sh"
-# shellcheck source=lib/anvil/sudo.sh
+# shuck: source=sudo.sh
 . "$ANVIL_ROOT/lib/anvil/sudo.sh"

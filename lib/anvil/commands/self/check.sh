@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
-# shellcheck source=lib/anvil/anvil.sh
+# shuck: source=../../anvil.sh
 . "$SRC_ROOT/lib/anvil/anvil.sh"
 
 print_usage_self_check() {

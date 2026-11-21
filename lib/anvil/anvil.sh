@@ -11,7 +11,7 @@ fi
 # Base API URL for project releases
 __ANVIL_REPO_API_BASE__="https://api.github.com/repos/fnichol/anvil"
 
-# shellcheck source=lib/anvil/facts.sh
+# shuck: source=facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
 
 # Returns the default path to the installs directory.

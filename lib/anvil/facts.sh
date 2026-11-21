@@ -8,7 +8,7 @@ else
   __ANVIL_SOURCED_FACTS__=true
 fi
 
-# shellcheck source=lib/anvil/jq.sh
+# shuck: source=jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
 
 # Determines the system kernel.
@@ -87,7 +87,7 @@ facts_os() {
       if [ -f /etc/os-release ]; then
         local os_release_id_lowercase
         os_release_id_lowercase="$(
-          # shellcheck source=/dev/null
+          # shuck: source=/dev/null
           . /etc/os-release
           echo "${ID:-}" | tr '[:upper:]' '[:lower:]'
         )"
@@ -237,7 +237,7 @@ facts_version() {
       if [ -f /etc/os-release ]; then
         local os_release_version_id
         os_release_version_id="$(
-          # shellcheck source=/dev/null
+          # shuck: source=/dev/null
           . /etc/os-release
           echo "${VERSION_ID:-}"
         )"
@@ -256,7 +256,7 @@ facts_version() {
           if [ -f /etc/os-release ]; then
             local os_release_version_id
             os_release_version_id="$(
-              # shellcheck source=/dev/null
+              # shuck: source=/dev/null
               . /etc/os-release
               echo "${VERSION_ID:-}"
             )"

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 # Anvil CLI command parsing
@@ -93,42 +93,52 @@ anvil_cli() {
 
   case "$subcommand" in
     apply)
+      # shuck: source=commands/apply.sh
       . "$root/lib/anvil/commands/apply.sh"
       cmd_apply "$program" "$version" "$@"
       ;;
     config)
+      # shuck: source=commands/config/lib.sh
       . "$root/lib/anvil/commands/config/lib.sh"
       cmd_config "$program" "$@"
       ;;
     diff)
+      # shuck: source=commands/diff.sh
       . "$root/lib/anvil/commands/diff.sh"
       cmd_diff "$program" "$@"
       ;;
     doctor)
+      # shuck: source=commands/doctor.sh
       . "$root/lib/anvil/commands/doctor.sh"
       cmd_doctor "$program" "$@"
       ;;
     facts)
+      # shuck: source=commands/facts.sh
       . "$root/lib/anvil/commands/facts.sh"
       cmd_facts "$program" "$@"
       ;;
     module)
+      # shuck: source=commands/module/lib.sh
       . "$root/lib/anvil/commands/module/lib.sh"
       cmd_module "$program" "$@"
       ;;
     role)
+      # shuck: source=commands/role/lib.sh
       . "$root/lib/anvil/commands/role/lib.sh"
       cmd_role "$program" "$@"
       ;;
     self)
+      # shuck: source=commands/self/lib.sh
       . "$root/lib/anvil/commands/self/lib.sh"
       cmd_self "$program" "$version" "$@"
       ;;
     tag)
+      # shuck: source=commands/tag/lib.sh
       . "$root/lib/anvil/commands/tag/lib.sh"
       cmd_tag "$program" "$@"
       ;;
     status)
+      # shuck: source=commands/status.sh
       . "$root/lib/anvil/commands/status.sh"
       cmd_status "$program" "$@"
       ;;

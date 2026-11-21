@@ -1,19 +1,19 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/modules.sh
+# shuck: source=../modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
-# shellcheck source=lib/anvil/facts.sh
+# shuck: source=../facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
-# shellcheck source=lib/anvil/discovery.sh
+# shuck: source=../discovery.sh
 . "$SRC_ROOT/lib/anvil/discovery.sh"
-# shellcheck source=lib/anvil/convergence.sh
+# shuck: source=../convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
-# shellcheck source=lib/anvil/phases/install.sh
+# shuck: source=../phases/install.sh
 . "$SRC_ROOT/lib/anvil/phases/install.sh"
 
 print_usage_diff() {

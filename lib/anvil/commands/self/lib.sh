@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 print_usage_self() {
@@ -63,10 +63,12 @@ cmd_self() {
 
   case "$subcommand" in
     check)
+      # shuck: source=check.sh
       . "$SRC_ROOT/lib/anvil/commands/self/check.sh"
       cmd_self_check "$program" "$version" "$@"
       ;;
     update)
+      # shuck: source=update.sh
       . "$SRC_ROOT/lib/anvil/commands/self/update.sh"
       cmd_self_update "$program" "$version" "$@"
       ;;

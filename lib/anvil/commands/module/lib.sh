@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 print_usage_module() {
@@ -66,30 +66,37 @@ cmd_module() {
 
   case "$subcommand" in
     add)
+      # shuck: source=add.sh
       . "$SRC_ROOT/lib/anvil/commands/module/add.sh"
       cmd_module_add "$program" "$@"
       ;;
     check)
+      # shuck: source=check.sh
       . "$SRC_ROOT/lib/anvil/commands/module/check.sh"
       cmd_module_check "$program" "$@"
       ;;
     install)
+      # shuck: source=install.sh
       . "$SRC_ROOT/lib/anvil/commands/module/install.sh"
       cmd_module_install "$program" "$@"
       ;;
     list)
+      # shuck: source=list.sh
       . "$SRC_ROOT/lib/anvil/commands/module/list.sh"
       cmd_module_list "$program" "$@"
       ;;
     remove)
+      # shuck: source=remove.sh
       . "$SRC_ROOT/lib/anvil/commands/module/remove.sh"
       cmd_module_remove "$program" "$@"
       ;;
     show)
+      # shuck: source=show.sh
       . "$SRC_ROOT/lib/anvil/commands/module/show.sh"
       cmd_module_show "$program" "$@"
       ;;
     update)
+      # shuck: source=update.sh
       . "$SRC_ROOT/lib/anvil/commands/module/update.sh"
       cmd_module_update "$program" "$@"
       ;;

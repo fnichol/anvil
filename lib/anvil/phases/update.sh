@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/convergence.sh
+# shuck: source=../convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
-# shellcheck source=lib/anvil/sudo.sh
+# shuck: source=../sudo.sh
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 # Returns platform-specific update steps, one per package manager.
@@ -241,7 +241,7 @@ update_step_mise() {
 
 _run_bashrc() {
   bash <<-EOF
-	# shellcheck source=/dev/null
+	# shuck: source=/dev/null
 	. "$bashrc"
         bashrc $*
 	EOF

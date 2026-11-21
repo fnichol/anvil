@@ -1,18 +1,20 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/_ksh_local.sh
+# shuck: source=_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
   commonOneTimeSetUp
 
+  # shuck: source=../vendor/lib/libsh.full.sh
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
 
+  # shuck: source=../lib/anvil/anvil.sh
   . "${SRC:=lib/anvil/anvil.sh}"
 }
 
@@ -82,9 +84,10 @@ testLatestAnvilVersionReturnsEmptyOnDownloadFailure() {
   assertStderrNull
 }
 
-# shellcheck source=tests/test_helpers.sh
+# shuck: source=test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
 shell_compat "$0"
 
+# shuck: source=../tmp/shunit2/shunit2
 . "${0%/*}/../$shunit2RelRoot"

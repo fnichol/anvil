@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/hooks.sh
+# shuck: source=../hooks.sh
 . "$SRC_ROOT/lib/anvil/hooks.sh"
-# shellcheck source=lib/anvil/state.sh
+# shuck: source=../state.sh
 . "$SRC_ROOT/lib/anvil/state.sh"
 
 finalize_steps() {

@@ -1,12 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/_ksh_local.sh
+# shuck: source=_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
   commonOneTimeSetUp
 
+  # shuck: source=../vendor/lib/libsh.full.sh
   . "${0%/*}/../vendor/lib/libsh.full.sh"
 
   # shellcheck disable=SC2329
@@ -16,6 +17,7 @@ oneTimeSetUp() {
 setUp() {
   commonSetUp
 
+  # shuck: source=../lib/anvil/discovery.sh
   . "${SRC:=lib/anvil/discovery.sh}"
 
   mkdir -p "$isolated_path"
@@ -425,9 +427,10 @@ testDiscoverInstalledMacosMiseUsesMise() {
   assertStderrNull
 }
 
-# shellcheck source=tests/test_helpers.sh
+# shuck: source=test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
 shell_compat "$0"
 
+# shuck: source=../tmp/shunit2/shunit2
 . "$shunit2"

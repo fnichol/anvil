@@ -8,9 +8,9 @@ else
   __ANVIL_SOURCED_TAGS__=true
 fi
 
-# shellcheck source=lib/anvil/jq.sh
+# shuck: source=jq.sh
 . "$SRC_ROOT/lib/anvil/jq.sh"
-# shellcheck source=lib/anvil/modules.sh
+# shuck: source=modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
 
 # Returns the path to a specific tag file.

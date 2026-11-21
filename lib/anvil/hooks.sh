@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/tags.sh
+# shuck: source=tags.sh
 . "$SRC_ROOT/lib/anvil/tags.sh"
-# shellcheck source=lib/anvil/modules.sh
+# shuck: source=modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
 
 # Emits hook step names for a phase, one per line, in numeric file order.

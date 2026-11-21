@@ -1,18 +1,20 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=tests/_ksh_local.sh
+# shuck: source=_ksh_local.sh
 . "${0%/*}/_ksh_local.sh"
 
 oneTimeSetUp() {
   commonOneTimeSetUp
 
+  # shuck: source=../vendor/lib/libsh.full.sh
   . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
   commonSetUp
 
+  # shuck: source=../lib/anvil/phases.sh
   . "${SRC:=lib/anvil/phases.sh}"
 
   config_file="$(config_path)"
@@ -90,6 +92,7 @@ testPhasesRunHookStepExecutesHookScriptAsSubprocess() {
 	}
 	EOF
 
+  # shuck: source=../lib/anvil/hooks.sh
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
@@ -112,6 +115,7 @@ testPhasesRunHookStepFailsOnNonZeroHookExit() {
 	}
 	EOF
 
+  # shuck: source=../lib/anvil/hooks.sh
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
@@ -132,6 +136,7 @@ testPhasesRunHookStepExportsAnvilEnvVars() {
 	}
 	EOF
 
+  # shuck: source=../lib/anvil/hooks.sh
   . "$SRC_ROOT/lib/anvil/hooks.sh"
 
   run _phases_run_hook_step \
@@ -148,9 +153,10 @@ testPhasesRunHookStepExportsAnvilEnvVars() {
     "grep -q 'testarch_arch' '$HOME/envcheck'"
 }
 
-# shellcheck source=tests/test_helpers.sh
+# shuck: source=test_helpers.sh
 . "${0%/*}/test_helpers.sh"
 
 shell_compat "$0"
 
+# shuck: source=../tmp/shunit2/shunit2
 . "$shunit2"

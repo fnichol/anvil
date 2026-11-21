@@ -1,21 +1,21 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
-# shellcheck source=lib/anvil/script.sh
+# shuck: source=../script.sh
 . "$SRC_ROOT/lib/anvil/script.sh"
-# shellcheck source=lib/anvil/logging.sh
+# shuck: source=../logging.sh
 . "$SRC_ROOT/lib/anvil/logging.sh"
-# shellcheck source=lib/anvil/modules.sh
+# shuck: source=../modules.sh
 . "$SRC_ROOT/lib/anvil/modules.sh"
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/phases.sh
+# shuck: source=../phases.sh
 . "$SRC_ROOT/lib/anvil/phases.sh"
-# shellcheck source=lib/anvil/state.sh
+# shuck: source=../state.sh
 . "$SRC_ROOT/lib/anvil/state.sh"
-# shellcheck source=lib/anvil/anvil.sh
+# shuck: source=../anvil.sh
 . "$SRC_ROOT/lib/anvil/anvil.sh"
 
 # Prints usage for the apply command.

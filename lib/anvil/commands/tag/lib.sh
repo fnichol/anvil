@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 #
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 print_usage_tag() {
@@ -61,12 +61,12 @@ cmd_tag() {
 
   case "$subcommand" in
     list)
-      # shellcheck source=lib/anvil/commands/tag/list.sh
+      # shuck: source=list.sh
       . "$SRC_ROOT/lib/anvil/commands/tag/list.sh"
       cmd_tag_list "$program" "$@"
       ;;
     show)
-      # shellcheck source=lib/anvil/commands/tag/show.sh
+      # shuck: source=show.sh
       . "$SRC_ROOT/lib/anvil/commands/tag/show.sh"
       cmd_tag_show "$program" "$@"
       ;;

@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/sudo.sh
+# shuck: source=../sudo.sh
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 prepare_steps() {

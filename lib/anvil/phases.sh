@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/hooks.sh
+# shuck: source=hooks.sh
 . "$SRC_ROOT/lib/anvil/hooks.sh"
 
 # Ordered phase list
@@ -29,7 +29,7 @@ phases_run() {
   arch=""
 
   for phase in $__ANVIL_PHASES__; do
-    # shellcheck source=/dev/null
+    # shuck: source=/dev/null
     . "$SRC_ROOT/lib/anvil/phases/$phase.sh"
 
     echo

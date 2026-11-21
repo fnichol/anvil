@@ -8,9 +8,9 @@ else
   __ANVIL_SOURCED_GIT__=true
 fi
 
-# shellcheck source=lib/anvil/facts.sh
+# shuck: source=facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
-# shellcheck source=lib/anvil/sudo.sh
+# shuck: source=sudo.sh
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 # Ensures that a version of Git is present on the system

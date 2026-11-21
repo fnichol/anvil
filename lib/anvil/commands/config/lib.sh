@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/argparse.sh
+# shuck: source=../../argparse.sh
 . "${SRC_ROOT}/lib/anvil/argparse.sh"
 
 print_usage_config() {
@@ -62,17 +62,17 @@ cmd_config() {
 
   case "$subcommand" in
     edit)
-      # shellcheck source=lib/anvil/commands/config/edit.sh
+      # shuck: source=edit.sh
       . "$SRC_ROOT/lib/anvil/commands/config/edit.sh"
       cmd_config_edit "$program" "$@"
       ;;
     init)
-      # shellcheck source=lib/anvil/commands/config/init.sh
+      # shuck: source=init.sh
       . "$SRC_ROOT/lib/anvil/commands/config/init.sh"
       cmd_config_init "$program" "$@"
       ;;
     show)
-      # shellcheck source=lib/anvil/commands/config/show.sh
+      # shuck: source=show.sh
       . "$SRC_ROOT/lib/anvil/commands/config/show.sh"
       cmd_config_show "$program" "$@"
       ;;

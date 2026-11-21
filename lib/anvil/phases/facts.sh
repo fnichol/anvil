@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/facts.sh
+# shuck: source=../facts.sh
 . "$SRC_ROOT/lib/anvil/facts.sh"
 
 facts_steps() {

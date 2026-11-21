@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 # shellcheck disable=SC3043
 
-# shellcheck source=lib/anvil/git.sh
+# shuck: source=../git.sh
 . "$SRC_ROOT/lib/anvil/git.sh"
-# shellcheck source=lib/anvil/convergence.sh
+# shuck: source=../convergence.sh
 . "$SRC_ROOT/lib/anvil/convergence.sh"
-# shellcheck source=lib/anvil/config.sh
+# shuck: source=../config.sh
 . "$SRC_ROOT/lib/anvil/config.sh"
-# shellcheck source=lib/anvil/hooks.sh
+# shuck: source=../hooks.sh
 . "$SRC_ROOT/lib/anvil/hooks.sh"
-# shellcheck source=lib/anvil/sudo.sh
+# shuck: source=../sudo.sh
 . "$SRC_ROOT/lib/anvil/sudo.sh"
 
 # Returns platform-specific bootstrap steps.
@@ -227,7 +227,7 @@ bootstrap_step_homeshick() {
     ensure_git "$os"
 
     # Load homeshick so subcommands are available in this shell
-    # shellcheck source=/dev/null
+    # shuck: source=/dev/null
     . "$homeshick_path/homeshick.sh"
 
     return 0
@@ -256,7 +256,7 @@ bootstrap_step_homeshick() {
   fi
 
   # Load homeshick so subcommands are available in this shell
-  # shellcheck source=/dev/null
+  # shuck: source=/dev/null
   . "$homeshick_path/homeshick.sh"
 }
 
