@@ -1,0 +1,13 @@
+# Test helper variables.
+#
+# These are assigned by the helpers in `tests/test_helpers.sh`
+# (`commonOneTimeSetUp`, `commonSetUp`, `run`) and read from `test*` functions
+# that shUnit2 invokes by name. Shuck (as of 0.2.11) does not apply bindings
+# imported through `source` to references inside function bodies, so C006
+# reports them as unassigned even though the helpers are sourced. Declare them
+# as provided here instead of suppressing the rule.
+[[lint.contracts.custom]]
+id = "anvil-test-helpers"
+when = "always"
+files = ["tests/**"]
+provides = { variables = ["root", "tmpdir", "stdout", "isolated_path", "return_status"] }
