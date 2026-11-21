@@ -1,0 +1,14 @@
+# Maintenance tasks that download tools only to copy files into `vendor/`.
+#
+# This file is only loaded with `MISE_ENV=vendor` (or `mise -E vendor ...`), so
+# the tools these tasks need are not installed by `mise install
+# --include-task-tools` when setting up the project or in CI. Run them with:
+#
+#   mise -E vendor run vendor:libsh
+#   mise -E vendor run vendor:shunit2
+
+[tasks."vendor:libsh"]
+extends = "vendor:libsh"
+
+[tasks."vendor:shunit2"]
+extends = "vendor:shunit2"

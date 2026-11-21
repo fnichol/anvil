@@ -1,0 +1,33 @@
+[task_templates."check:format:json"]
+description = "Checks all formatting enforcements for json sources"
+deny_all = true
+allow_read = ["."]
+allow_env = ["usage_*", "MISE_TASK_NAME"]
+sources = [
+  "{{ vars.extra_json_source | default(value='') }}",
+  "**/*.json",
+  "!vendor/**",
+  "!@gitignore",
+]
+usage = '''
+flag "-v --verbose" help="Increase verbosity (repeat for more)" count=#true
+arg "[files]" double_dash="optional" var=#true help="Sources to include in task (default: all sources)"
+'''
+run = '''#!/usr/bin/env sh
+{% set default_script = env.MISE_TASK_NAME | replace(from=":", to="-") %}
+{% set script = vars.script | default(value=default_script) %}
+{% set all = task_source_files() | json_encode() %}
+{% set changed = task_source_files(only_changed=true) | json_encode() %}
+{% set total = (all | length) + (changed | length) %}
+exec python3 -B \
+  "{{ config_root }}/.config/mise/scripts/{{ script }}.py" \
+  {% if all | length > 100000 %}  --sources-too-long
+  {% else %}  --all-json {{ all | quote }} \
+  {% if total < 120000 %}  --changed-json {{ changed | quote }}
+  {% else %}  --changed all
+  {% endif %}{% endif %}
+'''
+
+[task_templates."check:format:json".tools]
+jq = "{{ vars.tool_version_jq }}"
+python = "{{ vars.tool_version_python }}"

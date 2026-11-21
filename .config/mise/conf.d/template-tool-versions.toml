@@ -1,0 +1,21 @@
+[task_templates."check:tool-versions"]
+description = "Checks that pinned tool versions are the latest available"
+allow_env = ["usage_*", "MISE_TASK_NAME"]
+allow_read = [".", "{{ mise_bin }}", "{{ xdg_config_home }}/mise"]
+# Everything is denied except network access, which the latest-version lookups
+# need (see the `test:shell:shunit2` template for why this is not `deny_all`).
+deny_env = true
+deny_read = true
+deny_unix = true
+deny_write = true
+usage = '''
+flag "-v --verbose" help="Increase verbosity (repeat for more)" count=#true
+'''
+run = '''#!/usr/bin/env sh
+{% set default_script = env.MISE_TASK_NAME | replace(from=":", to="-") %}
+{% set script = vars.script | default(value=default_script) %}
+exec python3 -B "{{ config_root }}/.config/mise/scripts/{{ script }}.py"
+'''
+
+[task_templates."check:tool-versions".tools]
+python = "{{ vars.tool_version_python }}"

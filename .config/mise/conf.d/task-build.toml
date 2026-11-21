@@ -1,0 +1,11 @@
+[tasks."build"]
+alias = "default"
+extends = "build"
+
+[tasks."build:_"]
+description = "Empty task to match when there are no child tasks"
+deny_all = true
+hide = true
+quiet = true
+silent = true
+run = "true"

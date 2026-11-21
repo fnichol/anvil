@@ -1,0 +1,7 @@
+[vars]
+tool_version_jq = "1.8.2"
+tool_version_libsh = "0.10.1"
+tool_version_python = "3.12"
+tool_version_shfmt = "3.14.1"
+tool_version_shuck = "0.2.11"
+tool_version_shunit2 = "2.1.8"

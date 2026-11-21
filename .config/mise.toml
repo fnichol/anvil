@@ -4,7 +4,28 @@
   "support/bin"
 ]
 
-[tools]
-jq = "latest"
-shellcheck = "latest"
-shfmt = "latest"
+[settings]
+cargo.binstall_native = true
+
+[vars]
+extra_shell_source = "bin/anvil"
+
+[tasks."check:format:json"]
+extends = "check:format:json"
+
+[tasks."check:format:shell"]
+extends = "check:format:shell"
+
+[tasks."check:lint:shell"]
+extends = "check:lint:shell"
+
+[tasks."check:tool-versions"]
+extends = "check:tool-versions"
+
+[tasks."clean:shell"]
+extends = "clean:shell:shunit2"
+
+[tasks."test:shell"]
+extends = "test:shell:shunit2"
+vars = { script = "test-shell-shunit2" }
+deny_net = true

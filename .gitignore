@@ -1,4 +1,4 @@
-/.vagrant/
 /log/
 /tmp/
+__pycache__/
 .worktrees

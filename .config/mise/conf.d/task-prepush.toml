@@ -1,0 +1,5 @@
+[tasks."prepush"]
+description = "Runs all checks and tests required before pushing changes"
+depends = ["check", "test"]
+deny_all = true
+run = "echo 'Okay to push'"

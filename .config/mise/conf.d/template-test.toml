@@ -1,0 +1,3 @@
+[task_templates."test"]
+description = "Runs all tests"
+depends = ["test:*"]

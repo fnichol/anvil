@@ -1,0 +1,15 @@
+[task_templates."check:doc"]
+description = "Checks all documentation enforcements"
+depends = ["check:doc:*"]
+
+[task_templates."check:format"]
+description = "Checks all formatting enforcements"
+depends = ["check:format:*"]
+
+[task_templates."check:lint"]
+description = "Checks all linting enforcements"
+depends = ["check:lint:*"]
+
+[task_templates."check"]
+description = "Checks all linting and formatting enforcements"
+depends = ["check:*"]

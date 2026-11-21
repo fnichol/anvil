@@ -1,0 +1,3 @@
+[tasks."setup:shuck-cache"]
+extends = "setup:shuck-cache"
+hide = true

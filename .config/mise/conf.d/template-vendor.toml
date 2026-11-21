@@ -1,0 +1,40 @@
+[task_templates."vendor:libsh"]
+description = "Vendors libsh into vendor/lib/"
+deny_all = true
+allow_read = ["."]
+allow_write = ["vendor"]
+allow_env = ["usage_*", "MISE_TASK_NAME"]
+usage = '''
+flag "-n --dry-run" help="Show what would change without writing"
+flag "-v --verbose" help="Increase verbosity (repeat for more)" count=#true
+'''
+run = '''#!/usr/bin/env sh
+{% set default_script = env.MISE_TASK_NAME | replace(from=":", to="-") %}
+{% set script = vars.script | default(value=default_script) %}
+exec python3 -B "{{ config_root }}/.config/mise/scripts/{{ script }}.py"
+'''
+
+[task_templates."vendor:libsh".tools]
+"github:fnichol/libsh" = { version = "{{ vars.tool_version_libsh }}", asset_pattern = "libsh.full.sh", rename_exe = "libsh.full.sh" }
+python = "{{ vars.tool_version_python }}"
+
+
+[task_templates."vendor:shunit2"]
+description = "Vendors shUnit2 into vendor/lib/"
+deny_all = true
+allow_read = ["."]
+allow_write = ["vendor"]
+allow_env = ["usage_*", "MISE_TASK_NAME"]
+usage = '''
+flag "-n --dry-run" help="Show what would change without writing"
+flag "-v --verbose" help="Increase verbosity (repeat for more)" count=#true
+'''
+run = '''#!/usr/bin/env sh
+{% set default_script = env.MISE_TASK_NAME | replace(from=":", to="-") %}
+{% set script = vars.script | default(value=default_script) %}
+exec python3 -B "{{ config_root }}/.config/mise/scripts/{{ script }}.py"
+'''
+
+[task_templates."vendor:shunit2".tools]
+"http:shunit2" = { version = "{{ vars.tool_version_shunit2 }}", url = "https://github.com/kward/shunit2/archive/refs/tags/v{{ vars.tool_version_shunit2 }}.tar.gz" }
+python = "{{ vars.tool_version_python }}"
