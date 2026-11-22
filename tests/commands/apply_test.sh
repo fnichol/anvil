@@ -8,6 +8,9 @@ oneTimeSetUp() {
   TEST_ROOT="${0%/*}/../.."
 
   commonOneTimeSetUp
+
+  # shuck: source=../../vendor/lib/libsh.full.sh
+  . "$SRC_ROOT/vendor/lib/libsh.full.sh"
 }
 
 setUp() {
@@ -22,6 +25,14 @@ setUp() {
 runCli() {
   ANVIL_CONFIG_PATH="$test_config" __ANVIL_LOGGING__=1 \
     run "$root/bin/anvil" "$@"
+}
+
+# Runs the CLI with a fresh cached update check, so `apply` never queries the
+# GitHub API. Tests of the advisory itself write their own cache and stub the
+# network instead.
+runCliOffline() {
+  XDG_STATE_HOME="$tmpdir/state" state_write_update_check "0.0.0"
+  XDG_STATE_HOME="$tmpdir/state" runCli "$@"
 }
 
 testCmdConfigHelpShortFlag() {
@@ -72,7 +83,7 @@ testApplyDryRunWithConfig() {
 	EOF
   writeModuleFixture "foo" "$root/tests/fixtures/data/tags"
 
-  runCli apply --dry-run
+  runCliOffline apply --dry-run
 
   assertTrue 'apply --dry-run should succeeed' "$return_status"
   # TODO: this may come back, depending on output of re-assembled functionality
@@ -96,7 +107,7 @@ testApplyNoSudoDeclaresElevationDisabled() {
 	EOF
   writeModuleFixture "foo" "$root/tests/fixtures/data/tags"
 
-  runCli apply --no-sudo --dry-run
+  runCliOffline apply --no-sudo --dry-run
 
   assertTrue 'apply --no-sudo --dry-run should succeed' "$return_status"
   assertStdoutContains 'Privilege elevation disabled'
