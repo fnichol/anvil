@@ -331,5 +331,5 @@ shell_compat() {
 }
 
 # shellcheck disable=SC2034
-shunit2RelRoot="tmp/shunit2/shunit2"
+shunit2RelRoot="vendor/lib/shunit2.sh"
 shunit2="${0%/*}/../$shunit2RelRoot"

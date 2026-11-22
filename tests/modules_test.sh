@@ -808,5 +808,5 @@ testModulesNameFromUrlExtractsOrgFromAnvilModulesRepoName() {
 
 shell_compat "$0"
 
-# shuck: source=../tmp/shunit2/shunit2
+# shuck: source=../vendor/lib/shunit2.sh
 . "${0%/*}/../$shunit2RelRoot"

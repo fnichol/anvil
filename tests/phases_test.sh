@@ -158,5 +158,5 @@ testPhasesRunHookStepExportsAnvilEnvVars() {
 
 shell_compat "$0"
 
-# shuck: source=../tmp/shunit2/shunit2
+# shuck: source=../vendor/lib/shunit2.sh
 . "$shunit2"
