@@ -130,10 +130,14 @@ testGetSudoCallsDoasTrue() {
 
 testKeepSudoSpawnsBackgroundJobAndReturns() {
   mkdir -p "$isolated_path"
-  # Fake sudo that sleeps forever — verifies keep_sudo doesn't block
+  sudo_pid_file="$tmpdir/sudo.pid"
+  # Fake sudo that sleeps forever — verifies keep_sudo doesn't block. It records
+  # its pid (and `exec`s into the sleep, so that is the only process) so the
+  # test can stop it: killing keep_sudo's background loop alone would leave this
+  # fake and its sleep running after the test.
   # shellcheck disable=SC2016
-  printf '#!/bin/sh\ncase "$1" in -n) sleep 9999 ;; esac\n' \
-    >"$isolated_path/sudo"
+  printf '#!/bin/sh\ncase "$1" in -n) echo $$ >"%s"; exec sleep 9999 ;; esac\n' \
+    "$sudo_pid_file" >"$isolated_path/sudo"
   chmod +x "$isolated_path/sudo"
   PATH="$isolated_path:$PATH"
 
@@ -143,8 +147,18 @@ testKeepSudoSpawnsBackgroundJobAndReturns() {
   run keep_sudo
 
   assertTrue 'keep_sudo failed' "$return_status"
-  # Clean up the background job
+
+  # Clean up the background loop, then the fake sudo it was waiting on (giving
+  # the fake a moment to record its pid if it has not started yet)
   kill %1 2>/dev/null || true
+  _tries=0
+  while [ ! -s "$sudo_pid_file" ] && [ "$_tries" -lt 5 ]; do
+    sleep 1
+    _tries=$((_tries + 1))
+  done
+  if [ -s "$sudo_pid_file" ]; then
+    kill "$(cat "$sudo_pid_file")" 2>/dev/null || true
+  fi
 }
 
 # shuck: source=test_helpers.sh
